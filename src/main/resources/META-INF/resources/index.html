@@ -12,7 +12,7 @@
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #1a1a2e;
+            background: #0f0f1e;
             color: #eee;
             min-height: 100vh;
             padding: 20px;
@@ -36,7 +36,7 @@
         }
         .status.connected {
             background: #00d4aa;
-            color: #1a1a2e;
+            color: #0f0f1e;
         }
         .status.disconnected {
             background: #e74c3c;
@@ -44,45 +44,127 @@
         }
         .status.connecting {
             background: #f39c12;
-            color: #1a1a2e;
+            color: #0f0f1e;
         }
         .events {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
         }
-        .event {
-            background: #16213e;
-            border-left: 4px solid #00d4aa;
-            padding: 15px 20px;
-            border-radius: 0 8px 8px 0;
-            font-family: 'Monaco', 'Menlo', monospace;
-            font-size: 0.9rem;
-            word-break: break-all;
+        .event-card {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 1px solid #2a2a4a;
+            border-radius: 12px;
+            padding: 16px 20px;
             animation: slideIn 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
-        .event:nth-child(even) {
-            border-left-color: #3498db;
+        .event-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
         }
-        .timestamp {
+        .brand-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .type-badge {
+            background: #00d4aa;
+            color: #0f0f1e;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .service-id {
             color: #888;
             font-size: 0.8rem;
-            margin-bottom: 5px;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+        .meta-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 12px;
+            font-size: 0.8rem;
+            color: #aaa;
+            flex-wrap: wrap;
+        }
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .meta-label {
+            color: #666;
+        }
+        .meta-value {
+            color: #ccc;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+        .payload-section {
+            background: #0f0f1e;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+        .payload-title {
+            color: #00d4aa;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .payload-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        .payload-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .payload-key {
+            color: #666;
+            font-size: 0.75rem;
+        }
+        .payload-value {
+            color: #fff;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+        }
+        .payload-value.number {
+            color: #f39c12;
+        }
+        .payload-value.boolean {
+            color: #9b59b6;
+        }
+        .payload-value.string {
+            color: #2ecc71;
         }
         @keyframes slideIn {
             from {
                 opacity: 0;
-                transform: translateX(-20px);
+                transform: translateY(-10px);
             }
             to {
                 opacity: 1;
-                transform: translateX(0);
+                transform: translateY(0);
             }
         }
         .empty {
             text-align: center;
             color: #666;
-            padding: 40px;
+            padding: 60px;
             font-style: italic;
         }
     </style>
@@ -117,15 +199,19 @@
             };
 
             ws.onmessage = (event) => {
-                const data = event.data;
-                const timestamp = new Date().toLocaleTimeString();
-                
-                events.unshift({ timestamp, data });
-                if (events.length > 100) {
-                    events.pop();
+                try {
+                    const data = JSON.parse(event.data);
+                    const receivedAt = new Date();
+                    
+                    events.unshift({ receivedAt, data });
+                    if (events.length > 100) {
+                        events.pop();
+                    }
+                    
+                    renderEvents();
+                } catch (e) {
+                    console.error('Failed to parse event:', e);
                 }
-                
-                renderEvents();
             };
 
             ws.onclose = () => {
@@ -140,21 +226,85 @@
             };
         }
 
+        function formatTimestamp(ts) {
+            if (typeof ts === 'number') {
+                const seconds = Math.floor(ts);
+                const ms = Math.round((ts - seconds) * 1000);
+                const date = new Date(seconds * 1000 + ms);
+                return date.toLocaleString();
+            }
+            return ts;
+        }
+
+        function formatValue(value) {
+            if (typeof value === 'boolean') {
+                return `<span class="payload-value boolean">${value}</span>`;
+            } else if (typeof value === 'number') {
+                return `<span class="payload-value number">${value}</span>`;
+            } else if (typeof value === 'string') {
+                return `<span class="payload-value string">"${escapeHtml(value)}"</span>`;
+            }
+            return `<span class="payload-value">${escapeHtml(String(value))}</span>`;
+        }
+
+        function renderPayload(payload) {
+            if (!payload || typeof payload !== 'object') {
+                return `<div class="payload-value">${escapeHtml(String(payload))}</div>`;
+            }
+            
+            const entries = Object.entries(payload);
+            if (entries.length === 0) return '<div class="payload-value">{}</div>';
+            
+            return `<div class="payload-grid">
+                ${entries.map(([key, value]) => `
+                    <div class="payload-item">
+                        <span class="payload-key">${escapeHtml(key)}</span>
+                        ${formatValue(value)}
+                    </div>
+                `).join('')}
+            </div>`;
+        }
+
         function renderEvents() {
             if (events.length === 0) {
                 eventsEl.innerHTML = '<div class="empty">Waiting for events...</div>';
                 return;
             }
 
-            eventsEl.innerHTML = events.map(event => `
-                <div class="event">
-                    <div class="timestamp">${event.timestamp}</div>
-                    <div class="data">${escapeHtml(event.data)}</div>
+            eventsEl.innerHTML = events.map(event => {
+                const e = event.data;
+                return `
+                <div class="event-card">
+                    <div class="event-header">
+                        <span class="brand-badge">${escapeHtml(e.brandName || 'Unknown')}</span>
+                        <span class="type-badge">${escapeHtml(e.type || 'UNKNOWN')}</span>
+                        <span class="service-id">${escapeHtml(e.serviceId || '-')}</span>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-item">
+                            <span class="meta-label">Trace:</span>
+                            <span class="meta-value">${escapeHtml(e.traceId || '-')}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Time:</span>
+                            <span class="meta-value">${formatTimestamp(e.timestamp)}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Received:</span>
+                            <span class="meta-value">${event.receivedAt.toLocaleTimeString()}</span>
+                        </div>
+                    </div>
+                    <div class="payload-section">
+                        <div class="payload-title">Payload</div>
+                        ${renderPayload(e.payload)}
+                    </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function escapeHtml(text) {
+            if (text == null) return '';
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
