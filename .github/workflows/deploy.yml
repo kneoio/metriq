@@ -74,4 +74,4 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            kubectl rollout restart deployment/aivox -n default
+            kubectl rollout restart deployment/metriq -n default
