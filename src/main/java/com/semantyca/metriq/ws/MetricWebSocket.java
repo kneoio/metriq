@@ -1,4 +1,4 @@
-package com.semantyca.metriq.websocket;
+package com.semantyca.metriq.ws;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.websocket.OnClose;
@@ -11,7 +11,7 @@ import org.jboss.logging.Logger;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-@ServerEndpoint("/ws/metrics")
+@ServerEndpoint("/metriq/ws/metrics")
 @ApplicationScoped
 public class MetricWebSocket {
 

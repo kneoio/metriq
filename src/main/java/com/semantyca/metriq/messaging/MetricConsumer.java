@@ -1,7 +1,7 @@
 package com.semantyca.metriq.messaging;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.semantyca.metriq.websocket.MetricWebSocket;
+import com.semantyca.metriq.ws.MetricWebSocket;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
