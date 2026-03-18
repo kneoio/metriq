@@ -8,18 +8,18 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #080810;
-            --surface: #0d0d1a;
-            --surface2: #12121f;
-            --border: rgba(255,255,255,0.06);
-            --border-bright: rgba(255,255,255,0.12);
-            --accent: #00e5b0;
-            --accent2: #7c6dfa;
+            --bg: #1a1a1a;
+            --surface: #2a2a2a;
+            --surface2: #1a1a1a;
+            --border: #333333;
+            --border-bright: #444444;
+            --accent: #2196F3;
+            --accent2: #42A5F5;
             --accent3: #fa6d6d;
             --amber: #f5a623;
-            --text: #e8e8f0;
-            --text-muted: #5a5a72;
-            --text-dim: #3a3a52;
+            --text: #f0f0f0;
+            --text-muted: #d0d0d0;
+            --text-dim: #b0b0b0;
             --mono: 'IBM Plex Mono', monospace;
             --sans: 'Space Grotesk', sans-serif;
         }
@@ -34,7 +34,6 @@
             overflow-x: hidden;
         }
 
-        /* grid bg */
         body::before {
             content: '';
             position: fixed;
@@ -47,7 +46,6 @@
             z-index: 0;
         }
 
-        /* scanline sweep */
         body::after {
             content: '';
             position: fixed;
@@ -74,7 +72,6 @@
             z-index: 2;
         }
 
-        /* SIDEBAR */
         .sidebar {
             grid-row: 1 / 3;
             border-right: 1px solid var(--border);
@@ -86,6 +83,7 @@
             position: sticky;
             top: 0;
             height: 100vh;
+            overflow-y: auto;
         }
 
         .logo {
@@ -186,6 +184,35 @@
             background: rgba(0,229,176,0.06);
         }
 
+        .filter-tag.brand-tag:hover, .filter-tag.brand-tag.active {
+            border-color: var(--amber);
+            color: var(--amber);
+            background: rgba(245,166,35,0.06);
+        }
+
+        .filter-tag.svc-aivox:hover,   .filter-tag.svc-aivox.active   { border-color:#a78bfa; color:#a78bfa; background:rgba(167,139,250,0.08); }
+        .filter-tag.svc-jesoos:hover,  .filter-tag.svc-jesoos.active  { border-color:#34d399; color:#34d399; background:rgba(52,211,153,0.08); }
+        .filter-tag.svc-datanest:hover,.filter-tag.svc-datanest.active{ border-color:#60a5fa; color:#60a5fa; background:rgba(96,165,250,0.08); }
+        .filter-tag.svc-metriq:hover,  .filter-tag.svc-metriq.active  { border-color:#f472b6; color:#f472b6; background:rgba(244,114,182,0.08); }
+        .filter-tag.svc-nivaro:hover,  .filter-tag.svc-nivaro.active  { border-color:#fb923c; color:#fb923c; background:rgba(251,146,60,0.08); }
+
+        .service-pill {
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            padding: 2px 8px;
+            border-radius: 2px;
+            border: 1px solid;
+            white-space: nowrap;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        .service-pill.svc-aivox    { color:#a78bfa; border-color:rgba(167,139,250,0.35); background:rgba(167,139,250,0.08); }
+        .service-pill.svc-jesoos   { color:#34d399; border-color:rgba(52,211,153,0.35);  background:rgba(52,211,153,0.08); }
+        .service-pill.svc-datanest { color:#60a5fa; border-color:rgba(96,165,250,0.35);  background:rgba(96,165,250,0.08); }
+        .service-pill.svc-metriq   { color:#f472b6; border-color:rgba(244,114,182,0.35); background:rgba(244,114,182,0.08); }
+        .service-pill.svc-nivaro   { color:#fb923c; border-color:rgba(251,146,60,0.35);  background:rgba(251,146,60,0.08); }
+        .service-pill.svc-unknown  { color:var(--text-dim); border-color:var(--border-bright); background:transparent; }
+
         .status-indicator {
             margin-top: auto;
             padding: 20px 24px;
@@ -228,7 +255,6 @@
             color: var(--text-muted);
         }
 
-        /* HEADER */
         .topbar {
             grid-column: 2;
             padding: 24px 32px;
@@ -295,7 +321,6 @@
             animation: pulse-dot 1.5s ease-in-out infinite;
         }
 
-        /* MAIN */
         .main {
             grid-column: 2;
             padding: 24px 32px;
@@ -308,7 +333,6 @@
             gap: 2px;
         }
 
-        /* EVENT CARD */
         .event-card {
             border: 1px solid var(--border);
             border-radius: 6px;
@@ -389,7 +413,6 @@
             transform: rotate(90deg);
         }
 
-        /* PAYLOAD */
         .event-payload {
             overflow: hidden;
             height: 0;
@@ -469,7 +492,6 @@
 
         .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
 
-        /* EMPTY */
         .empty-state {
             display: flex;
             flex-direction: column;
@@ -499,7 +521,6 @@
             text-transform: uppercase;
         }
 
-        /* scrollbar */
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
@@ -547,6 +568,29 @@
             </div>
         </div>
 
+        <div class="sidebar-divider"></div>
+
+        <div class="filter-section">
+            <div class="filter-label">Filter by brand</div>
+            <div class="filter-tags" id="brand-filter-tags">
+                <span class="filter-tag brand-tag active" data-brand="all">all</span>
+            </div>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="filter-section">
+            <div class="filter-label">Filter by service</div>
+            <div class="filter-tags" id="service-filter-tags">
+                <span class="filter-tag svc-aivox active" data-service="all">all</span>
+                <span class="filter-tag svc-aivox" data-service="aivox">aivox</span>
+                <span class="filter-tag svc-jesoos" data-service="jesoos">jesoos</span>
+                <span class="filter-tag svc-datanest" data-service="datanest">datanest</span>
+                <span class="filter-tag svc-metriq" data-service="metriq">metriq</span>
+                <span class="filter-tag svc-nivaro" data-service="nivaro">nivaro</span>
+            </div>
+        </div>
+
         <div class="status-indicator">
             <div class="status-row">
                 <div class="status-dot" id="status-dot"></div>
@@ -587,6 +631,8 @@
     const statRate = document.getElementById('stat-rate');
     const statErrors = document.getElementById('stat-errors');
     const filterTagsEl = document.getElementById('filter-tags');
+    const brandFilterTagsEl = document.getElementById('brand-filter-tags');
+    const serviceFilterTagsEl = document.getElementById('service-filter-tags');
     const liveLabel = document.getElementById('live-label');
     const liveDot = document.getElementById('live-dot');
     const clearBtn = document.getElementById('clear-btn');
@@ -596,10 +642,28 @@
     let errorCount = 0;
     let recentTimestamps = [];
     let activeFilter = 'all';
+    let activeBrandFilter = 'all';
+    let activeServiceFilter = 'all';
     let knownTypes = new Set();
+    let knownBrands = new Set();
+    let knownServices = new Set();
     let ws = null;
+    const maxAgeMs = 15 * 60 * 1000;
 
-    // ── WebSocket ──────────────────────────────────────────
+    const SERVICE_CLASS = {
+        aivox: 'svc-aivox', jesoos: 'svc-jesoos',
+        datanest: 'svc-datanest', metriq: 'svc-metriq', nivaro: 'svc-nivaro'
+    };
+
+    function svcClass(id) {
+        return SERVICE_CLASS[(id || '').toLowerCase()] || 'svc-unknown';
+    }
+
+    function servicePillHtml(id) {
+        if (!id) return '<span class="service-pill svc-unknown">—</span>';
+        return `<span class="service-pill ${svcClass(id)}">${esc(id)}</span>`;
+    }
+
     const wsUrl = `ws://${window.location.host}/metriq/ws/metrics`;
 
     function connect() {
@@ -608,6 +672,7 @@
 
         ws.onopen = () => {
             setStatus('connected');
+            purgeOldEvents();
         };
 
         ws.onmessage = (msg) => {
@@ -637,7 +702,6 @@
         }
     }
 
-    // ── Ingest ─────────────────────────────────────────────
     function ingestEvent(data) {
         const now = Date.now();
         totalCount++;
@@ -647,13 +711,20 @@
         const type = (data.type || 'UNKNOWN').toUpperCase();
         if (type.includes('ERROR') || type.includes('FAIL')) errorCount++;
 
-        // update type filters
         if (!knownTypes.has(type)) {
             knownTypes.add(type);
             addFilterTag(type);
         }
 
-        // update stats with GSAP counter animation
+        const brand = (data.brandName || '').trim();
+        if (brand && !knownBrands.has(brand)) {
+            knownBrands.add(brand);
+            addBrandFilterTag(brand);
+        }
+
+        const service = (data.serviceId || '').trim();
+        if (service) knownServices.add(service);
+
         animateNumber(statTotal, totalCount);
         animateNumber(statRate, recentTimestamps.length);
         animateNumber(statErrors, errorCount);
@@ -662,14 +733,25 @@
         events.unshift(entry);
         if (events.length > 100) events.pop();
 
-        // hide empty state
+        purgeOldEvents();
+
         if (emptyEl.parentNode) {
             gsap.to(emptyEl, { opacity: 0, y: -8, duration: 0.2, onComplete: () => emptyEl.remove() });
         }
 
-        if (activeFilter === 'all' || activeFilter === type) {
+        if (matchesFilters(data)) {
             prependCard(entry);
         }
+    }
+
+    function matchesFilters(data) {
+        const type = (data.type || 'UNKNOWN').toUpperCase();
+        const brand = (data.brandName || '').trim();
+        const service = (data.serviceId || '').trim();
+        const typeOk = activeFilter === 'all' || activeFilter === type;
+        const brandOk = activeBrandFilter === 'all' || activeBrandFilter === brand;
+        const serviceOk = activeServiceFilter === 'all' || activeServiceFilter === service;
+        return typeOk && brandOk && serviceOk;
     }
 
     function animateNumber(el, value) {
@@ -684,7 +766,6 @@
         });
     }
 
-    // ── Render card ────────────────────────────────────────
     function prependCard(entry) {
         const e = entry.data;
         const type = (e.type || 'UNKNOWN').toUpperCase();
@@ -693,13 +774,15 @@
         const card = document.createElement('div');
         card.className = 'event-card';
         card.dataset.type = type;
+        card.dataset.brand = (e.brandName || '').trim();
+        card.dataset.service = (e.serviceId || '').trim();
         card.dataset.id = entry.id;
 
         card.innerHTML = `
             <div class="event-row">
                 <span class="brand-cell">${esc(e.brandName || '—')}</span>
                 <span class="type-cell" style="${isError ? 'color:var(--accent3);background:rgba(250,109,109,0.08);border-color:rgba(250,109,109,0.2)' : ''}">${esc(type)}</span>
-                <span class="service-cell">${esc(e.serviceId || e.traceId || '—')}</span>
+                <span class="service-cell">${servicePillHtml(e.serviceId)}</span>
                 <span class="time-cell">${entry.receivedAt.toLocaleTimeString()}</span>
                 <span class="chevron-cell">›</span>
             </div>
@@ -727,24 +810,20 @@
             </div>
         `;
 
-        // expand / collapse on click
         card.querySelector('.event-row').addEventListener('click', () => toggleCard(card, entry.id));
 
         listEl.insertBefore(card, listEl.firstChild);
 
-        // GSAP entrance: slide in from top + flash border
         gsap.fromTo(card,
             { opacity: 0, y: -12, scaleY: 0.95 },
             { opacity: 1, y: 0, scaleY: 1, duration: 0.35, ease: 'power3.out', transformOrigin: 'top center' }
         );
 
-        // brief border flash on new card
         gsap.fromTo(card,
             { borderColor: isError ? 'rgba(250,109,109,0.8)' : 'rgba(0,229,176,0.8)' },
             { borderColor: 'rgba(255,255,255,0.06)', duration: 1.2, ease: 'power2.out', delay: 0.1 }
         );
 
-        // cap DOM cards at 50
         const allCards = listEl.querySelectorAll('.event-card');
         if (allCards.length > 50) {
             const last = allCards[allCards.length - 1];
@@ -752,7 +831,6 @@
         }
     }
 
-    // ── Expand / collapse ──────────────────────────────────
     function toggleCard(card, id) {
         const payloadEl = document.getElementById('payload-' + id);
         const isOpen = card.classList.contains('expanded');
@@ -773,7 +851,6 @@
                 { height: naturalH, duration: 0.35, ease: 'power2.out',
                   onComplete: () => gsap.set(payloadEl, { height: 'auto' }) }
             );
-            // stagger inner items
             gsap.fromTo(payloadEl.querySelectorAll('.meta-pair, .payload-json-wrap'),
                 { opacity: 0, y: 6 },
                 { opacity: 1, y: 0, duration: 0.25, stagger: 0.05, ease: 'power2.out', delay: 0.1 }
@@ -782,7 +859,6 @@
         }
     }
 
-    // ── Filter tags ────────────────────────────────────────
     function addFilterTag(type) {
         const tag = document.createElement('span');
         tag.className = 'filter-tag';
@@ -793,9 +869,40 @@
         gsap.fromTo(tag, { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.2, ease: 'back.out(2)' });
     }
 
+    function addBrandFilterTag(brand) {
+        const tag = document.createElement('span');
+        tag.className = 'filter-tag brand-tag';
+        tag.textContent = brand.toLowerCase();
+        tag.dataset.brand = brand;
+        tag.addEventListener('click', () => setBrandFilter(brand, tag));
+        brandFilterTagsEl.appendChild(tag);
+        gsap.fromTo(tag, { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.2, ease: 'back.out(2)' });
+    }
+
+    // service filter — static tags, use delegation
+    serviceFilterTagsEl.addEventListener('click', (e) => {
+        const tag = e.target.closest('[data-service]');
+        if (!tag) return;
+        setServiceFilter(tag.dataset.service, tag);
+    });
+
     function setFilter(type, tagEl) {
         activeFilter = type;
         filterTagsEl.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
+        tagEl.classList.add('active');
+        rerenderList();
+    }
+
+    function setBrandFilter(brand, tagEl) {
+        activeBrandFilter = brand;
+        brandFilterTagsEl.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
+        tagEl.classList.add('active');
+        rerenderList();
+    }
+
+    function setServiceFilter(service, tagEl) {
+        activeServiceFilter = service;
+        serviceFilterTagsEl.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
         tagEl.classList.add('active');
         rerenderList();
     }
@@ -804,11 +911,13 @@
         setFilter('all', this);
     });
 
+    document.querySelector('[data-brand="all"]').addEventListener('click', function() {
+        setBrandFilter('all', this);
+    });
+
     function rerenderList() {
         listEl.innerHTML = '';
-        const filtered = activeFilter === 'all'
-            ? events
-            : events.filter(e => (e.data.type || 'UNKNOWN').toUpperCase() === activeFilter);
+        const filtered = events.filter(e => matchesFilters(e.data));
 
         if (filtered.length === 0) {
             listEl.appendChild(emptyEl);
@@ -829,13 +938,15 @@
         const card = document.createElement('div');
         card.className = 'event-card';
         card.dataset.type = type;
+        card.dataset.brand = (e.brandName || '').trim();
+        card.dataset.service = (e.serviceId || '').trim();
         card.dataset.id = entry.id;
 
         card.innerHTML = `
             <div class="event-row">
                 <span class="brand-cell">${esc(e.brandName || '—')}</span>
                 <span class="type-cell" style="${isError ? 'color:var(--accent3);background:rgba(250,109,109,0.08);border-color:rgba(250,109,109,0.2)' : ''}">${esc(type)}</span>
-                <span class="service-cell">${esc(e.serviceId || e.traceId || '—')}</span>
+                <span class="service-cell">${servicePillHtml(e.serviceId)}</span>
                 <span class="time-cell">${entry.receivedAt.toLocaleTimeString()}</span>
                 <span class="chevron-cell">›</span>
             </div>
@@ -872,7 +983,15 @@
         );
     }
 
-    // ── Clear ──────────────────────────────────────────────
+    function purgeOldEvents() {
+        const cutoff = Date.now() - maxAgeMs;
+        const before = events.length;
+        events = events.filter(e => e.receivedAt.getTime() > cutoff);
+        if (events.length !== before) {
+            rerenderList();
+        }
+    }
+
     clearBtn.addEventListener('click', () => {
         const cards = listEl.querySelectorAll('.event-card');
         gsap.to(cards, {
@@ -880,6 +999,16 @@
             onComplete: () => {
                 events = [];
                 totalCount = 0; errorCount = 0; recentTimestamps = [];
+                knownBrands = new Set();
+                knownServices = new Set();
+                brandFilterTagsEl.innerHTML = '<span class="filter-tag brand-tag active" data-brand="all">all</span>';
+                document.querySelector('[data-brand="all"]').addEventListener('click', function() {
+                    setBrandFilter('all', this);
+                });
+                // reset service filter active state (tags are static)
+                serviceFilterTagsEl.querySelectorAll('.filter-tag').forEach((t, i) => t.classList.toggle('active', i === 0));
+                activeBrandFilter = 'all';
+                activeServiceFilter = 'all';
                 listEl.innerHTML = '';
                 listEl.appendChild(emptyEl);
                 gsap.fromTo(emptyEl, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.3 });
@@ -890,7 +1019,6 @@
         });
     });
 
-    // ── Helpers ────────────────────────────────────────────
     function esc(str) {
         if (str == null) return '';
         const d = document.createElement('div');
@@ -916,7 +1044,6 @@
         }).catch(() => { btn.textContent = 'failed'; setTimeout(() => btn.textContent = 'copy', 2000); });
     }
 
-    // ── Page entrance ──────────────────────────────────────
     gsap.from('.sidebar', { x: -20, opacity: 0, duration: 0.6, ease: 'power3.out' });
     gsap.from('.topbar', { y: -10, opacity: 0, duration: 0.5, delay: 0.15, ease: 'power3.out' });
     gsap.from('.stat-item', { y: 10, opacity: 0, duration: 0.4, stagger: 0.08, delay: 0.3, ease: 'power2.out' });
