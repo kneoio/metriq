@@ -36,9 +36,7 @@ public class MetricConsumer {
 
                         MetricEventDTO dto = parseDto(payload);
                         String brand = dto != null ? dto.brandName() : extractBrand(raw);
-                        if (brand != null && !brand.isBlank()) {
-                            brandMetricWebSocket.broadcast(brand, raw);
-                        }
+                        brandMetricWebSocket.broadcast(brand, raw);
                         metricWebSocket.broadcast(raw);
                         return raw;
                     } catch (Exception e) {
