@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -8,389 +8,197 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-          --bg: #1a1a1a;
-          --surface: #2a2a2a;
-          --surface2: #1a1a1a;
-          --border: #333333;
-          --border-bright: #444444;
-          --accent: #2196F3;
-          --accent2: #42A5F5;
-          --accent3: #fa6d6d;
-          --amber: #f5a623;
-          --text: #f0f0f0;
-          --text-muted: #d0d0d0;
-          --text-dim: #b0b0b0;
-          --mono: 'IBM Plex Mono', monospace;
-          --sans: 'Space Grotesk', sans-serif;
+          --bg: #1a1a1a; --surface: #2a2a2a; --surface2: #1a1a1a;
+          --border: #333333; --border-bright: #444444;
+          --accent: #2196F3; --accent2: #42A5F5; --accent3: #fa6d6d;
+          --amber: #f5a623; --text: #f0f0f0; --text-muted: #d0d0d0; --text-dim: #b0b0b0;
+          --mono: 'IBM Plex Mono', monospace; --sans: 'Space Grotesk', sans-serif;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-          font-family: var(--sans);
-          background: var(--bg);
-          color: var(--text);
-          min-height: 100vh;
-          overflow-x: hidden;
-        }
+        body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
         body::before {
-          content: '';
-          position: fixed;
-          inset: 0;
+          content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
           background-image: linear-gradient(rgba(0,229,176,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,176,0.025) 1px, transparent 1px);
           background-size: 40px 40px;
-          pointer-events: none;
-          z-index: 0;
         }
         body::after {
-          content: '';
-          position: fixed;
-          left: 0; right: 0; height: 2px;
+          content: ''; position: fixed; left: 0; right: 0; height: 2px; top: -2px;
           background: linear-gradient(90deg, transparent, var(--accent), transparent);
-          opacity: 0.4;
-          top: -2px;
-          animation: scanline 6s linear infinite;
-          z-index: 1;
-          pointer-events: none;
+          opacity: 0.4; animation: scanline 6s linear infinite; z-index: 1; pointer-events: none;
         }
         @keyframes scanline { to { top: 100vh; } }
+        @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-        .layout {
-          display: grid;
-          grid-template-columns: 260px 1fr;
-          grid-template-rows: auto 1fr;
-          min-height: 100vh;
-          position: relative;
-          z-index: 2;
-        }
+        .layout { display: grid; grid-template-columns: 260px 1fr; grid-template-rows: auto 1fr; min-height: 100vh; position: relative; z-index: 2; }
+
+        /* ── Sidebar ── */
         .sidebar {
-          grid-row: 1 / 3;
-          border-right: 1px solid var(--border);
-          padding: 32px 0;
-          display: flex;
-          flex-direction: column;
-          background: rgba(13,13,26,0.7);
-          backdrop-filter: blur(12px);
-          position: sticky;
-          top: 0;
-          height: 100vh;
-          overflow-y: auto;
+          grid-row: 1 / 3; border-right: 1px solid var(--border); padding: 32px 0 0;
+          display: flex; flex-direction: column;
+          background: rgba(13,13,26,0.7); backdrop-filter: blur(12px);
+          position: sticky; top: 0; height: 100vh; overflow-y: auto;
         }
-        .logo { padding: 0 24px 32px; border-bottom: 1px solid var(--border); }
-        .logo-text {
-          font-family: var(--mono);
-          font-size: 0.7rem;
-          letter-spacing: 4px;
-          color: var(--accent);
-          text-transform: uppercase;
-          font-weight: 500;
+        .logo { padding: 0 24px 24px; border-bottom: 1px solid var(--border); }
+        .logo-text { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; font-weight: 500; }
+        .logo-sub { font-family: var(--mono); font-size: 0.6rem; color: var(--text-muted); letter-spacing: 2px; margin-top: 4px; }
+
+        /* ── Nav menu ── */
+        .nav-menu { padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .nav-item {
+          display: flex; align-items: center; gap: 10px; padding: 9px 24px;
+          font-family: var(--mono); font-size: 0.65rem; letter-spacing: 2px;
+          color: var(--text-dim); text-transform: uppercase; cursor: pointer;
+          transition: all 0.15s; border-left: 2px solid transparent; user-select: none;
         }
-        .logo-sub {
-          font-family: var(--mono);
-          font-size: 0.6rem;
-          color: var(--text-muted);
-          letter-spacing: 2px;
-          margin-top: 4px;
-        }
+        .nav-item:hover { color: var(--text-muted); background: rgba(255,255,255,0.03); }
+        .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(33,150,243,0.06); }
+        .nav-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+        /* ── Stream sidebar ── */
         .sidebar-stats { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
         .stat-item { display: flex; flex-direction: column; gap: 4px; }
-        .stat-label {
-          font-family: var(--mono);
-          font-size: 0.6rem;
-          letter-spacing: 2px;
-          color: var(--text-muted);
-          text-transform: uppercase;
-        }
-        .stat-value {
-          font-family: var(--mono);
-          font-size: 1.4rem;
-          font-weight: 600;
-          color: var(--accent);
-          line-height: 1;
-        }
+        .stat-label { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; }
+        .stat-value { font-family: var(--mono); font-size: 1.4rem; font-weight: 600; color: var(--accent); line-height: 1; }
         .stat-value.amber { color: var(--amber); }
         .stat-value.red { color: var(--accent3); }
         .sidebar-divider { height: 1px; background: var(--border); margin: 8px 24px; }
-
         .filter-section { padding: 16px 24px; }
-        .filter-label {
-          font-family: var(--mono);
-          font-size: 0.6rem;
-          letter-spacing: 2px;
-          color: var(--text-muted);
-          text-transform: uppercase;
-          margin-bottom: 12px;
-        }
+        .filter-label { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; }
         .filter-tags { display: flex; flex-wrap: wrap; gap: 6px; }
         .filter-tag {
-          font-family: var(--mono);
-          font-size: 0.65rem;
-          padding: 4px 10px;
-          border-radius: 3px;
-          border: 1px solid var(--border-bright);
-          color: var(--text-muted);
-          cursor: pointer;
-          transition: all 0.15s;
-          background: transparent;
-          letter-spacing: 0.5px;
+          font-family: var(--mono); font-size: 0.65rem; padding: 4px 10px;
+          border-radius: 3px; border: 1px solid var(--border-bright); color: var(--text-muted);
+          cursor: pointer; transition: all 0.15s; background: transparent; letter-spacing: 0.5px;
         }
         .filter-tag:hover, .filter-tag.active { border-color: var(--accent); color: var(--accent); background: rgba(0,229,176,0.06); }
         .filter-tag.brand-tag:hover, .filter-tag.brand-tag.active { border-color: var(--amber); color: var(--amber); background: rgba(245,166,35,0.06); }
-        .filter-tag.svc-aivox:hover, .filter-tag.svc-aivox.active { border-color:#a78bfa; color:#a78bfa; background:rgba(167,139,250,0.08); }
-        .filter-tag.svc-jesoos:hover, .filter-tag.svc-jesoos.active { border-color:#34d399; color:#34d399; background:rgba(52,211,153,0.08); }
-        .filter-tag.svc-datanest:hover,.filter-tag.svc-datanest.active{ border-color:#60a5fa; color:#60a5fa; background:rgba(96,165,250,0.08); }
-        .filter-tag.svc-metriq:hover, .filter-tag.svc-metriq.active { border-color:#f472b6; color:#f472b6; background:rgba(244,114,182,0.08); }
-        .filter-tag.svc-nivaro:hover, .filter-tag.svc-nivaro.active { border-color:#fb923c; color:#fb923c; background:rgba(251,146,60,0.08); }
+        .filter-tag.svc-aivox:hover,    .filter-tag.svc-aivox.active    { border-color:#a78bfa; color:#a78bfa; background:rgba(167,139,250,0.08); }
+        .filter-tag.svc-jesoos:hover,   .filter-tag.svc-jesoos.active   { border-color:#34d399; color:#34d399; background:rgba(52,211,153,0.08); }
+        .filter-tag.svc-datanest:hover, .filter-tag.svc-datanest.active { border-color:#60a5fa; color:#60a5fa; background:rgba(96,165,250,0.08); }
+        .filter-tag.svc-metriq:hover,   .filter-tag.svc-metriq.active   { border-color:#f472b6; color:#f472b6; background:rgba(244,114,182,0.08); }
+        .filter-tag.svc-nivaro:hover,   .filter-tag.svc-nivaro.active   { border-color:#fb923c; color:#fb923c; background:rgba(251,146,60,0.08); }
 
-        .service-pill {
-          font-family: var(--mono);
-          font-size: 0.62rem;
-          padding: 2px 8px;
-          border-radius: 2px;
-          border: 1px solid;
-          white-space: nowrap;
-          font-weight: 500;
-          letter-spacing: 0.5px;
+        /* ── Traces sidebar ── */
+        .brand-tabs { padding: 16px 24px 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+        .brand-tab {
+          font-family: var(--mono); font-size: 0.6rem; letter-spacing: 1px; padding: 4px 10px;
+          border-radius: 3px; border: 1px solid var(--border-bright); color: var(--text-muted);
+          cursor: pointer; transition: all 0.15s; text-transform: uppercase;
         }
-        .service-pill.svc-aivox { color:#a78bfa; border-color:rgba(167,139,250,0.35); background:rgba(167,139,250,0.08); }
-        .service-pill.svc-jesoos { color:#34d399; border-color:rgba(52,211,153,0.35); background:rgba(52,211,153,0.08); }
-        .service-pill.svc-datanest { color:#60a5fa; border-color:rgba(96,165,250,0.35); background:rgba(96,165,250,0.08); }
-        .service-pill.svc-metriq { color:#f472b6; border-color:rgba(244,114,182,0.35); background:rgba(244,114,182,0.08); }
-        .service-pill.svc-nivaro { color:#fb923c; border-color:rgba(251,146,60,0.35); background:rgba(251,146,60,0.08); }
-        .service-pill.svc-unknown { color:var(--text-dim); border-color:var(--border-bright); background:transparent; }
+        .brand-tab:hover { border-color: var(--amber); color: var(--amber); }
+        .brand-tab.active { border-color: var(--amber); color: var(--amber); background: rgba(245,166,35,0.08); }
+        .trace-list { padding: 8px 12px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; }
+        .trace-item {
+          padding: 8px 10px; border-radius: 4px; border: 1px solid var(--border);
+          cursor: pointer; transition: border-color 0.15s; display: flex; flex-direction: column; gap: 4px;
+        }
+        .trace-item:hover { border-color: var(--border-bright); }
+        .trace-item.active { border-color: var(--accent); background: rgba(33,150,243,0.05); }
+        .trace-item-id { font-family: var(--mono); font-size: 0.58rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .trace-item-meta { display: flex; gap: 8px; align-items: center; }
+        .trace-count-badge { font-family: var(--mono); font-size: 0.55rem; padding: 1px 6px; border-radius: 10px; background: rgba(33,150,243,0.12); color: var(--accent2); border: 1px solid rgba(33,150,243,0.2); }
+        .trace-time-label { font-family: var(--mono); font-size: 0.55rem; color: var(--text-dim); }
+        .sidebar-empty { padding: 20px 24px; font-family: var(--mono); font-size: 0.6rem; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; }
 
-        .status-indicator { margin-top: auto; padding: 20px 24px; border-top: 1px solid var(--border); }
+        /* ── Service pills ── */
+        .service-pill { font-family: var(--mono); font-size: 0.62rem; padding: 2px 8px; border-radius: 2px; border: 1px solid; white-space: nowrap; font-weight: 500; letter-spacing: 0.5px; }
+        .service-pill.svc-aivox    { color:#a78bfa; border-color:rgba(167,139,250,0.35); background:rgba(167,139,250,0.08); }
+        .service-pill.svc-jesoos   { color:#34d399; border-color:rgba(52,211,153,0.35);  background:rgba(52,211,153,0.08); }
+        .service-pill.svc-datanest { color:#60a5fa; border-color:rgba(96,165,250,0.35);  background:rgba(96,165,250,0.08); }
+        .service-pill.svc-metriq   { color:#f472b6; border-color:rgba(244,114,182,0.35); background:rgba(244,114,182,0.08); }
+        .service-pill.svc-nivaro   { color:#fb923c; border-color:rgba(251,146,60,0.35);  background:rgba(251,146,60,0.08); }
+        .service-pill.svc-unknown  { color:var(--text-dim); border-color:var(--border-bright); background:transparent; }
+
+        /* ── Status ── */
+        .status-indicator { margin-top: auto; padding: 16px 24px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
         .status-row { display: flex; align-items: center; gap: 10px; }
-        .status-dot {
-          width: 8px; height: 8px;
-          border-radius: 50%;
-          background: var(--text-dim);
-          flex-shrink: 0;
-          transition: background 0.3s;
-        }
-        .status-dot.connected { background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: pulse-dot 2s ease-in-out infinite; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); flex-shrink: 0; transition: background 0.3s; }
+        .status-dot.connected    { background: var(--accent);  box-shadow: 0 0 8px var(--accent); animation: pulse-dot 2s ease-in-out infinite; }
         .status-dot.disconnected { background: var(--accent3); }
-        .status-dot.connecting { background: var(--amber); }
-        @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-        .status-text {
-          font-family: var(--mono);
-          font-size: 0.65rem;
-          letter-spacing: 1px;
-          color: var(--text-muted);
+        .status-dot.connecting   { background: var(--amber);   }
+        .status-text { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 1px; color: var(--text-muted); }
+        .host-row { display: flex; gap: 6px; align-items: center; }
+        .host-input {
+          flex: 1; font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.5px;
+          background: rgba(255,255,255,0.04); border: 1px solid var(--border-bright);
+          color: var(--text-muted); padding: 5px 8px; border-radius: 3px; outline: none;
+          min-width: 0;
         }
+        .host-input:focus { border-color: var(--accent); color: var(--text); }
+        .reconnect-btn {
+          font-family: var(--mono); font-size: 0.6rem; padding: 5px 8px; border-radius: 3px;
+          border: 1px solid var(--border-bright); background: transparent; color: var(--text-dim);
+          cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+        }
+        .reconnect-btn:hover { border-color: var(--accent); color: var(--accent); }
 
+        /* ── Topbar ── */
         .topbar {
-          grid-column: 2;
-          padding: 24px 32px;
-          border-bottom: 1px solid var(--border);
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          background: rgba(8,8,16,0.8);
-          backdrop-filter: blur(8px);
-          position: sticky;
-          top: 0;
-          z-index: 10;
+          grid-column: 2; padding: 24px 32px; border-bottom: 1px solid var(--border);
+          display: flex; align-items: center; justify-content: space-between;
+          background: rgba(8,8,16,0.8); backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 10;
         }
-        .topbar-title {
-          font-size: 0.75rem;
-          letter-spacing: 3px;
-          color: var(--text-muted);
-          text-transform: uppercase;
-          font-weight: 400;
-        }
+        .topbar-title { font-size: 0.75rem; letter-spacing: 3px; color: var(--text-muted); text-transform: uppercase; font-weight: 400; }
         .topbar-right { display: flex; align-items: center; gap: 16px; }
         .clear-btn {
-          font-family: var(--mono);
-          font-size: 0.65rem;
-          letter-spacing: 1px;
-          color: var(--text-muted);
-          background: transparent;
-          border: 1px solid var(--border-bright);
-          padding: 6px 14px;
-          border-radius: 3px;
-          cursor: pointer;
-          transition: all 0.15s;
-          text-transform: uppercase;
+          font-family: var(--mono); font-size: 0.65rem; letter-spacing: 1px;
+          color: var(--text-muted); background: transparent; border: 1px solid var(--border-bright);
+          padding: 6px 14px; border-radius: 3px; cursor: pointer; transition: all 0.15s; text-transform: uppercase;
         }
         .clear-btn:hover { border-color: var(--accent3); color: var(--accent3); }
-        .live-badge {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-family: var(--mono);
-          font-size: 0.6rem;
-          letter-spacing: 2px;
-          color: var(--accent);
-          text-transform: uppercase;
-        }
-        .live-dot {
-          width: 6px; height: 6px;
-          border-radius: 50%;
-          background: var(--accent);
-          animation: pulse-dot 1.5s ease-in-out infinite;
-        }
+        .live-badge { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 0.6rem; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; }
+        .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse-dot 1.5s ease-in-out infinite; }
 
+        /* ── Stream main ── */
         .main { grid-column: 2; padding: 24px 32px; overflow-y: auto; }
         .events-list { display: flex; flex-direction: column; gap: 2px; }
-        .event-card {
-          border: 1px solid var(--border);
-          border-radius: 6px;
-          overflow: hidden;
-          background: var(--surface);
-          cursor: pointer;
-          transition: border-color 0.2s;
-          will-change: transform, opacity;
-        }
+        .event-card { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--surface); cursor: pointer; transition: border-color 0.2s; will-change: transform, opacity; }
         .event-card:hover { border-color: var(--border-bright); }
         .event-card.expanded { border-color: var(--accent2); }
-
-        .event-row {
-          display: grid;
-          grid-template-columns: max-content max-content max-content minmax(140px, auto) auto auto;
-          align-items: center;
-          gap: 20px;
-          padding: 12px 16px;
-          min-height: 48px;
-        }
-
-        .brand-cell {
-          font-family: var(--mono);
-          font-size: 0.7rem;
-          font-weight: 600;
-          letter-spacing: 1px;
-          color: var(--accent2);
-          text-transform: uppercase;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          min-width: 140px;
-        }
-        .type-cell {
-          font-family: var(--mono);
-          font-size: 0.65rem;
-          letter-spacing: 0.5px;
-          color: var(--accent);
-          background: rgba(0,229,176,0.08);
-          padding: 3px 10px;
-          border-radius: 3px;
-          text-align: center;
-          border: 1px solid rgba(0,229,176,0.2);
-          white-space: nowrap;
-          min-width: 110px;
-        }
-        .service-cell {
-          font-family: var(--mono);
-          font-size: 0.65rem;
-          color: var(--text-muted);
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          min-width: 80px;
-        }
-        .code-cell {
-          font-family: var(--mono);
-          font-size: 0.62rem;
-          letter-spacing: 0.4px;
-          color: var(--text-muted);
-          padding: 3px 10px;
-          border-radius: 3px;
-          border: 1px dashed rgba(255,255,255,0.12);
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          min-width: 140px;
-          max-width: 320px;
-        }
-        .time-cell {
-          font-family: var(--mono);
-          font-size: 0.62rem;
-          color: var(--text-dim);
-          white-space: nowrap;
-          text-align: right;
-          min-width: 90px;
-        }
-        .chevron-cell {
-          color: var(--text-dim);
-          font-size: 0.9rem;
-          transition: transform 0.2s;
-          width: 20px;
-          text-align: center;
-        }
+        .event-row { display: grid; grid-template-columns: max-content max-content max-content minmax(140px, auto) auto auto; align-items: center; gap: 20px; padding: 12px 16px; min-height: 48px; }
+        .brand-cell { font-family: var(--mono); font-size: 0.7rem; font-weight: 600; letter-spacing: 1px; color: var(--accent2); text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 140px; }
+        .type-cell { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.5px; color: var(--accent); background: rgba(0,229,176,0.08); padding: 3px 10px; border-radius: 3px; text-align: center; border: 1px solid rgba(0,229,176,0.2); white-space: nowrap; min-width: 110px; }
+        .service-cell { font-family: var(--mono); font-size: 0.65rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 80px; }
+        .code-cell { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.4px; color: var(--text-muted); padding: 3px 10px; border-radius: 3px; border: 1px dashed rgba(255,255,255,0.12); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 140px; max-width: 320px; }
+        .time-cell { font-family: var(--mono); font-size: 0.62rem; color: var(--text-dim); white-space: nowrap; text-align: right; min-width: 90px; }
+        .chevron-cell { color: var(--text-dim); font-size: 0.9rem; transition: transform 0.2s; width: 20px; text-align: center; }
         .event-card.expanded .chevron-cell { transform: rotate(90deg); }
-
         .event-payload { overflow: hidden; height: 0; border-top: 0 solid var(--border); }
         .event-payload.open { border-top-width: 1px; }
         .payload-inner { padding: 16px; background: var(--surface2); }
         .payload-meta { display: flex; gap: 24px; margin-bottom: 12px; flex-wrap: wrap; }
         .meta-pair { display: flex; flex-direction: column; gap: 2px; }
-        .meta-key {
-          font-family: var(--mono);
-          font-size: 0.55rem;
-          letter-spacing: 2px;
-          color: var(--text-dim);
-          text-transform: uppercase;
-        }
-        .meta-val {
-          font-family: var(--mono);
-          font-size: 0.7rem;
-          color: var(--text-muted);
-        }
+        .meta-key { font-family: var(--mono); font-size: 0.55rem; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; }
+        .meta-val { font-family: var(--mono); font-size: 0.7rem; color: var(--text-muted); }
         .payload-json-wrap { position: relative; }
-        .payload-json {
-          background: #080810;
-          border: 1px solid var(--border);
-          border-radius: 4px;
-          padding: 14px;
-          font-family: var(--mono);
-          font-size: 0.75rem;
-          color: #a8b3cf;
-          white-space: pre-wrap;
-          overflow-x: auto;
-          max-height: 260px;
-          overflow-y: auto;
-          line-height: 1.6;
-        }
-        .copy-btn {
-          position: absolute;
-          top: 8px; right: 8px;
-          font-family: var(--mono);
-          font-size: 0.6rem;
-          letter-spacing: 1px;
-          background: var(--surface2);
-          border: 1px solid var(--border-bright);
-          color: var(--text-muted);
-          padding: 4px 10px;
-          border-radius: 2px;
-          cursor: pointer;
-          transition: all 0.15s;
-          text-transform: uppercase;
-        }
+        .payload-json { background: #080810; border: 1px solid var(--border); border-radius: 4px; padding: 14px; font-family: var(--mono); font-size: 0.75rem; color: #a8b3cf; white-space: pre-wrap; overflow-x: auto; max-height: 260px; overflow-y: auto; line-height: 1.6; }
+        .copy-btn { position: absolute; top: 8px; right: 8px; font-family: var(--mono); font-size: 0.6rem; letter-spacing: 1px; background: var(--surface2); border: 1px solid var(--border-bright); color: var(--text-muted); padding: 4px 10px; border-radius: 2px; cursor: pointer; transition: all 0.15s; text-transform: uppercase; }
         .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 40px; gap: 16px; }
+        .empty-icon { width: 48px; height: 48px; border: 1px solid var(--border-bright); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-size: 1.4rem; }
+        .empty-text { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; }
 
-        .empty-state {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 80px 40px;
-          gap: 16px;
-        }
-        .empty-icon {
-          width: 48px; height: 48px;
-          border: 1px solid var(--border-bright);
-          border-radius: 6px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: var(--text-dim);
-          font-size: 1.4rem;
-        }
-        .empty-text {
-          font-family: var(--mono);
-          font-size: 0.7rem;
-          letter-spacing: 2px;
-          color: var(--text-dim);
-          text-transform: uppercase;
-        }
+        /* ── Traces main ── */
+        .traces-main { grid-column: 2; padding: 24px 32px; overflow: auto; display: flex; flex-direction: column; gap: 20px; }
+        .trace-header-bar { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+        .trace-header-label { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; }
+        .trace-header-id { font-family: var(--mono); font-size: 0.7rem; color: var(--text-muted); word-break: break-all; }
+        .trace-event-count { font-family: var(--mono); font-size: 0.6rem; padding: 2px 8px; border-radius: 10px; background: rgba(33,150,243,0.12); color: var(--accent2); border: 1px solid rgba(33,150,243,0.2); white-space: nowrap; }
+        .flow-scroll { padding-bottom: 12px; }
+        .flow-container { display: flex; flex-wrap: wrap; align-items: flex-start; gap-row: 12px; padding: 8px 0; }
+        .flow-arrow { flex-shrink: 0; display: flex; align-items: center; padding: 0 6px; color: var(--border-bright); font-size: 1.1rem; margin-top: 14px; }
+        .flow-node { flex-shrink: 0; width: 190px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); cursor: pointer; transition: border-color 0.2s; overflow: hidden; }
+        .flow-node:hover { border-color: var(--border-bright); }
+        .flow-node.expanded { border-color: var(--accent2); }
+        .flow-node.is-error { border-color: rgba(250,109,109,0.35); }
+        .flow-node.is-error:hover, .flow-node.is-error.expanded { border-color: var(--accent3); }
+        .flow-node-header { padding: 10px 12px; display: flex; flex-direction: column; gap: 5px; }
+        .flow-node-seq { font-family: var(--mono); font-size: 0.5rem; letter-spacing: 1px; color: var(--text-dim); }
+        .flow-node-type { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.5px; color: var(--accent); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .flow-node-code { font-family: var(--mono); font-size: 0.58rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .flow-node-time { font-family: var(--mono); font-size: 0.55rem; color: var(--text-dim); }
+        .flow-node-payload { border-top: 1px solid var(--border); padding: 12px; background: var(--surface2); max-height: 300px; overflow-y: auto; }
+        .flow-payload-meta { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
 
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -399,7 +207,7 @@
         @media (max-width: 768px) {
           .layout { grid-template-columns: 1fr; }
           .sidebar { display: none; }
-          .topbar, .main { grid-column: 1; }
+          .topbar, .main, .traces-main { grid-column: 1; }
           .event-row { grid-template-columns: 1fr auto; gap: 12px; }
           .service-cell, .code-cell, .type-cell { display: none; }
           .brand-cell { min-width: auto; }
@@ -408,481 +216,506 @@
     </style>
 </head>
 <body>
-<div class="layout">
+<div id="app">
+  <div class="layout">
+
+    <!-- ── Sidebar ── -->
     <aside class="sidebar">
-        <div class="logo">
-            <div class="logo-text">METRIQ</div>
-            <div class="logo-sub">event stream</div>
+      <div class="logo">
+        <div class="logo-text">METRIQ</div>
+        <div class="logo-sub">event stream</div>
+      </div>
+
+      <nav class="nav-menu">
+        <div class="nav-item" :class="{ active: activeView === 'stream' }" @click="activeView = 'stream'">
+          <span class="nav-dot"></span>Stream
         </div>
+        <div class="nav-item" :class="{ active: activeView === 'traces' }" @click="activeView = 'traces'">
+          <span class="nav-dot"></span>Traces
+        </div>
+      </nav>
+
+      <!-- Stream sidebar -->
+      <template v-if="activeView === 'stream'">
         <div class="sidebar-stats">
-            <div class="stat-item">
-                <span class="stat-label">total received</span>
-                <span class="stat-value" id="stat-total">0</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">last minute</span>
-                <span class="stat-value amber" id="stat-rate">0</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">error types</span>
-                <span class="stat-value red" id="stat-errors">0</span>
-            </div>
+          <div class="stat-item">
+            <span class="stat-label">total received</span>
+            <span class="stat-value">{{ displayTotal }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">last minute</span>
+            <span class="stat-value amber">{{ displayRate }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">error types</span>
+            <span class="stat-value red">{{ displayErrors }}</span>
+          </div>
         </div>
         <div class="sidebar-divider"></div>
         <div class="filter-section">
-            <div class="filter-label">Filter by type</div>
-            <div class="filter-tags" id="filter-tags">
-                <span class="filter-tag active" data-filter="all">all</span>
-            </div>
+          <div class="filter-label">Filter by type</div>
+          <div class="filter-tags">
+            <span class="filter-tag" :class="{ active: store.activeFilter === 'all' }" @click="store.setFilter('all')">all</span>
+            <span v-for="type in store.knownTypes" :key="type" class="filter-tag"
+              :class="{ active: store.activeFilter === type }" @click="store.setFilter(type)">{{ type.toLowerCase() }}</span>
+          </div>
         </div>
         <div class="sidebar-divider"></div>
         <div class="filter-section">
-            <div class="filter-label">Filter by brand</div>
-            <div class="filter-tags" id="brand-filter-tags">
-                <span class="filter-tag brand-tag active" data-brand="all">all</span>
-            </div>
+          <div class="filter-label">Filter by brand</div>
+          <div class="filter-tags">
+            <span class="filter-tag brand-tag" :class="{ active: store.activeBrandFilter === 'all' }" @click="store.setBrandFilter('all')">all</span>
+            <span v-for="brand in store.knownBrands" :key="brand" class="filter-tag brand-tag"
+              :class="{ active: store.activeBrandFilter === brand }" @click="store.setBrandFilter(brand)">{{ brand.toLowerCase() }}</span>
+          </div>
         </div>
         <div class="sidebar-divider"></div>
         <div class="filter-section">
-            <div class="filter-label">Filter by service</div>
-            <div class="filter-tags" id="service-filter-tags">
-                <span class="filter-tag svc-aivox active" data-service="all">all</span>
-                <span class="filter-tag svc-aivox" data-service="aivox">aivox</span>
-                <span class="filter-tag svc-jesoos" data-service="jesoos">jesoos</span>
-                <span class="filter-tag svc-datanest" data-service="datanest">datanest</span>
-                <span class="filter-tag svc-metriq" data-service="metriq">metriq</span>
-                <span class="filter-tag svc-nivaro" data-service="nivaro">nivaro</span>
-            </div>
+          <div class="filter-label">Filter by service</div>
+          <div class="filter-tags">
+            <span v-for="svc in serviceOptions" :key="svc.value" class="filter-tag"
+              :class="[svc.cls, { active: store.activeServiceFilter === svc.value }]"
+              @click="store.setServiceFilter(svc.value)">{{ svc.label }}</span>
+          </div>
         </div>
-        <div class="status-indicator">
-            <div class="status-row">
-                <div class="status-dot" id="status-dot"></div>
-                <span class="status-text" id="status-text">connecting</span>
-            </div>
+      </template>
+
+      <!-- Traces sidebar -->
+      <template v-else>
+        <div class="filter-section" style="padding-bottom:8px;">
+          <div class="filter-label">Filter by brand</div>
+          <div class="brand-tabs" style="padding:0;">
+            <span v-if="traceBrands.length === 0" class="sidebar-empty">no data yet</span>
+            <template v-else>
+              <span class="brand-tab" :class="{ active: selectedBrand === 'all' }" @click="selectBrand('all')">all</span>
+              <span v-for="brand in traceBrands" :key="brand" class="brand-tab"
+                :class="{ active: selectedBrand === brand }" @click="selectBrand(brand)">{{ brand }}</span>
+            </template>
+          </div>
         </div>
+        <div class="sidebar-divider"></div>
+        <div class="trace-list">
+          <div v-if="tracesForSelectedBrand.length === 0" class="sidebar-empty">no traces</div>
+          <div v-for="t in tracesForSelectedBrand" :key="t.id" class="trace-item"
+            :class="{ active: selectedTraceId === t.id }" @click="selectedTraceId = t.id">
+            <div class="trace-item-id">{{ t.id }}</div>
+            <div class="trace-item-meta">
+              <span class="trace-count-badge">{{ t.count }}</span>
+              <span class="trace-time-label">{{ relTime(t.lastTime) }}</span>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <div class="status-indicator">
+        <div class="status-row">
+          <div class="status-dot" :class="store.status"></div>
+          <span class="status-text">{{ store.status }}</span>
+        </div>
+        <div class="host-row">
+          <input class="host-input" v-model="wsHost" @keydown.enter="reconnect" placeholder="host:port" spellcheck="false" />
+          <button class="reconnect-btn" @click="reconnect" title="Reconnect">↺</button>
+        </div>
+      </div>
     </aside>
 
+    <!-- ── Topbar ── -->
     <header class="topbar">
-        <span class="topbar-title">LIVE EVENT STREAM</span>
-        <div class="topbar-right">
-            <button class="clear-btn" id="clear-btn">CLEAR</button>
-            <div class="live-badge">
-                <div class="live-dot" id="live-dot" style="display:none"></div>
-                <span id="live-label">offline</span>
-            </div>
+      <span class="topbar-title">{{ activeView === 'stream' ? 'LIVE EVENT STREAM' : 'TRACE FLOW' }}</span>
+      <div class="topbar-right">
+        <button v-if="activeView === 'stream'" class="clear-btn" @click="clearAll">CLEAR</button>
+        <div class="live-badge">
+          <div class="live-dot" v-show="store.status === 'connected'"></div>
+          <span>{{ store.status === 'connected' ? 'LIVE' : store.status.toUpperCase() }}</span>
         </div>
+      </div>
     </header>
 
-    <main class="main">
-        <div class="events-list" id="events-list">
-            <div class="empty-state" id="empty-state">
-                <div class="empty-icon">⬡</div>
-                <div class="empty-text">awaiting events</div>
+    <!-- ── Stream main ── -->
+    <main v-if="activeView === 'stream'" class="main">
+      <div class="events-list" ref="listEl">
+        <transition :css="false" @leave="onEmptyLeave">
+          <div v-if="store.filteredEvents.length === 0" class="empty-state">
+            <div class="empty-icon">⬡</div>
+            <div class="empty-text">awaiting events</div>
+          </div>
+        </transition>
+        <transition-group :css="false" @enter="onCardEnter" @leave="onCardLeave">
+          <div v-for="entry in store.filteredEvents" :key="entry.id"
+            class="event-card" :class="{ expanded: expandedIds.has(entry.id) }">
+            <div class="event-row" @click="toggleCard(entry.id)">
+              <span class="brand-cell">{{ entry.data.brandName || '—' }}</span>
+              <span class="type-cell"
+                :style="isError(entry.data.type) ? 'color:var(--accent3);background:rgba(250,109,109,0.12);border-color:rgba(250,109,109,0.3)' : ''">
+                {{ (entry.data.type || 'UNKNOWN').toUpperCase() }}</span>
+              <span class="service-cell" v-html="servicePillHtml(entry.data.serviceId)"></span>
+              <span class="code-cell">{{ entry.data.code || '—' }}</span>
+              <span class="time-cell">{{ relTimeReactive(entry.receivedAt) }}</span>
+              <span class="chevron-cell">›</span>
             </div>
-        </div>
+            <div class="event-payload" :class="{ open: expandedIds.has(entry.id) }"
+              :ref="el => setPayloadRef(entry.id, el)">
+              <div class="payload-inner">
+                <div class="payload-meta">
+                  <div class="meta-pair"><span class="meta-key">trace id</span><span class="meta-val">{{ entry.data.traceId || '—' }}</span></div>
+                  <div class="meta-pair"><span class="meta-key">code</span><span class="meta-val">{{ entry.data.code || '—' }}</span></div>
+                  <div class="meta-pair"><span class="meta-key">timestamp</span><span class="meta-val">{{ formatTs(entry.data.timestamp) }}</span></div>
+                  <div class="meta-pair"><span class="meta-key">received</span><span class="meta-val">{{ entry.receivedAt.toLocaleTimeString() }}</span></div>
+                </div>
+                <div class="payload-json-wrap">
+                  <pre class="payload-json">{{ JSON.stringify(entry.data.payload, null, 2) || 'null' }}</pre>
+                  <button class="copy-btn" @click.stop="copyJson($event.target, JSON.stringify(entry.data.payload, null, 2))">copy</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </transition-group>
+      </div>
     </main>
+
+    <!-- ── Traces main ── -->
+    <main v-else class="traces-main">
+      <div v-if="!selectedTraceId || eventsForSelectedTrace.length === 0" class="empty-state">
+        <div class="empty-icon">⬡</div>
+        <div class="empty-text">{{ selectedTraceId ? 'no events' : 'select a trace' }}</div>
+      </div>
+      <template v-else>
+        <div class="trace-header-bar">
+          <span class="trace-header-label">trace</span>
+          <span class="trace-header-id">{{ selectedTraceId }}</span>
+          <span class="trace-event-count">{{ eventsForSelectedTrace.length }} events</span>
+        </div>
+        <div class="flow-scroll">
+          <div class="flow-container" ref="flowContainerEl">
+            <template v-for="(entry, idx) in eventsForSelectedTrace" :key="entry.id">
+              <div class="flow-arrow" v-if="idx > 0">→</div>
+              <div class="flow-node"
+                :class="{ expanded: expandedTraceIds.has(entry.id), 'is-error': isError(entry.data.type) }">
+                <div class="flow-node-header" @click="toggleFlowNode(entry.id)">
+                  <div class="flow-node-seq">#{{ idx + 1 }}</div>
+                  <div class="flow-node-type" :style="isError(entry.data.type) ? 'color:var(--accent3)' : ''">
+                    {{ (entry.data.type || 'UNKNOWN').toUpperCase() }}</div>
+                  <span v-html="servicePillHtml(entry.data.serviceId)"></span>
+                  <div class="flow-node-code" v-if="entry.data.code">{{ entry.data.code }}</div>
+                  <div class="flow-node-time">{{ relTime(entry.receivedAt) }}</div>
+                </div>
+                <div v-if="expandedTraceIds.has(entry.id)" class="flow-node-payload">
+                  <div class="flow-payload-meta">
+                    <div class="meta-pair"><span class="meta-key">trace</span><span class="meta-val" style="font-size:0.6rem;word-break:break-all;">{{ entry.data.traceId || '—' }}</span></div>
+                    <div class="meta-pair"><span class="meta-key">code</span><span class="meta-val">{{ entry.data.code || '—' }}</span></div>
+                    <div class="meta-pair"><span class="meta-key">time</span><span class="meta-val">{{ entry.receivedAt.toLocaleTimeString() }}</span></div>
+                  </div>
+                  <div v-if="entry.data.payload" class="payload-json-wrap">
+                    <pre class="payload-json" style="font-size:0.65rem;max-height:200px;">{{ JSON.stringify(entry.data.payload, null, 2) }}</pre>
+                    <button class="copy-btn" @click.stop="copyJson($event.target, JSON.stringify(entry.data.payload, null, 2))">copy</button>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+    </main>
+
+  </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="/gsap.min.js"></script>
+<script src="/vue.global.prod.js"></script>
+<script>window.VueDemi = window.Vue;</script>
+<script src="/pinia.iife.prod.js"></script>
 <script>
-    const listEl = document.getElementById('events-list');
-    const emptyEl = document.getElementById('empty-state');
-    const statusDot = document.getElementById('status-dot');
-    const statusText = document.getElementById('status-text');
-    const statTotal = document.getElementById('stat-total');
-    const statRate = document.getElementById('stat-rate');
-    const statErrors = document.getElementById('stat-errors');
-    const filterTagsEl = document.getElementById('filter-tags');
-    const brandFilterTagsEl = document.getElementById('brand-filter-tags');
-    const serviceFilterTagsEl = document.getElementById('service-filter-tags');
-    const liveLabel = document.getElementById('live-label');
-    const liveDot = document.getElementById('live-dot');
-    const clearBtn = document.getElementById('clear-btn');
+  const { createApp, ref, computed, reactive, watch, onMounted, onUnmounted, nextTick } = Vue;
+  const { createPinia, defineStore } = Pinia;
 
-    let events = [];
-    let totalCount = 0;
-    let errorCount = 0;
-    let recentTimestamps = [];
-    let activeFilter = 'all';
-    let activeBrandFilter = 'all';
-    let activeServiceFilter = 'all';
-    let knownTypes = new Set();
-    let knownBrands = new Set();
-    let knownServices = new Set();
-    let ws = null;
+  // ── Utilities ────────────────────────────────────────────────────────────────
 
-    const maxAgeMs = 15 * 60 * 1000;
-    const SERVICE_CLASS = {
-      aivox: 'svc-aivox',
-      jesoos: 'svc-jesoos',
-      datanest: 'svc-datanest',
-      metriq: 'svc-metriq',
-      nivaro: 'svc-nivaro'
-    };
+  const SERVICE_CLASS = { aivox:'svc-aivox', jesoos:'svc-jesoos', datanest:'svc-datanest', metriq:'svc-metriq', nivaro:'svc-nivaro' };
 
-    function svcClass(id) {
-      return SERVICE_CLASS[(id || '').toLowerCase()] || 'svc-unknown';
-    }
+  function svcClass(id) { return SERVICE_CLASS[(id||'').toLowerCase()] || 'svc-unknown'; }
 
-    function servicePillHtml(id) {
-      if (!id) return '<span class="service-pill svc-unknown">—</span>';
-      return `<span class="service-pill ${svcClass(id)}">${esc(id)}</span>`;
-    }
+  function escHtml(str) {
+    if (str == null) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
 
-    const wsUrl = `ws://${window.location.host}/metriq/ws/metrics`;
+  function servicePillHtml(id) {
+    if (!id) return '<span class="service-pill svc-unknown">—</span>';
+    return `<span class="service-pill ${svcClass(id)}">${escHtml(id)}</span>`;
+  }
 
-    function connect() {
-      setStatus('connecting');
-      ws = new WebSocket(wsUrl);
-      ws.onopen = () => {
-        setStatus('connected');
-        purgeOldEvents();
-      };
-      ws.onmessage = (msg) => {
-        try {
-          const data = JSON.parse(msg.data);
-          ingestEvent(data);
-        } catch(e) { console.error(e); }
-      };
-      ws.onclose = () => {
-        setStatus('disconnected');
-        setTimeout(connect, 3000);
-      };
-      ws.onerror = () => {};
-    }
+  function relTime(date) {
+    if (!date) return '—';
+    const sec = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (sec < 10) return 'just now';
+    if (sec < 60) return `${sec}s ago`;
+    const min = Math.floor(sec / 60);
+    if (min < 60) return `${min}m ago`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}h ago`;
+    return date.toLocaleDateString();
+  }
 
-    function setStatus(s) {
-      statusDot.className = 'status-dot ' + s;
-      statusText.textContent = s;
-      if (s === 'connected') {
-        liveDot.style.display = 'block';
-        liveLabel.textContent = 'LIVE';
-      } else {
-        liveDot.style.display = 'none';
-        liveLabel.textContent = s.toUpperCase();
-      }
-    }
+  function formatTs(ts) { return typeof ts === 'number' ? new Date(ts).toLocaleString() : (ts || '—'); }
+
+  function isError(type) { const t = (type||'').toUpperCase(); return t.includes('ERROR') || t.includes('FAIL'); }
+
+  // ── Pinia Store ──────────────────────────────────────────────────────────────
+
+  const useMetriqStore = defineStore('metriq', () => {
+    const events             = ref([]);
+    const totalCount         = ref(0);
+    const errorCount         = ref(0);
+    const recentTimestamps   = ref([]);
+    const status             = ref('connecting');
+    const activeFilter       = ref('all');
+    const activeBrandFilter  = ref('all');
+    const activeServiceFilter= ref('all');
+    const knownTypes         = ref([]);
+    const knownBrands        = ref([]);
+    // byBrand[brandSlug] = Event[]  — all events for a brand across all traces
+    // byTrace[traceId]   = Event[]  — full cross-service trace (jesoos → aivox → ...)
+    const byBrand = reactive({});
+    const byTrace = reactive({});
+
+    const rateCount = computed(() => recentTimestamps.value.length);
+
+    const filteredEvents = computed(() =>
+      events.value.filter(entry => {
+        const type    = (entry.data.type      || 'UNKNOWN').toUpperCase();
+        const brand   = (entry.data.brandName || '').trim();
+        const service = (entry.data.serviceId || '').trim();
+        return (activeFilter.value        === 'all' || activeFilter.value        === type)    &&
+               (activeBrandFilter.value   === 'all' || activeBrandFilter.value   === brand)   &&
+               (activeServiceFilter.value === 'all' || activeServiceFilter.value === service);
+      })
+    );
 
     function ingestEvent(data) {
       const now = Date.now();
-      totalCount++;
-      recentTimestamps.push(now);
-      recentTimestamps = recentTimestamps.filter(t => now - t < 60000);
+      totalCount.value++;
+      recentTimestamps.value.push(now);
+      recentTimestamps.value = recentTimestamps.value.filter(t => now - t < 60000);
+      if (isError(data.type)) errorCount.value++;
 
       const type = (data.type || 'UNKNOWN').toUpperCase();
-      if (type.includes('ERROR') || type.includes('FAIL')) errorCount++;
-
-      if (!knownTypes.has(type)) {
-        knownTypes.add(type);
-        addFilterTag(type);
-      }
+      if (!knownTypes.value.includes(type)) knownTypes.value.push(type);
 
       const brand = (data.brandName || '').trim();
-      if (brand && !knownBrands.has(brand)) {
-        knownBrands.add(brand);
-        addBrandFilterTag(brand);
-      }
-
-      const service = (data.serviceId || '').trim();
-      if (service) knownServices.add(service);
-
-      animateNumber(statTotal, totalCount);
-      animateNumber(statRate, recentTimestamps.length);
-      animateNumber(statErrors, errorCount);
+      if (brand && !knownBrands.value.includes(brand)) knownBrands.value.push(brand);
 
       const entry = { data, receivedAt: new Date(), id: now + Math.random() };
-      events.unshift(entry);
-      if (events.length > 120) events.pop();
+      events.value.unshift(entry);
+      if (events.value.length > 120) events.value.pop();
+      const cutoff = now - 15 * 60 * 1000;
+      events.value = events.value.filter(e => e.receivedAt.getTime() > cutoff);
 
-      purgeOldEvents();
-
-      if (emptyEl.parentNode) {
-        gsap.to(emptyEl, { opacity: 0, y: -8, duration: 0.2, onComplete: () => emptyEl.remove() });
+      // ── Feed byBrand ──
+      if (brand) {
+        if (!byBrand[brand]) byBrand[brand] = [];
+        byBrand[brand].push(entry);
+        if (byBrand[brand].length > 500) byBrand[brand].shift();
       }
 
-      if (matchesFilters(data)) {
-        prependCard(entry);
+      // ── Feed byTrace ──
+      const traceId = (data.traceId || '').toString().trim();
+      if (traceId) {
+        if (!byTrace[traceId]) byTrace[traceId] = [];
+        byTrace[traceId].push(entry);
+        // Cap total traces at 200 (drop oldest by first-event time)
+        const keys = Object.keys(byTrace);
+        if (keys.length > 200) {
+          const oldest = keys.reduce((a, b) =>
+            (byTrace[a][0]?.receivedAt?.getTime()||0) < (byTrace[b][0]?.receivedAt?.getTime()||0) ? a : b
+          );
+          delete byTrace[oldest];
+        }
       }
     }
 
-    function matchesFilters(data) {
-      const type = (data.type || 'UNKNOWN').toUpperCase();
-      const brand = (data.brandName || '').trim();
-      const service = (data.serviceId || '').trim();
-      return (activeFilter === 'all' || activeFilter === type) &&
-             (activeBrandFilter === 'all' || activeBrandFilter === brand) &&
-             (activeServiceFilter === 'all' || activeServiceFilter === service);
+    function clearAllEvents() {
+      events.value = []; totalCount.value = 0; errorCount.value = 0;
+      recentTimestamps.value = []; knownBrands.value = [];
+      activeFilter.value = 'all'; activeBrandFilter.value = 'all'; activeServiceFilter.value = 'all';
     }
 
-    function animateNumber(el, value) {
-      const current = parseInt(el.textContent) || 0;
-      gsap.to({ v: current }, {
-        v: value,
-        duration: 0.4,
-        ease: 'power2.out',
-        onUpdate: function() { el.textContent = Math.round(this.targets()[0].v); }
+    function setFilter(f)        { activeFilter.value        = f; }
+    function setBrandFilter(b)   { activeBrandFilter.value   = b; }
+    function setServiceFilter(s) { activeServiceFilter.value = s; }
+
+    return {
+      events, totalCount, errorCount, recentTimestamps, status,
+      activeFilter, activeBrandFilter, activeServiceFilter,
+      knownTypes, knownBrands, byBrand, byTrace,
+      rateCount, filteredEvents,
+      ingestEvent, clearAllEvents, setFilter, setBrandFilter, setServiceFilter
+    };
+  });
+
+  // ── App ──────────────────────────────────────────────────────────────────────
+
+  const app = createApp({
+    setup() {
+      const store = useMetriqStore();
+
+      // ── View routing ──
+      const activeView      = ref('stream');
+      const selectedBrand   = ref('all');
+      const selectedTraceId = ref(null);
+      const expandedTraceIds = reactive(new Set());
+      const flowContainerEl  = ref(null);
+
+      // ── Stream ──
+      const listEl       = ref(null);
+      const displayTotal = ref(0);
+      const displayRate  = ref(0);
+      const displayErrors= ref(0);
+      const expandedIds  = reactive(new Set());
+      const payloadRefs  = {};
+      const timeTick     = ref(0);
+      const wsHost = ref(localStorage.getItem('metriq_ws_host') || window.location.host);
+      let clearing = false, ws = null, tickInterval = null;
+
+      const totalTarget = {v:0}, rateTarget = {v:0}, errorsTarget = {v:0};
+
+      watch(() => store.totalCount, v => gsap.to(totalTarget,  { v, duration:0.4, ease:'power2.out', onUpdate(){ displayTotal.value  = Math.round(totalTarget.v);  }}));
+      watch(() => store.rateCount,  v => gsap.to(rateTarget,   { v, duration:0.4, ease:'power2.out', onUpdate(){ displayRate.value   = Math.round(rateTarget.v);   }}));
+      watch(() => store.errorCount, v => gsap.to(errorsTarget, { v, duration:0.4, ease:'power2.out', onUpdate(){ displayErrors.value = Math.round(errorsTarget.v); }}));
+
+      // ── Traces computed ──
+      const traceBrands = computed(() => Object.keys(store.byBrand));
+
+      const tracesForSelectedBrand = computed(() => {
+        const allEntries = Object.entries(store.byTrace);
+        const filtered = (!selectedBrand.value || selectedBrand.value === 'all')
+          ? allEntries
+          : allEntries.filter(([, evts]) =>
+              evts.some(e => (e.data.brandName || '').trim() === selectedBrand.value)
+            );
+        return filtered
+          .map(([id, evts]) => ({ id, count: evts.length, lastTime: evts[evts.length-1]?.receivedAt }))
+          .sort((a,b) => (b.lastTime?.getTime()||0) - (a.lastTime?.getTime()||0));
       });
-    }
 
-    function prependCard(entry) {
-      const e = entry.data;
-      const type = (e.type || 'UNKNOWN').toUpperCase();
-      const isError = type.includes('ERROR') || type.includes('FAIL');
+      const eventsForSelectedTrace = computed(() => {
+        if (!selectedTraceId.value) return [];
+        return (store.byTrace[selectedTraceId.value] || [])
+          .slice().sort((a,b) => a.receivedAt - b.receivedAt);
+      });
 
-      const card = document.createElement('div');
-      card.className = 'event-card';
-      card.dataset.type = type;
-      card.dataset.brand = (e.brandName || '').trim();
-      card.dataset.service = (e.serviceId || '').trim();
-      card.dataset.id = entry.id;
+      // Reset selected trace when brand filter changes
+      watch(selectedBrand, () => { selectedTraceId.value = null; expandedTraceIds.clear(); });
 
-      card.innerHTML = `
-        <div class="event-row">
-          <span class="brand-cell">${esc(e.brandName || '—')}</span>
-          <span class="type-cell" style="${isError ? 'color:var(--accent3);background:rgba(250,109,109,0.12);border-color:rgba(250,109,109,0.3)' : ''}">${esc(type)}</span>
-          <span class="service-cell">${servicePillHtml(e.serviceId)}</span>
-          <span class="code-cell">${esc(e.code || '—')}</span>
-          <span class="time-cell" data-ts="${entry.receivedAt.getTime()}">${relTime(entry.receivedAt)}</span>
-          <span class="chevron-cell">›</span>
-        </div>
-        <div class="event-payload" id="payload-${entry.id}">
-          <div class="payload-inner">
-            <div class="payload-meta">
-              <div class="meta-pair">
-                <span class="meta-key">trace id</span>
-                <span class="meta-val">${esc(e.traceId || '—')}</span>
-              </div>
-              <div class="meta-pair">
-                <span class="meta-key">code</span>
-                <span class="meta-val">${esc(e.code || '—')}</span>
-              </div>
-              <div class="meta-pair">
-                <span class="meta-key">timestamp</span>
-                <span class="meta-val">${formatTs(e.timestamp)}</span>
-              </div>
-              <div class="meta-pair">
-                <span class="meta-key">received</span>
-                <span class="meta-val">${entry.receivedAt.toLocaleTimeString()}</span>
-              </div>
-            </div>
-            <div class="payload-json-wrap">
-              <pre class="payload-json">${esc(JSON.stringify(e.payload, null, 2) || 'null')}</pre>
-              <button class="copy-btn" onclick="copyJson(this, ${JSON.stringify(JSON.stringify(e.payload, null, 2))})">copy</button>
-            </div>
-          </div>
-        </div>
-      `;
+      function selectBrand(brand) { selectedBrand.value = brand; }
 
-      card.querySelector('.event-row').addEventListener('click', () => toggleCard(card, entry.id));
-      listEl.insertBefore(card, listEl.firstChild);
-
-      gsap.fromTo(card, { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.35, ease: 'power3.out' });
-
-      const allCards = listEl.querySelectorAll('.event-card');
-      if (allCards.length > 60) {
-        const last = allCards[allCards.length - 1];
-        gsap.to(last, { opacity: 0, height: 0, duration: 0.25, onComplete: () => last.remove() });
+      function toggleFlowNode(id) {
+        if (expandedTraceIds.has(id)) expandedTraceIds.delete(id);
+        else expandedTraceIds.add(id);
       }
-    }
 
-    function toggleCard(card, id) {
-      const payloadEl = document.getElementById('payload-' + id);
-      const isOpen = card.classList.contains('expanded');
-
-      if (isOpen) {
-        gsap.to(payloadEl, { height: 0, duration: 0.3, ease: 'power2.inOut', onComplete: () => payloadEl.classList.remove('open') });
-        card.classList.remove('expanded');
-      } else {
-        payloadEl.classList.add('open');
-        const naturalH = payloadEl.scrollHeight;
-        gsap.fromTo(payloadEl, { height: 0 }, { height: naturalH, duration: 0.35, ease: 'power2.out', onComplete: () => gsap.set(payloadEl, { height: 'auto' }) });
-        gsap.fromTo(payloadEl.querySelectorAll('.meta-pair, .payload-json-wrap'), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.25, stagger: 0.04 });
-        card.classList.add('expanded');
-      }
-    }
-
-    function addFilterTag(type) {
-      const tag = document.createElement('span');
-      tag.className = 'filter-tag';
-      tag.textContent = type.toLowerCase();
-      tag.dataset.filter = type;
-      tag.addEventListener('click', () => setFilter(type, tag));
-      filterTagsEl.appendChild(tag);
-    }
-
-    function addBrandFilterTag(brand) {
-      const tag = document.createElement('span');
-      tag.className = 'filter-tag brand-tag';
-      tag.textContent = brand.toLowerCase();
-      tag.dataset.brand = brand;
-      tag.addEventListener('click', () => setBrandFilter(brand, tag));
-      brandFilterTagsEl.appendChild(tag);
-    }
-
-    serviceFilterTagsEl.addEventListener('click', (e) => {
-      const tag = e.target.closest('[data-service]');
-      if (!tag) return;
-      setServiceFilter(tag.dataset.service, tag);
-    });
-
-    function setFilter(type, tagEl) {
-      activeFilter = type;
-      filterTagsEl.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
-      tagEl.classList.add('active');
-      rerenderList();
-    }
-
-    function setBrandFilter(brand, tagEl) {
-      activeBrandFilter = brand;
-      brandFilterTagsEl.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
-      tagEl.classList.add('active');
-      rerenderList();
-    }
-
-    function setServiceFilter(service, tagEl) {
-      activeServiceFilter = service;
-      serviceFilterTagsEl.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
-      tagEl.classList.add('active');
-      rerenderList();
-    }
-
-    document.querySelector('[data-filter="all"]').addEventListener('click', function() { setFilter('all', this); });
-    document.querySelector('[data-brand="all"]').addEventListener('click', function() { setBrandFilter('all', this); });
-
-    function rerenderList() {
-      listEl.innerHTML = '';
-      const filtered = events.filter(e => matchesFilters(e.data));
-      if (filtered.length === 0) {
-        listEl.appendChild(emptyEl);
-        return;
-      }
-      filtered.forEach((entry, i) => prependCardSilent(entry, i));
-    }
-
-    function prependCardSilent(entry, index) {
-      const e = entry.data;
-      const type = (e.type || 'UNKNOWN').toUpperCase();
-      const isError = type.includes('ERROR') || type.includes('FAIL');
-
-      const card = document.createElement('div');
-      card.className = 'event-card';
-      card.dataset.type = type;
-      card.dataset.brand = (e.brandName || '').trim();
-      card.dataset.service = (e.serviceId || '').trim();
-      card.dataset.id = entry.id;
-
-      card.innerHTML = `
-        <div class="event-row">
-          <span class="brand-cell">${esc(e.brandName || '—')}</span>
-          <span class="type-cell" style="${isError ? 'color:var(--accent3);background:rgba(250,109,109,0.12);border-color:rgba(250,109,109,0.3)' : ''}">${esc(type)}</span>
-          <span class="service-cell">${servicePillHtml(e.serviceId)}</span>
-          <span class="code-cell">${esc(e.code || '—')}</span>
-          <span class="time-cell" data-ts="${entry.receivedAt.getTime()}">${relTime(entry.receivedAt)}</span>
-          <span class="chevron-cell">›</span>
-        </div>
-        <div class="event-payload" id="payload-${entry.id}">
-          <div class="payload-inner">
-            <div class="payload-meta">
-              <div class="meta-pair">
-                <span class="meta-key">trace id</span>
-                <span class="meta-val">${esc(e.traceId || '—')}</span>
-              </div>
-              <div class="meta-pair">
-                <span class="meta-key">code</span>
-                <span class="meta-val">${esc(e.code || '—')}</span>
-              </div>
-              <div class="meta-pair">
-                <span class="meta-key">timestamp</span>
-                <span class="meta-val">${formatTs(e.timestamp)}</span>
-              </div>
-              <div class="meta-pair">
-                <span class="meta-key">received</span>
-                <span class="meta-val">${entry.receivedAt.toLocaleTimeString()}</span>
-              </div>
-            </div>
-            <div class="payload-json-wrap">
-              <pre class="payload-json">${esc(JSON.stringify(e.payload, null, 2) || 'null')}</pre>
-              <button class="copy-btn" onclick="copyJson(this, ${JSON.stringify(JSON.stringify(e.payload, null, 2))})">copy</button>
-            </div>
-          </div>
-        </div>
-      `;
-
-      card.querySelector('.event-row').addEventListener('click', () => toggleCard(card, entry.id));
-      listEl.appendChild(card);
-    }
-
-    function purgeOldEvents() {
-      const cutoff = Date.now() - maxAgeMs;
-      events = events.filter(e => e.receivedAt.getTime() > cutoff);
-    }
-
-    clearBtn.addEventListener('click', () => {
-      gsap.to(listEl.querySelectorAll('.event-card'), {
-        opacity: 0,
-        y: 20,
-        duration: 0.3,
-        stagger: 0.02,
-        onComplete: () => {
-          events = [];
-          totalCount = errorCount = 0;
-          recentTimestamps = [];
-          knownBrands.clear();
-          knownServices.clear();
-          brandFilterTagsEl.innerHTML = '<span class="filter-tag brand-tag active" data-brand="all">all</span>';
-          document.querySelector('[data-brand="all"]').addEventListener('click', function() { setBrandFilter('all', this); });
-          serviceFilterTagsEl.querySelectorAll('.filter-tag').forEach((t,i) => t.classList.toggle('active', i===0));
-          activeBrandFilter = activeServiceFilter = 'all';
-          listEl.innerHTML = '';
-          listEl.appendChild(emptyEl);
-          statTotal.textContent = statRate.textContent = statErrors.textContent = '0';
+      // GSAP: animate newest node in flow
+      watch(() => eventsForSelectedTrace.value.length, (len, prev) => {
+        if (len > (prev||0)) {
+          nextTick(() => {
+            if (!flowContainerEl.value) return;
+            const nodes = flowContainerEl.value.querySelectorAll('.flow-node');
+            const last = nodes[nodes.length - 1];
+            if (last) gsap.fromTo(last, { opacity:0, x:20 }, { opacity:1, x:0, duration:0.35, ease:'power3.out' });
+          });
         }
       });
-    });
 
-    function esc(str) {
-      if (str == null) return '';
-      const d = document.createElement('div');
-      d.textContent = String(str);
-      return d.innerHTML;
-    }
+      // ── Stream methods ──
+      function setPayloadRef(id, el) { if (el) payloadRefs[id] = el; else delete payloadRefs[id]; }
 
-    function formatTs(ts) {
-      if (typeof ts === 'number') {
-        return new Date(ts).toLocaleString();
+      function onCardEnter(el, done) { gsap.fromTo(el, { opacity:0, y:-12 }, { opacity:1, y:0, duration:0.35, ease:'power3.out', onComplete:done }); }
+      function onCardLeave(el, done) { if (clearing) { done(); return; } gsap.to(el, { opacity:0, y:20, duration:0.3, onComplete:done }); }
+      function onEmptyLeave(el, done){ gsap.to(el, { opacity:0, y:-8, duration:0.2, onComplete:done }); }
+
+      function toggleCard(id) {
+        const el = payloadRefs[id]; if (!el) return;
+        if (expandedIds.has(id)) {
+          gsap.to(el, { height:0, duration:0.3, ease:'power2.inOut', onComplete(){ expandedIds.delete(id); }});
+        } else {
+          expandedIds.add(id);
+          nextTick(() => {
+            const h = el.scrollHeight;
+            gsap.fromTo(el, { height:0 }, { height:h, duration:0.35, ease:'power2.out', onComplete(){ gsap.set(el,{height:'auto'}); }});
+            gsap.fromTo(el.querySelectorAll('.meta-pair,.payload-json-wrap'), { opacity:0, y:8 }, { opacity:1, y:0, duration:0.25, stagger:0.04 });
+          });
+        }
       }
-      return ts || '—';
+
+      function clearAll() {
+        clearing = true;
+        const cards = listEl.value?.querySelectorAll('.event-card') || [];
+        const reset = () => {
+          store.clearAllEvents(); expandedIds.clear();
+          displayTotal.value = displayRate.value = displayErrors.value = 0;
+          totalTarget.v = rateTarget.v = errorsTarget.v = 0;
+          nextTick(() => { clearing = false; });
+        };
+        if (!cards.length) { reset(); return; }
+        gsap.to(cards, { opacity:0, y:20, duration:0.3, stagger:0.02, onComplete: reset });
+      }
+
+      function copyJson(btn, json) {
+        navigator.clipboard.writeText(json||'').then(() => {
+          const orig = btn.textContent; btn.textContent = 'copied';
+          setTimeout(() => { btn.textContent = orig; }, 1800);
+        }).catch(() => { btn.textContent = 'failed'; setTimeout(() => { btn.textContent = 'copy'; }, 1800); });
+      }
+
+      function relTimeReactive(date) { void timeTick.value; return relTime(date); }
+
+      function connect() {
+        const host = wsHost.value.trim() || window.location.host;
+        store.status = 'connecting';
+        ws = new WebSocket(`ws://${host}/metriq/ws/metrics`);
+        ws.onopen    = () => { store.status = 'connected'; };
+        ws.onmessage = msg => { try { store.ingestEvent(JSON.parse(msg.data)); } catch(e){ console.error(e); }};
+        ws.onclose   = () => { store.status = 'disconnected'; setTimeout(connect, 3000); };
+        ws.onerror   = () => {};
+      }
+
+      function reconnect() {
+        const host = wsHost.value.trim() || window.location.host;
+        localStorage.setItem('metriq_ws_host', host);
+        if (ws) { ws.onclose = null; ws.close(); }
+        connect();
+      }
+
+      const serviceOptions = [
+        { value:'all',      label:'all',      cls:'svc-aivox'    },
+        { value:'aivox',    label:'aivox',    cls:'svc-aivox'    },
+        { value:'jesoos',   label:'jesoos',   cls:'svc-jesoos'   },
+        { value:'datanest', label:'datanest', cls:'svc-datanest' },
+        { value:'metriq',   label:'metriq',   cls:'svc-metriq'   },
+        { value:'nivaro',   label:'nivaro',   cls:'svc-nivaro'   }
+      ];
+
+      onMounted(() => { connect(); tickInterval = setInterval(() => { timeTick.value++; }, 20000); });
+      onUnmounted(() => { if (ws) ws.close(); clearInterval(tickInterval); });
+
+      return {
+        store, listEl, flowContainerEl,
+        wsHost, reconnect,
+        activeView, selectedBrand, selectedTraceId,
+        traceBrands, tracesForSelectedBrand, eventsForSelectedTrace,
+        expandedTraceIds, selectBrand, toggleFlowNode,
+        displayTotal, displayRate, displayErrors,
+        expandedIds, setPayloadRef, timeTick,
+        onCardEnter, onCardLeave, onEmptyLeave,
+        toggleCard, clearAll, copyJson,
+        relTimeReactive, relTime,
+        serviceOptions, servicePillHtml, formatTs, isError
+      };
     }
+  });
 
-    function copyJson(btn, json) {
-      navigator.clipboard.writeText(json || '').then(() => {
-        const orig = btn.textContent;
-        btn.textContent = 'copied';
-        setTimeout(() => btn.textContent = orig, 1800);
-      }).catch(() => {
-        btn.textContent = 'failed';
-        setTimeout(() => btn.textContent = 'copy', 1800);
-      });
-    }
-
-    function relTime(date) {
-      const sec = Math.floor((Date.now() - date.getTime()) / 1000);
-      if (sec < 10) return 'just now';
-      if (sec < 60) return `${sec}s ago`;
-      const min = Math.floor(sec / 60);
-      if (min < 60) return `${min} min ago`;
-      const hr = Math.floor(min / 60);
-      if (hr < 24) return `${hr}h ago`;
-      return date.toLocaleDateString();
-    }
-
-    setInterval(() => {
-      listEl.querySelectorAll('.time-cell[data-ts]').forEach(el => {
-        el.textContent = relTime(new Date(+el.dataset.ts));
-      });
-    }, 20000);
-
-    connect();
+  const pinia = createPinia();
+  app.use(pinia);
+  app.mount('#app');
 </script>
 </body>
 </html>
