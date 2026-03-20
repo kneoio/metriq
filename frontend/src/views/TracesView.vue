@@ -1,48 +1,31 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, nextTick } from 'vue'
+import { reactive, computed, watch, nextTick } from 'vue'
 import gsap from 'gsap'
 import { useMetriqStore } from '@/stores/metriq'
+import { useTracesStore } from '@/stores/traces'
 import { servicePillHtml, isError } from '@/utils/service'
 import { relTime, flowTimeDelta } from '@/utils/time'
 import type { EventEntry } from '@/types'
 
-const store = useMetriqStore()
+const metriq = useMetriqStore()
+const traces = useTracesStore()
 
 // ── State ─────────────────────────────────────────────────────────────────────
-const selectedBrand    = ref('all')
-const selectedTraceId  = ref<string | null>(null)
 const expandedTraceIds = reactive(new Set<number>())
-const showFlowTiming   = ref(false)
 const flowContainerEl  = ref<HTMLElement | null>(null)
 
+import { ref } from 'vue'
+
 // ── Computed ──────────────────────────────────────────────────────────────────
-const traceBrands = computed(() => Object.keys(store.byBrand))
-
-const tracesForSelectedBrand = computed(() => {
-  const allEntries = Object.entries(store.byTrace)
-  const filtered = (!selectedBrand.value || selectedBrand.value === 'all')
-    ? allEntries
-    : allEntries.filter(([, evts]) =>
-        (evts as EventEntry[]).some(e => (e.data.brandName ?? '').trim() === selectedBrand.value)
-      )
-  return filtered
-    .map(([id, evts]) => ({
-      id,
-      count: (evts as EventEntry[]).length,
-      lastTime: (evts as EventEntry[])[(evts as EventEntry[]).length - 1]?.receivedAt,
-    }))
-    .sort((a, b) => (b.lastTime?.getTime() ?? 0) - (a.lastTime?.getTime() ?? 0))
-})
-
 const eventsForSelectedTrace = computed((): EventEntry[] => {
-  if (!selectedTraceId.value) return []
-  return ((store.byTrace[selectedTraceId.value] ?? []) as EventEntry[])
+  if (!traces.selectedTraceId) return []
+  return ((metriq.byTrace[traces.selectedTraceId] ?? []) as EventEntry[])
     .slice()
     .sort((a, b) => a.receivedAt.getTime() - b.receivedAt.getTime())
 })
 
-// Reset selected trace when brand filter changes
-watch(selectedBrand, () => { selectedTraceId.value = null; expandedTraceIds.clear() })
+// Reset expanded trace nodes when trace changes
+watch(() => traces.selectedTraceId, () => { expandedTraceIds.clear() })
 
 // ── GSAP: animate newest flow node ────────────────────────────────────────────
 watch(() => eventsForSelectedTrace.value.length, (len, prev) => {
@@ -50,15 +33,13 @@ watch(() => eventsForSelectedTrace.value.length, (len, prev) => {
     nextTick(() => {
       if (!flowContainerEl.value) return
       const nodes = flowContainerEl.value.querySelectorAll('.flow-node')
-      const last = nodes[nodes.length - 1]
+      const last  = nodes[nodes.length - 1]
       if (last) gsap.fromTo(last, { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.35, ease: 'power3.out' })
     })
   }
 })
 
 // ── Methods ───────────────────────────────────────────────────────────────────
-function selectBrand(brand: string) { selectedBrand.value = brand }
-
 function toggleFlowNode(id: number) {
   if (expandedTraceIds.has(id)) expandedTraceIds.delete(id)
   else expandedTraceIds.add(id)
@@ -79,50 +60,15 @@ function deltaMs(prev: EventEntry, curr: EventEntry): string {
 </script>
 
 <template>
-  <!-- Sidebar content -->
-  <Teleport to="#view-sidebar">
-    <div class="filter-section" style="padding-bottom:8px;">
-      <div class="filter-label">Filter by brand</div>
-      <div class="brand-tabs" style="padding:0;">
-        <span v-if="traceBrands.length === 0" class="sidebar-empty">no data yet</span>
-        <template v-else>
-          <span class="brand-tab" :class="{ active: selectedBrand === 'all' }" @click="selectBrand('all')">all</span>
-          <span v-for="brand in traceBrands" :key="brand" class="brand-tab"
-            :class="{ active: selectedBrand === brand }" @click="selectBrand(brand)">{{ brand }}</span>
-        </template>
-      </div>
-    </div>
-    <div class="sidebar-divider"></div>
-    <div class="trace-list">
-      <div v-if="tracesForSelectedBrand.length === 0" class="sidebar-empty">no traces</div>
-      <div v-for="t in tracesForSelectedBrand" :key="t.id" class="trace-item"
-        :class="{ active: selectedTraceId === t.id }" @click="selectedTraceId = t.id">
-        <div class="trace-item-id">{{ t.id }}</div>
-        <div class="trace-item-meta">
-          <span class="trace-count-badge">{{ t.count }}</span>
-          <span class="trace-time-label">{{ relTime(t.lastTime) }}</span>
-        </div>
-      </div>
-    </div>
-  </Teleport>
-
-  <!-- Topbar action slot -->
-  <Teleport to="#topbar-action">
-    <button class="clear-btn"
-      :style="showFlowTiming ? 'border-color:var(--accent);color:var(--accent)' : ''"
-      @click="showFlowTiming = !showFlowTiming">⏱ TIMING</button>
-  </Teleport>
-
-  <!-- Main content -->
   <main class="traces-main">
-    <div v-if="!selectedTraceId || eventsForSelectedTrace.length === 0" class="empty-state">
+    <div v-if="!traces.selectedTraceId || eventsForSelectedTrace.length === 0" class="empty-state">
       <div class="empty-icon">⬡</div>
-      <div class="empty-text">{{ selectedTraceId ? 'no events' : 'select a trace' }}</div>
+      <div class="empty-text">{{ traces.selectedTraceId ? 'no events' : 'select a trace' }}</div>
     </div>
     <template v-else>
       <div class="trace-header-bar">
         <span class="trace-header-label">trace</span>
-        <span class="trace-header-id">{{ selectedTraceId }}</span>
+        <span class="trace-header-id">{{ traces.selectedTraceId }}</span>
         <span class="trace-event-count">{{ eventsForSelectedTrace.length }} events</span>
       </div>
       <div class="flow-scroll">
@@ -130,7 +76,7 @@ function deltaMs(prev: EventEntry, curr: EventEntry): string {
           <template v-for="(entry, idx) in eventsForSelectedTrace" :key="entry.id">
             <div class="flow-arrow" v-if="idx > 0">
               <span>→</span>
-              <span v-if="showFlowTiming" class="flow-arrow-time">{{ deltaMs(eventsForSelectedTrace[idx - 1], entry) }}</span>
+              <span v-if="traces.showFlowTiming" class="flow-arrow-time">{{ deltaMs(eventsForSelectedTrace[idx - 1], entry) }}</span>
             </div>
             <div class="flow-node"
               :class="{ expanded: expandedTraceIds.has(entry.id), 'is-error': isError(entry.data.type as string) }">

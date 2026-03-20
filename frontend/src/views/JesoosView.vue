@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, reactive, computed, nextTick } from 'vue'
 import gsap from 'gsap'
-import { STATION_LIST } from '@/utils/service'
+import { useJesoosStore } from '@/stores/jesoos'
 
-// ── State ─────────────────────────────────────────────────────────────────────
-const jesoosBrand            = ref('lumisonic')
-const jesoosStatus           = ref('idle')
+const jesoos = useJesoosStore()
+
+// ── Local state ───────────────────────────────────────────────────────────────
 const jesoosStartLoading     = ref(false)
 const jesoosStartResult      = ref<unknown>(null)
 const jesoosStartBadge       = ref('')
@@ -36,17 +36,15 @@ function jesoosFormatTime(dt: string): string {
 }
 function jesoosSceneType(title: string): string {
   const t = (title ?? '').toLowerCase()
-  if (t.includes('news'))                      return 'news'
-  if (t.includes('weather'))                   return 'weather'
+  if (t.includes('news'))                          return 'news'
+  if (t.includes('weather'))                       return 'weather'
   if (t.includes('greeting') || t.includes('bye')) return 'greeting'
   return 'music'
 }
-
 function copyJson(btn: EventTarget | null, json: string) {
   const el = btn as HTMLButtonElement
   navigator.clipboard.writeText(json ?? '').then(() => {
-    const orig = el.textContent ?? ''
-    el.textContent = 'copied'
+    const orig = el.textContent ?? ''; el.textContent = 'copied'
     setTimeout(() => { el.textContent = orig }, 1800)
   })
 }
@@ -86,71 +84,41 @@ function jesoosToggleJsonDump() {
 
 // ── API actions ───────────────────────────────────────────────────────────────
 async function jesoosStart() {
-  jesoosStartLoading.value = true
-  jesoosStartBadge.value   = 'pending'
-  jesoosStatus.value       = 'running'
+  jesoosStartLoading.value = true; jesoosStartBadge.value = 'pending'; jesoos.status = 'running'
   try {
-    const res  = await fetch(`/jesoos/${jesoosBrand.value}/start`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+    const res  = await fetch(`/jesoos/${jesoos.brand}/start`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
     const data = await res.json()
-    jesoosStartResult.value = data
-    jesoosStartBadge.value  = res.ok ? 'ok' : 'err'
-    jesoosStatus.value      = res.ok ? 'running' : 'error'
+    jesoosStartResult.value = data; jesoosStartBadge.value = res.ok ? 'ok' : 'err'
+    jesoos.status = res.ok ? 'running' : 'error'
   } catch (e: any) {
-    jesoosStartResult.value = e.message
-    jesoosStartBadge.value  = 'err'
-    jesoosStatus.value      = 'error'
+    jesoosStartResult.value = e.message; jesoosStartBadge.value = 'err'; jesoos.status = 'error'
   } finally { jesoosStartLoading.value = false }
 }
 
 async function jesoosFetchAgendas() {
-  jesoosAgendasLoading.value = true
-  jesoosAgendasBadge.value   = 'pending'
-  jesoosExpandedScenes.clear()
-  jesoosJsonDumpExpanded.value = false
+  jesoosAgendasLoading.value = true; jesoosAgendasBadge.value = 'pending'
+  jesoosExpandedScenes.clear(); jesoosJsonDumpExpanded.value = false
   try {
     const res  = await fetch('/jesoos/agendas')
     const data = await res.json()
-    jesoosAgendasData.value  = data
-    jesoosAgendasBadge.value = res.ok ? 'ok' : 'err'
+    jesoosAgendasData.value = data; jesoosAgendasBadge.value = res.ok ? 'ok' : 'err'
     nextTick(() => {
       gsap.from('.agenda-header', { opacity: 0, y: -10, duration: 0.3 })
       gsap.from('.scene-card',    { opacity: 0, y: 20,  duration: 0.3, stagger: 0.03, ease: 'power2.out' })
     })
   } catch (e: any) {
-    jesoosAgendasData.value  = null
-    jesoosStartResult.value  = e.message
-    jesoosAgendasBadge.value = 'err'
+    jesoosAgendasData.value = null; jesoosStartResult.value = e.message; jesoosAgendasBadge.value = 'err'
   } finally { jesoosAgendasLoading.value = false }
 }
 </script>
 
 <template>
-  <!-- Sidebar content -->
-  <Teleport to="#view-sidebar">
-    <div class="sidebar-section">
-      <span class="section-label">Brand</span>
-      <div class="select-wrap">
-        <select class="station-select" v-model="jesoosBrand">
-          <option v-for="s in STATION_LIST" :key="s" :value="s">{{ s }}</option>
-        </select>
-      </div>
-    </div>
-    <div class="status-indicator" style="margin-top:0; border-top: 1px solid var(--border);">
-      <div class="status-row">
-        <div class="status-dot" :class="jesoosStatus"></div>
-        <span class="status-text">{{ jesoosStatus }}</span>
-      </div>
-    </div>
-  </Teleport>
-
-  <!-- Main content -->
   <main class="jesoos-main">
     <div class="actions-row">
       <button class="action-btn primary" @click="jesoosStart" :disabled="jesoosStartLoading">▶ start</button>
       <button class="action-btn secondary" @click="jesoosFetchAgendas">view agendas</button>
     </div>
 
-    <!-- Start result panel -->
     <div class="result-panel">
       <div class="panel-header">
         <span class="panel-title">start result</span>
@@ -166,7 +134,6 @@ async function jesoosFetchAgendas() {
       </div>
     </div>
 
-    <!-- Agendas panel -->
     <div class="result-panel">
       <div class="panel-header">
         <span class="panel-title">agendas</span>
@@ -179,22 +146,10 @@ async function jesoosFetchAgendas() {
         <template v-else-if="jesoosAgendasData && jesoosAgenda">
           <div class="agenda-header">
             <div class="agenda-stats">
-              <div class="stat-box">
-                <span class="stat-label">Brand</span>
-                <span class="stat-value">{{ jesoosAgendaBrand }}</span>
-              </div>
-              <div class="stat-box">
-                <span class="stat-label">Scenes</span>
-                <span class="stat-value">{{ jesoosAgenda.totalScenes }}</span>
-              </div>
-              <div class="stat-box">
-                <span class="stat-label">Duration</span>
-                <span class="stat-value">{{ jesoosFormatDuration(jesoosAgenda.scenes.reduce((a: number, s: any) => a + s.durationSeconds, 0)) }}</span>
-              </div>
-              <div class="stat-box">
-                <span class="stat-label">Songs</span>
-                <span class="stat-value">{{ jesoosAgenda.scenes.reduce((a: number, s: any) => a + s.totalSongs, 0) }}</span>
-              </div>
+              <div class="stat-box"><span class="stat-label">Brand</span><span class="stat-value">{{ jesoosAgendaBrand }}</span></div>
+              <div class="stat-box"><span class="stat-label">Scenes</span><span class="stat-value">{{ jesoosAgenda.totalScenes }}</span></div>
+              <div class="stat-box"><span class="stat-label">Duration</span><span class="stat-value">{{ jesoosFormatDuration(jesoosAgenda.scenes.reduce((a: number, s: any) => a + s.durationSeconds, 0)) }}</span></div>
+              <div class="stat-box"><span class="stat-label">Songs</span><span class="stat-value">{{ jesoosAgenda.scenes.reduce((a: number, s: any) => a + s.totalSongs, 0) }}</span></div>
             </div>
           </div>
           <div class="scenes-list">
