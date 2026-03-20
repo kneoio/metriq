@@ -185,8 +185,9 @@
         .trace-header-id { font-family: var(--mono); font-size: 0.7rem; color: var(--text-muted); word-break: break-all; }
         .trace-event-count { font-family: var(--mono); font-size: 0.6rem; padding: 2px 8px; border-radius: 10px; background: rgba(33,150,243,0.12); color: var(--accent2); border: 1px solid rgba(33,150,243,0.2); white-space: nowrap; }
         .flow-scroll { padding-bottom: 12px; }
-        .flow-container { display: flex; flex-wrap: wrap; align-items: flex-start; gap-row: 12px; padding: 8px 0; }
-        .flow-arrow { flex-shrink: 0; display: flex; align-items: center; padding: 0 6px; color: var(--border-bright); font-size: 1.1rem; margin-top: 14px; }
+        .flow-container { display: flex; flex-wrap: wrap; align-items: flex-start; row-gap: 16px; padding: 8px 0; }
+        .flow-arrow { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 6px; color: var(--border-bright); font-size: 1.1rem; margin-top: 14px; gap: 2px; }
+        .flow-arrow-time { font-family: var(--mono); font-size: 0.52rem; letter-spacing: 0.5px; color: var(--text-dim); line-height: 1; }
         .flow-node { flex-shrink: 0; width: 190px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); cursor: pointer; transition: border-color 0.2s; overflow: hidden; }
         .flow-node:hover { border-color: var(--border-bright); }
         .flow-node.expanded { border-color: var(--accent2); }
@@ -476,6 +477,7 @@
       <span class="topbar-title">{{ activeView === 'stream' ? 'ALL METRICS' : activeView === 'traces' ? 'TRACE FLOW' : activeView === 'player' ? 'AIVOX CONTROL' : 'JESOOS CONTROL' }}</span>
       <div class="topbar-right">
         <button v-if="activeView === 'stream'" class="clear-btn" @click="clearAll">CLEAR</button>
+        <button v-if="activeView === 'traces'" class="clear-btn" :style="showFlowTiming ? 'border-color:var(--accent);color:var(--accent)' : ''" @click="showFlowTiming = !showFlowTiming">⏱ TIMING</button>
         <div v-if="activeView === 'player'" class="live-badge" v-show="playerStatus === 'playing'">
           <div class="live-dot"></div><span>LIVE</span>
         </div>
@@ -691,7 +693,10 @@
         <div class="flow-scroll">
           <div class="flow-container" ref="flowContainerEl">
             <template v-for="(entry, idx) in eventsForSelectedTrace" :key="entry.id">
-              <div class="flow-arrow" v-if="idx > 0">→</div>
+              <div class="flow-arrow" v-if="idx > 0">
+                <span>→</span>
+                <span v-if="showFlowTiming" class="flow-arrow-time">{{ flowTimeDelta(eventsForSelectedTrace[idx - 1], entry) }}</span>
+              </div>
               <div class="flow-node"
                 :class="{ expanded: expandedTraceIds.has(entry.id), 'is-error': isError(entry.data.type) }">
                 <div class="flow-node-header" @click="toggleFlowNode(entry.id)">
@@ -864,6 +869,7 @@
 
       // ── View routing ──
       const activeView      = ref('stream');
+      const showFlowTiming  = ref(false);
       const selectedBrand   = ref('all');
       const selectedTraceId = ref(null);
       const expandedTraceIds = reactive(new Set());
@@ -911,6 +917,16 @@
       watch(selectedBrand, () => { selectedTraceId.value = null; expandedTraceIds.clear(); });
 
       function selectBrand(brand) { selectedBrand.value = brand; }
+
+      function flowTimeDelta(prev, curr) {
+        if (!prev || !curr) return '';
+        const ms = curr.receivedAt.getTime() - prev.receivedAt.getTime();
+        if (ms < 0) return '00:00';
+        const totalSec = Math.floor(ms / 1000);
+        const mm = String(Math.floor(totalSec / 60)).padStart(2, '0');
+        const ss = String(totalSec % 60).padStart(2, '0');
+        return `${mm}:${ss}`;
+      }
 
       function toggleFlowNode(id) {
         if (expandedTraceIds.has(id)) expandedTraceIds.delete(id);
@@ -1287,9 +1303,9 @@
       return {
         store, listEl, flowContainerEl,
         wsHost, reconnect,
-        activeView, selectedBrand, selectedTraceId,
+        activeView, showFlowTiming, selectedBrand, selectedTraceId,
         traceBrands, tracesForSelectedBrand, eventsForSelectedTrace,
-        expandedTraceIds, selectBrand, toggleFlowNode,
+        expandedTraceIds, selectBrand, toggleFlowNode, flowTimeDelta,
         displayTotal, displayRate, displayErrors,
         expandedIds, setPayloadRef, timeTick,
         onCardEnter, onCardLeave, onEmptyLeave,
