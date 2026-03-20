@@ -110,13 +110,27 @@
         .service-pill.svc-unknown  { color:var(--text-dim); border-color:var(--border-bright); background:transparent; }
 
         /* ── Status ── */
-        .status-indicator { margin-top: auto; padding: 20px 24px; border-top: 1px solid var(--border); }
+        .status-indicator { margin-top: auto; padding: 16px 24px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
         .status-row { display: flex; align-items: center; gap: 10px; }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); flex-shrink: 0; transition: background 0.3s; }
         .status-dot.connected    { background: var(--accent);  box-shadow: 0 0 8px var(--accent); animation: pulse-dot 2s ease-in-out infinite; }
         .status-dot.disconnected { background: var(--accent3); }
         .status-dot.connecting   { background: var(--amber);   }
         .status-text { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 1px; color: var(--text-muted); }
+        .host-row { display: flex; gap: 6px; align-items: center; }
+        .host-input {
+          flex: 1; font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.5px;
+          background: rgba(255,255,255,0.04); border: 1px solid var(--border-bright);
+          color: var(--text-muted); padding: 5px 8px; border-radius: 3px; outline: none;
+          min-width: 0;
+        }
+        .host-input:focus { border-color: var(--accent); color: var(--text); }
+        .reconnect-btn {
+          font-family: var(--mono); font-size: 0.6rem; padding: 5px 8px; border-radius: 3px;
+          border: 1px solid var(--border-bright); background: transparent; color: var(--text-dim);
+          cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+        }
+        .reconnect-btn:hover { border-color: var(--accent); color: var(--accent); }
 
         /* ── Topbar ── */
         .topbar {
@@ -297,6 +311,10 @@
         <div class="status-row">
           <div class="status-dot" :class="store.status"></div>
           <span class="status-text">{{ store.status }}</span>
+        </div>
+        <div class="host-row">
+          <input class="host-input" v-model="wsHost" @keydown.enter="reconnect" placeholder="host:port" spellcheck="false" />
+          <button class="reconnect-btn" @click="reconnect" title="Reconnect">↺</button>
         </div>
       </div>
     </aside>
@@ -555,6 +573,7 @@
       const expandedIds  = reactive(new Set());
       const payloadRefs  = {};
       const timeTick     = ref(0);
+      const wsHost = ref(localStorage.getItem('metriq_ws_host') || window.location.host);
       let clearing = false, ws = null, tickInterval = null;
 
       const totalTarget = {v:0}, rateTarget = {v:0}, errorsTarget = {v:0};
@@ -649,15 +668,21 @@
 
       function relTimeReactive(date) { void timeTick.value; return relTime(date); }
 
-      const wsUrl = `ws://${window.location.host}/metriq/ws/metrics`;
-
       function connect() {
+        const host = wsHost.value.trim() || window.location.host;
         store.status = 'connecting';
-        ws = new WebSocket(wsUrl);
+        ws = new WebSocket(`ws://${host}/metriq/ws/metrics`);
         ws.onopen    = () => { store.status = 'connected'; };
         ws.onmessage = msg => { try { store.ingestEvent(JSON.parse(msg.data)); } catch(e){ console.error(e); }};
         ws.onclose   = () => { store.status = 'disconnected'; setTimeout(connect, 3000); };
         ws.onerror   = () => {};
+      }
+
+      function reconnect() {
+        const host = wsHost.value.trim() || window.location.host;
+        localStorage.setItem('metriq_ws_host', host);
+        if (ws) { ws.onclose = null; ws.close(); }
+        connect();
       }
 
       const serviceOptions = [
@@ -674,6 +699,7 @@
 
       return {
         store, listEl, flowContainerEl,
+        wsHost, reconnect,
         activeView, selectedBrand, selectedTraceId,
         traceBrands, tracesForSelectedBrand, eventsForSelectedTrace,
         expandedTraceIds, selectBrand, toggleFlowNode,
