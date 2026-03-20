@@ -5,11 +5,14 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [vue()],
 
+  resolve: {
+    alias: { '@': resolve(__dirname, 'src') },
+  },
+
   build: {
     // Output directly into Quarkus static resources
     outDir: resolve(__dirname, '../src/main/resources/META-INF/resources'),
-    // Step 7: flip to true once old index.html + CDN files are removed
-    emptyOutDir: false,
+    emptyOutDir: true,
   },
 
   server: {

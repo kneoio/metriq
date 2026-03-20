@@ -16,7 +16,10 @@
       "WebFetch(domain:www.naiveui.com)",
       "WebFetch(domain:www.npmjs.com)",
       "WebFetch(domain:github.com)",
-      "Bash(curl -sLo hls.min.js \"https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js\")"
+      "Bash(curl -sLo hls.min.js \"https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js\")",
+      "Bash(npm run:*)",
+      "Bash(powershell -Command \"\\(Get-Content JesoosView.vue\\) -replace '':ref=\"\"\\\\\\(el\\\\\\) => \\\\{ jesoosJsonDumpEl = el as HTMLElement \\\\}\"\"'', '':ref=\"\"\\(el\\) => { jesoosJsonDumpEl = \\(el as HTMLElement | null\\) }\"\"'' | Set-Content JesoosView.vue\")",
+      "Bash(npm --version)"
     ]
   }
 }
