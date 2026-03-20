@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import { ref, nextTick, onUnmounted } from 'vue'
+import { ref, watch, nextTick, onUnmounted } from 'vue'
 import gsap from 'gsap'
 import Hls from 'hls.js'
-import { STATION_LIST } from '@/utils/service'
+import { useAivoxStore } from '@/stores/aivox'
 import type { PlayerLogLine } from '@/types'
 
-// ── State ─────────────────────────────────────────────────────────────────────
-const playerStation     = ref('lumisonic')
-const playerStatus      = ref('idle')
-const playerFragCount   = ref(0)
-const playerErrorCount  = ref(0)
-const playerLastFragSize = ref('—')
+const aivox = useAivoxStore()
+
+// ── Local state ───────────────────────────────────────────────────────────────
 const playerLogs        = ref<PlayerLogLine[]>([])
 const playerNpTitle     = ref('')
 const playerNpArtist    = ref('')
@@ -24,7 +21,7 @@ const waveformCanvas = ref<HTMLCanvasElement | null>(null)
 const playerAudio    = ref<HTMLAudioElement | null>(null)
 const playerLogEl    = ref<HTMLElement | null>(null)
 
-// Internal HLS + Web Audio state (not reactive)
+// Internal HLS + Web Audio state
 let pHls: Hls | null = null
 let pHlsDestroyed = true
 let pAudioEventsAttached = false
@@ -33,17 +30,22 @@ let pAnalyser: AnalyserNode | null = null
 let pSource: MediaElementAudioSourceNode | null = null
 let pAnimId: number | null = null
 
+// Watch station change from sidebar (App.vue changes aivox.station via store)
+watch(() => aivox.station, () => {
+  if (pHls && !pHlsDestroyed) playerLoad(`/stream/${aivox.station}/stream.m3u8`)
+})
+
 // ── Logging ───────────────────────────────────────────────────────────────────
 function playerLog(msg: string, type: PlayerLogLine['type'] = 'info') {
   const now = new Date()
-  const ts = now.toTimeString().slice(0, 8) + '.' + String(now.getMilliseconds()).padStart(3, '0')
+  const ts  = now.toTimeString().slice(0, 8) + '.' + String(now.getMilliseconds()).padStart(3, '0')
   playerLogs.value.push({ ts, msg, type })
   if (playerLogs.value.length > 200) playerLogs.value.shift()
   nextTick(() => { if (playerLogEl.value) playerLogEl.value.scrollTop = playerLogEl.value.scrollHeight })
 }
 
 function setPlayerStatus(label: string, cls: string) {
-  playerStatus.value = cls === 'playing' ? 'playing' : label
+  aivox.status = cls === 'playing' ? 'playing' : label
 }
 
 // ── Waveform ──────────────────────────────────────────────────────────────────
@@ -72,13 +74,10 @@ function startWaveformViz() {
   if (pAudioCtx || !playerAudio.value) return
   try {
     pAudioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
-    pAnalyser = pAudioCtx.createAnalyser()
-    pAnalyser.fftSize = 128
-    pSource = pAudioCtx.createMediaElementSource(playerAudio.value)
-    pSource.connect(pAnalyser)
-    pAnalyser.connect(pAudioCtx.destination)
-    isWaveformActive.value = true
-    drawWaveform()
+    pAnalyser = pAudioCtx.createAnalyser(); pAnalyser.fftSize = 128
+    pSource   = pAudioCtx.createMediaElementSource(playerAudio.value)
+    pSource.connect(pAnalyser); pAnalyser.connect(pAudioCtx.destination)
+    isWaveformActive.value = true; drawWaveform()
   } catch (e: any) { playerLog('waveform unavailable: ' + e.message, 'warn') }
 }
 
@@ -86,8 +85,7 @@ function stopWaveformViz() {
   if (pAnimId) { cancelAnimationFrame(pAnimId); pAnimId = null }
   isWaveformActive.value = false
   if (waveformCanvas.value) {
-    const ctx = waveformCanvas.value.getContext('2d')
-    ctx?.clearRect(0, 0, waveformCanvas.value.width, waveformCanvas.value.height)
+    waveformCanvas.value.getContext('2d')?.clearRect(0, 0, waveformCanvas.value.width, waveformCanvas.value.height)
   }
 }
 
@@ -104,8 +102,7 @@ function bindPlayerAudioEvents() {
   a.addEventListener('ended',   () => { setPlayerStatus('ended', 'stopped'); stopWaveformViz() })
   a.addEventListener('error',   () => {
     playerLog('audio error: ' + (a.error ? a.error.code : '?'), 'error')
-    setPlayerStatus('error', 'error')
-    playerErrorCount.value++
+    setPlayerStatus('error', 'error'); aivox.errorCount++
   })
   ;['play', 'pause', 'playing', 'waiting', 'stalled', 'ended'].forEach(ev =>
     a.addEventListener(ev, () => playerLog('audio: ' + ev, 'event'))
@@ -120,13 +117,12 @@ function playerUpdateNowPlaying(frag: any) {
   const ar = di !== -1 ? title.slice(di + 3).trim() : ''
   if (t === playerNpTitle.value && ar === playerNpArtist.value) return
   gsap.to({ v: 0 }, { v: 1, duration: 0.15, onComplete() {
-    playerNpTitle.value  = t  || '—'
-    playerNpArtist.value = ar || '—'
+    playerNpTitle.value = t || '—'; playerNpArtist.value = ar || '—'
   }})
   playerLog('now playing: ' + title, 'ok')
 }
 
-// ── Stop / Load / Play ────────────────────────────────────────────────────────
+// ── Stop / Load ───────────────────────────────────────────────────────────────
 function playerStop() {
   pHlsDestroyed = true
   if (pHls) { pHls.destroy(); pHls = null; playerLog('hls destroyed', 'event') }
@@ -135,11 +131,9 @@ function playerStop() {
     playerAudio.value.removeAttribute('src')
     playerAudio.value.load()
   }
-  pAudioEventsAttached = false
-  stopWaveformViz()
+  pAudioEventsAttached = false; stopWaveformViz()
   setPlayerStatus('stopped', 'stopped')
-  isPlaying.value = false
-  playerStreamLabel.value = '—'
+  isPlaying.value = false; playerStreamLabel.value = '—'
   playerLog('stopped.', 'info')
 }
 
@@ -162,11 +156,11 @@ function playerLoad(src: string) {
     a.play().catch(e => playerLog('play() rejected: ' + e.message, 'warn'))
   })
   pHls.on(Hls.Events.FRAG_LOADED, (_e, d) => {
-    playerFragCount.value++
-    const loaded = (d as any).stats?.loaded ?? (d as any).frag?.stats?.loaded ?? 0
+    aivox.fragCount++
+    const loaded = (d as any).stats?.loaded ?? 0
     const kb = (loaded / 1024).toFixed(1)
     playerLog(`frag [sn=${d.frag.sn}] ${kb} KB`, 'ok')
-    playerLastFragSize.value = kb + ' KB'
+    aivox.lastFragSize = kb + ' KB'
     playerUpdateNowPlaying(d.frag)
   })
   pHls.on(Hls.Events.ERROR, (_e, data) => {
@@ -174,7 +168,7 @@ function playerLoad(src: string) {
     const fatal = data.fatal ? ' [FATAL]' : ''
     playerLog(`${data.type}/${data.details}${fatal}`, data.fatal ? 'error' : 'warn')
     if (!data.fatal) return
-    playerErrorCount.value++
+    aivox.errorCount++
     if (data.type === Hls.ErrorTypes.NETWORK_ERROR) pHls!.startLoad()
     else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) pHls!.recoverMediaError()
     else { pHls!.destroy(); pHls = null }
@@ -183,21 +177,18 @@ function playerLoad(src: string) {
   playerLog('hls configured', 'info')
 }
 
+// ── Controls ──────────────────────────────────────────────────────────────────
 function togglePlay() {
   const a = playerAudio.value; if (!a) return
-  if (!a.src && !pHls) { playerLoad(`/stream/${playerStation.value}/stream.m3u8`); return }
+  if (!a.src && !pHls) { playerLoad(`/stream/${aivox.station}/stream.m3u8`); return }
   if (a.paused) a.play().catch(e => playerLog('play() rejected: ' + e.message, 'warn'))
   else a.pause()
 }
 
 function updateVolume() { if (playerAudio.value) playerAudio.value.volume = Number(playerVolume.value) }
 
-function playerOnStationChange() {
-  if (pHls && !pHlsDestroyed) playerLoad(`/stream/${playerStation.value}/stream.m3u8`)
-}
-
 async function playerServerAction(method: 'POST' | 'DELETE') {
-  const brand = playerStation.value
+  const brand = aivox.station
   playerLog(`${method === 'POST' ? 'starting' : 'stopping'} server stream [${brand}]`, 'info')
   try {
     const r = await fetch('/aivox/' + brand + '/command/', { method })
@@ -216,47 +207,6 @@ onUnmounted(() => { playerStop() })
 </script>
 
 <template>
-  <!-- Sidebar content -->
-  <Teleport to="#view-sidebar">
-    <div class="sidebar-section">
-      <span class="section-label">Station</span>
-      <div class="select-wrap">
-        <select class="station-select" v-model="playerStation" @change="playerOnStationChange">
-          <option v-for="s in STATION_LIST" :key="s" :value="s">{{ s }}</option>
-        </select>
-      </div>
-    </div>
-    <div class="sidebar-divider"></div>
-    <div class="sidebar-section">
-      <div class="stat-item">
-        <span class="stat-label">frags loaded</span>
-        <span class="stat-value">{{ playerFragCount }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">last frag</span>
-        <span class="stat-value amber small">{{ playerLastFragSize }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">errors</span>
-        <span class="stat-value red">{{ playerErrorCount }}</span>
-      </div>
-    </div>
-    <div class="status-indicator" style="margin-top:0; border-top: 1px solid var(--border);">
-      <div class="status-row">
-        <div class="status-dot" :class="playerStatus"></div>
-        <span class="status-text">{{ playerStatus }}</span>
-      </div>
-    </div>
-  </Teleport>
-
-  <!-- Topbar action slot -->
-  <Teleport to="#topbar-action">
-    <div class="live-badge" v-show="playerStatus === 'playing'">
-      <div class="live-dot"></div><span>LIVE</span>
-    </div>
-  </Teleport>
-
-  <!-- Main content -->
   <main class="player-main">
     <div class="player-card">
       <div class="player-card-body">
@@ -279,8 +229,8 @@ onUnmounted(() => { playerStop() })
             <input type="range" v-model="playerVolume" min="0" max="1" step="0.02" @input="updateVolume">
           </div>
         </div>
-        <div class="sidebar-divider" style="margin: 4px 0;"></div>
-        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+        <div class="sidebar-divider" style="margin:4px 0;"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
           <span class="card-label">aivox control</span>
           <div class="btn-row">
             <button class="action-btn" @click="playerServerAction('POST')">start stream</button>

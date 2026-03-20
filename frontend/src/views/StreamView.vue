@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, reactive, nextTick } from 'vue'
+import { ref, reactive, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import gsap from 'gsap'
 import { useMetriqStore } from '@/stores/metriq'
-import { SERVICE_OPTIONS, servicePillHtml, isError } from '@/utils/service'
+import { servicePillHtml, isError } from '@/utils/service'
 import { relTime, formatTs } from '@/utils/time'
 
 const store = useMetriqStore()
@@ -12,12 +12,10 @@ const listEl      = ref<HTMLElement | null>(null)
 const expandedIds = reactive(new Set<number>())
 const payloadRefs: Record<number, HTMLElement> = {}
 const timeTick    = ref(0)
-
 let tickInterval: ReturnType<typeof setInterval> | null = null
 let clearing = false
 
 // ── GSAP number tweens ────────────────────────────────────────────────────────
-import { watch } from 'vue'
 const displayTotal  = ref(0)
 const displayRate   = ref(0)
 const displayErrors = ref(0)
@@ -86,62 +84,14 @@ function copyJson(btn: EventTarget | null, json: string) {
 
 function relTimeReactive(date: Date) { void timeTick.value; return relTime(date) }
 
-// Start tick for relative time refresh
-import { onMounted, onUnmounted } from 'vue'
 onMounted(() => { tickInterval = setInterval(() => { timeTick.value++ }, 20_000) })
 onUnmounted(() => { if (tickInterval) clearInterval(tickInterval) })
 
-// ── Expose sidebar data via defineExpose (App.vue reads it) ──────────────────
+// Expose to App.vue for sidebar stats + clear button
 defineExpose({ displayTotal, displayRate, displayErrors, clearAll })
 </script>
 
 <template>
-  <!-- Sidebar content teleported into App layout -->
-  <Teleport to="#view-sidebar">
-    <div class="sidebar-stats">
-      <div class="stat-item">
-        <span class="stat-label">total received</span>
-        <span class="stat-value">{{ displayTotal }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">last minute</span>
-        <span class="stat-value amber">{{ displayRate }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">error types</span>
-        <span class="stat-value red">{{ displayErrors }}</span>
-      </div>
-    </div>
-    <div class="sidebar-divider"></div>
-    <div class="filter-section">
-      <div class="filter-label">Filter by type</div>
-      <div class="filter-tags">
-        <span class="filter-tag" :class="{ active: store.activeFilter === 'all' }" @click="store.setFilter('all')">all</span>
-        <span v-for="type in store.knownTypes" :key="type" class="filter-tag"
-          :class="{ active: store.activeFilter === type }" @click="store.setFilter(type)">{{ type.toLowerCase() }}</span>
-      </div>
-    </div>
-    <div class="sidebar-divider"></div>
-    <div class="filter-section">
-      <div class="filter-label">Filter by brand</div>
-      <div class="filter-tags">
-        <span class="filter-tag brand-tag" :class="{ active: store.activeBrandFilter === 'all' }" @click="store.setBrandFilter('all')">all</span>
-        <span v-for="brand in store.knownBrands" :key="brand" class="filter-tag brand-tag"
-          :class="{ active: store.activeBrandFilter === brand }" @click="store.setBrandFilter(brand)">{{ brand.toLowerCase() }}</span>
-      </div>
-    </div>
-    <div class="sidebar-divider"></div>
-    <div class="filter-section">
-      <div class="filter-label">Filter by service</div>
-      <div class="filter-tags">
-        <span v-for="svc in SERVICE_OPTIONS" :key="svc.value" class="filter-tag"
-          :class="[svc.cls, { active: store.activeServiceFilter === svc.value }]"
-          @click="store.setServiceFilter(svc.value)">{{ svc.label }}</span>
-      </div>
-    </div>
-  </Teleport>
-
-  <!-- Main content -->
   <main class="main">
     <div class="events-list" ref="listEl">
       <transition :css="false" @leave="onEmptyLeave">
@@ -156,7 +106,7 @@ defineExpose({ displayTotal, displayRate, displayErrors, clearAll })
           <div class="event-row" @click="toggleCard(entry.id)">
             <span class="brand-cell">{{ entry.data.brandName || '—' }}</span>
             <span class="type-cell"
-              :style="isError(entry.data.type) ? 'color:var(--accent3);background:rgba(250,109,109,0.12);border-color:rgba(250,109,109,0.3)' : ''">
+              :style="isError(entry.data.type as string) ? 'color:var(--accent3);background:rgba(250,109,109,0.12);border-color:rgba(250,109,109,0.3)' : ''">
               {{ (entry.data.type || 'UNKNOWN').toUpperCase() }}</span>
             <span class="service-cell" v-html="servicePillHtml(entry.data.serviceId as string)"></span>
             <span class="code-cell">{{ entry.data.code || '—' }}</span>
@@ -164,7 +114,7 @@ defineExpose({ displayTotal, displayRate, displayErrors, clearAll })
             <span class="chevron-cell">›</span>
           </div>
           <div class="event-payload" :class="{ open: expandedIds.has(entry.id) }"
-            :ref="el => setPayloadRef(entry.id, el)">
+            :ref="(el: unknown) => setPayloadRef(entry.id, el)">
             <div class="payload-inner">
               <div class="payload-meta">
                 <div class="meta-pair"><span class="meta-key">trace id</span><span class="meta-val">{{ entry.data.traceId || '—' }}</span></div>
