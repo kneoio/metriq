@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Metriq (Quarkus dev)",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "mvn", "quarkus:dev"],
+      "port": 38790
+    }
+  ]
+}
