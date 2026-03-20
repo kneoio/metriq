@@ -11,7 +11,7 @@
           --bg: #1a1a1a; --surface: #2a2a2a; --surface2: #1a1a1a;
           --border: #333333; --border-bright: #444444;
           --accent: #2196F3; --accent2: #42A5F5; --accent3: #fa6d6d;
-          --amber: #f5a623; --text: #f0f0f0; --text-muted: #d0d0d0; --text-dim: #b0b0b0;
+          --amber: #f5a623; --purple: #b084ff; --green: #34d399; --text: #f0f0f0; --text-muted: #d0d0d0; --text-dim: #b0b0b0;
           --mono: 'IBM Plex Mono', monospace; --sans: 'Space Grotesk', sans-serif;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -246,6 +246,55 @@
         .log-error { color: var(--accent3); }
         .log-event { color: #888; }
 
+        /* ── Jesoos main ── */
+        .jesoos-main { grid-column: 2; padding: 24px 32px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+        .actions-row { display: flex; gap: 10px; flex-wrap: wrap; }
+        .action-btn.primary  { border-color: var(--accent); color: var(--accent); }
+        .action-btn.primary:hover  { background: rgba(33,150,243,0.12); }
+        .action-btn.secondary { border-color: var(--border-bright); color: var(--text-muted); }
+        .action-btn.secondary:hover { border-color: var(--accent2); color: var(--accent2); }
+        .result-panel { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--surface); }
+        .panel-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); background: rgba(8,8,16,0.5); }
+        .panel-title { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
+        .panel-badge { font-family: var(--mono); font-size: 0.6rem; padding: 2px 8px; border-radius: 2px; letter-spacing: 1px; text-transform: uppercase; }
+        .panel-badge.ok      { color: var(--accent);  background: rgba(33,150,243,0.1);  border: 1px solid rgba(33,150,243,0.25); }
+        .panel-badge.err     { color: var(--accent3); background: rgba(250,109,109,0.1); border: 1px solid rgba(250,109,109,0.25); }
+        .panel-badge.pending { color: var(--amber);   background: rgba(245,166,35,0.1);  border: 1px solid rgba(245,166,35,0.25); }
+        .panel-body { padding: 16px; background: var(--surface2); }
+        .panel-empty { padding: 32px; text-align: center; font-family: var(--mono); font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; }
+        .agenda-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; }
+        .agenda-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+        .stat-box { display: flex; flex-direction: column; gap: 4px; }
+        .scenes-list { display: flex; flex-direction: column; gap: 2px; }
+        .scene-card { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--surface); cursor: pointer; transition: border-color 0.2s; }
+        .scene-card:hover { border-color: var(--border-bright); }
+        .scene-card.expanded { border-color: var(--accent2); }
+        .scene-row { display: grid; grid-template-columns: max-content max-content 1fr max-content max-content auto; align-items: center; gap: 16px; padding: 12px 16px; min-height: 48px; }
+        .scene-time { font-family: var(--mono); font-size: 0.7rem; font-weight: 600; letter-spacing: 1px; color: var(--accent2); min-width: 50px; }
+        .scene-type-badge { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.5px; padding: 3px 10px; border-radius: 3px; text-align: center; border: 1px solid; white-space: nowrap; min-width: 80px; text-transform: uppercase; }
+        .scene-type-badge.music    { color: var(--accent);  background: rgba(33,150,243,0.08);  border-color: rgba(33,150,243,0.2); }
+        .scene-type-badge.news     { color: var(--purple);  background: rgba(176,132,255,0.08); border-color: rgba(176,132,255,0.2); }
+        .scene-type-badge.weather  { color: var(--green);   background: rgba(52,211,153,0.08);  border-color: rgba(52,211,153,0.2); }
+        .scene-type-badge.greeting { color: var(--amber);   background: rgba(245,166,35,0.08);  border-color: rgba(245,166,35,0.2); }
+        .scene-title { font-size: 0.9rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .scene-duration { font-family: var(--mono); font-size: 0.65rem; color: var(--text-muted); white-space: nowrap; }
+        .scene-songs { font-family: var(--mono); font-size: 0.65rem; color: var(--text-muted); padding: 3px 10px; border-radius: 3px; border: 1px dashed rgba(255,255,255,0.12); white-space: nowrap; min-width: 80px; text-align: center; }
+        .scene-payload { overflow: hidden; height: 0; border-top: 0 solid var(--border); }
+        .scene-payload.open { border-top-width: 1px; }
+        .json-dump-section { margin-top: 12px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--surface); }
+        .json-dump-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(8,8,16,0.5); border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
+        .json-dump-header:hover { background: rgba(8,8,16,0.8); }
+        .json-dump-title { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
+        .json-dump-chevron { color: var(--text-dim); font-size: 0.9rem; transition: transform 0.2s; }
+        .json-dump-section.expanded .json-dump-chevron { transform: rotate(90deg); }
+        .json-dump-body { overflow: hidden; height: 0; background: var(--surface2); }
+        .json-dump-body.open { height: auto; }
+        .json-dump-inner { padding: 16px; }
+        pre.json-code { background: #080810; border: 1px solid var(--border); border-radius: 4px; padding: 14px; font-family: var(--mono); font-size: 0.75rem; color: #a8b3cf; white-space: pre-wrap; overflow-x: auto; max-height: 400px; overflow-y: auto; line-height: 1.6; margin: 0; }
+        .spinner { display: inline-block; width: 10px; height: 10px; border: 1px solid var(--border-bright); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 8px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { font-family: var(--mono); font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; display: flex; align-items: center; }
+
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
@@ -281,6 +330,9 @@
         </div>
         <div class="nav-item" :class="{ active: activeView === 'player' }" @click="activeView = 'player'">
           <span class="nav-dot"></span>Aivox
+        </div>
+        <div class="nav-item" :class="{ active: activeView === 'jesoos' }" @click="activeView = 'jesoos'">
+          <span class="nav-dot"></span>Jesoos
         </div>
       </nav>
 
@@ -362,6 +414,24 @@
         </div>
       </template>
 
+      <!-- Jesoos sidebar -->
+      <template v-else-if="activeView === 'jesoos'">
+        <div class="sidebar-section">
+          <span class="section-label">Brand</span>
+          <div class="select-wrap">
+            <select class="station-select" v-model="jesoosBrand">
+              <option v-for="s in playerStations" :key="s" :value="s">{{ s }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="status-indicator">
+          <div class="status-row">
+            <div class="status-dot" :class="jesoosStatus"></div>
+            <span class="status-text">{{ jesoosStatus }}</span>
+          </div>
+        </div>
+      </template>
+
       <!-- Traces sidebar -->
       <template v-else>
         <div class="filter-section" style="padding-bottom:8px;">
@@ -403,7 +473,7 @@
 
     <!-- ── Topbar ── -->
     <header class="topbar">
-      <span class="topbar-title">{{ activeView === 'stream' ? 'ALL METRICS' : activeView === 'traces' ? 'TRACE FLOW' : 'AIVOX CONTROL' }}</span>
+      <span class="topbar-title">{{ activeView === 'stream' ? 'ALL METRICS' : activeView === 'traces' ? 'TRACE FLOW' : activeView === 'player' ? 'AIVOX CONTROL' : 'JESOOS CONTROL' }}</span>
       <div class="topbar-right">
         <button v-if="activeView === 'stream'" class="clear-btn" @click="clearAll">CLEAR</button>
         <div v-if="activeView === 'player'" class="live-badge" v-show="playerStatus === 'playing'">
@@ -504,6 +574,106 @@
         </div>
       </div>
       <audio ref="playerAudio" style="display:none"></audio>
+    </main>
+
+    <!-- ── Jesoos main ── -->
+    <main v-else-if="activeView === 'jesoos'" class="jesoos-main">
+      <div class="actions-row">
+        <button class="action-btn primary" @click="jesoosStart" :disabled="jesoosStartLoading">▶ start</button>
+        <button class="action-btn secondary" @click="jesoosFetchAgendas">view agendas</button>
+      </div>
+
+      <div class="result-panel">
+        <div class="panel-header">
+          <span class="panel-title">start result</span>
+          <span v-if="jesoosStartBadge" class="panel-badge" :class="jesoosStartBadge">
+            {{ jesoosStartBadge === 'ok' ? 'ok' : jesoosStartBadge === 'err' ? 'error' : 'pending' }}
+          </span>
+        </div>
+        <div class="panel-body">
+          <div v-if="jesoosStartLoading" class="loading-text"><span class="spinner"></span>fetching</div>
+          <pre v-else-if="jesoosStartResult !== null" class="json-code"
+            :style="jesoosStartBadge === 'err' ? 'color:var(--accent3)' : ''">{{ typeof jesoosStartResult === 'string' ? jesoosStartResult : JSON.stringify(jesoosStartResult, null, 2) }}</pre>
+          <div v-else class="panel-empty">no result yet</div>
+        </div>
+      </div>
+
+      <div class="result-panel">
+        <div class="panel-header">
+          <span class="panel-title">agendas</span>
+          <span v-if="jesoosAgendasBadge" class="panel-badge" :class="jesoosAgendasBadge">
+            {{ jesoosAgendasBadge === 'ok' ? 'ok' : jesoosAgendasBadge === 'err' ? 'error' : 'pending' }}
+          </span>
+        </div>
+        <div class="panel-body">
+          <div v-if="jesoosAgendasLoading" class="loading-text"><span class="spinner"></span>fetching</div>
+          <template v-else-if="jesoosAgendasData">
+            <div class="agenda-header">
+              <div class="agenda-stats">
+                <div class="stat-box">
+                  <span class="stat-label">Brand</span>
+                  <span class="stat-value">{{ jesoosAgendaBrand }}</span>
+                </div>
+                <div class="stat-box">
+                  <span class="stat-label">Scenes</span>
+                  <span class="stat-value">{{ jesoosAgenda.totalScenes }}</span>
+                </div>
+                <div class="stat-box">
+                  <span class="stat-label">Duration</span>
+                  <span class="stat-value">{{ jesoosFormatDuration(jesoosAgenda.scenes.reduce((a,s) => a + s.durationSeconds, 0)) }}</span>
+                </div>
+                <div class="stat-box">
+                  <span class="stat-label">Songs</span>
+                  <span class="stat-value">{{ jesoosAgenda.scenes.reduce((a,s) => a + s.totalSongs, 0) }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="scenes-list">
+              <div v-for="(scene, idx) in jesoosAgenda.scenes" :key="scene.id"
+                class="scene-card" :class="{ expanded: jesoosExpandedScenes.has(idx) }">
+                <div class="scene-row" @click="jesoosToggleScene(idx)">
+                  <span class="scene-time">{{ jesoosFormatTime(scene.scheduledStartTime) }}</span>
+                  <span class="scene-type-badge" :class="jesoosSceneType(scene.title)">{{ jesoosSceneType(scene.title) }}</span>
+                  <span class="scene-title">{{ scene.title }}</span>
+                  <span class="scene-duration">{{ jesoosFormatDuration(scene.durationSeconds) }}</span>
+                  <span class="scene-songs">{{ scene.totalSongs }} songs</span>
+                  <span class="chevron-cell">›</span>
+                </div>
+                <div class="scene-payload" :class="{ open: jesoosExpandedScenes.has(idx) }"
+                  :ref="el => setJesoosSceneRef(idx, el)">
+                  <div class="payload-inner">
+                    <div class="payload-meta">
+                      <div class="meta-pair"><span class="meta-key">scene id</span><span class="meta-val">{{ scene.id }}</span></div>
+                      <div class="meta-pair"><span class="meta-key">duration</span><span class="meta-val">{{ scene.durationSeconds }}s</span></div>
+                      <div class="meta-pair"><span class="meta-key">songs</span><span class="meta-val">{{ scene.totalSongs }}</span></div>
+                      <div class="meta-pair"><span class="meta-key">start time</span><span class="meta-val">{{ scene.scheduledStartTime }}</span></div>
+                    </div>
+                    <div class="payload-json-wrap">
+                      <pre class="payload-json">{{ JSON.stringify(scene, null, 2) }}</pre>
+                      <button class="copy-btn" @click.stop="copyJson($event.target, JSON.stringify(scene, null, 2))">copy</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="json-dump-section" :class="{ expanded: jesoosJsonDumpExpanded }">
+              <div class="json-dump-header" @click="jesoosToggleJsonDump">
+                <span class="json-dump-title">full json dump</span>
+                <span class="json-dump-chevron">›</span>
+              </div>
+              <div class="json-dump-body" :ref="el => jesoosJsonDumpEl = el" :class="{ open: jesoosJsonDumpExpanded }">
+                <div class="json-dump-inner">
+                  <div class="payload-json-wrap">
+                    <pre class="json-code">{{ JSON.stringify(jesoosAgendasData, null, 2) }}</pre>
+                    <button class="copy-btn" @click="copyJson($event.target, JSON.stringify(jesoosAgendasData, null, 2))">copy all</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+          <div v-else class="panel-empty">no result yet</div>
+        </div>
+      </div>
     </main>
 
     <!-- ── Traces main ── -->
@@ -1013,6 +1183,104 @@
         navigator.clipboard.writeText(text).then(() => playerLog('log copied', 'ok'));
       }
 
+      // ── Jesoos ───────────────────────────────────────────────────────────────
+      const jesoosBrand          = ref('lumisonic');
+      const jesoosStatus         = ref('idle');
+      const jesoosStartLoading   = ref(false);
+      const jesoosStartResult    = ref(null);
+      const jesoosStartBadge     = ref('');
+      const jesoosAgendasLoading = ref(false);
+      const jesoosAgendasData    = ref(null);
+      const jesoosAgendasBadge   = ref('');
+      const jesoosExpandedScenes = reactive(new Set());
+      const jesoosJsonDumpExpanded = ref(false);
+      let jesoosJsonDumpEl = null;
+      const jesoosSceneRefs = {};
+
+      const jesoosAgendaBrand = computed(() => jesoosAgendasData.value ? Object.keys(jesoosAgendasData.value)[0] : '');
+      const jesoosAgenda      = computed(() => jesoosAgendasData.value ? jesoosAgendasData.value[jesoosAgendaBrand.value] : null);
+
+      function jesoosFormatDuration(sec) {
+        const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
+        return h > 0 ? `${h}h ${m}m` : `${m}m`;
+      }
+      function jesoosFormatTime(dt) {
+        return new Date(dt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+      }
+      function jesoosSceneType(title) {
+        const t = (title || '').toLowerCase();
+        if (t.includes('news')) return 'news';
+        if (t.includes('weather')) return 'weather';
+        if (t.includes('greeting') || t.includes('bye')) return 'greeting';
+        return 'music';
+      }
+      function setJesoosSceneRef(idx, el) { if (el) jesoosSceneRefs[idx] = el; else delete jesoosSceneRefs[idx]; }
+
+      function jesoosToggleScene(idx) {
+        const el = jesoosSceneRefs[idx]; if (!el) return;
+        if (jesoosExpandedScenes.has(idx)) {
+          gsap.to(el, { height: 0, duration: 0.3, ease: 'power2.inOut', onComplete() { jesoosExpandedScenes.delete(idx); } });
+        } else {
+          jesoosExpandedScenes.add(idx);
+          nextTick(() => {
+            const h = el.scrollHeight;
+            gsap.fromTo(el, { height: 0 }, { height: h, duration: 0.35, ease: 'power2.out', onComplete() { gsap.set(el, { height: 'auto' }); } });
+            gsap.fromTo(el.querySelectorAll('.meta-pair,.payload-json-wrap'), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.25, stagger: 0.04 });
+          });
+        }
+      }
+
+      function jesoosToggleJsonDump() {
+        const el = jesoosJsonDumpEl; if (!el) return;
+        if (jesoosJsonDumpExpanded.value) {
+          gsap.to(el, { height: 0, duration: 0.3, ease: 'power2.inOut', onComplete() { jesoosJsonDumpExpanded.value = false; } });
+        } else {
+          jesoosJsonDumpExpanded.value = true;
+          nextTick(() => {
+            const h = el.scrollHeight;
+            gsap.fromTo(el, { height: 0 }, { height: h, duration: 0.35, ease: 'power2.out', onComplete() { gsap.set(el, { height: 'auto' }); } });
+          });
+        }
+      }
+
+      async function jesoosStart() {
+        jesoosStartLoading.value = true;
+        jesoosStartBadge.value = 'pending';
+        jesoosStatus.value = 'running';
+        try {
+          const res = await fetch(`/jesoos/${jesoosBrand.value}/start`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+          const data = await res.json();
+          jesoosStartResult.value = data;
+          jesoosStartBadge.value = res.ok ? 'ok' : 'err';
+          jesoosStatus.value = res.ok ? 'running' : 'error';
+        } catch(e) {
+          jesoosStartResult.value = e.message;
+          jesoosStartBadge.value = 'err';
+          jesoosStatus.value = 'error';
+        } finally { jesoosStartLoading.value = false; }
+      }
+
+      async function jesoosFetchAgendas() {
+        jesoosAgendasLoading.value = true;
+        jesoosAgendasBadge.value = 'pending';
+        jesoosExpandedScenes.clear();
+        jesoosJsonDumpExpanded.value = false;
+        try {
+          const res = await fetch('/jesoos/agendas');
+          const data = await res.json();
+          jesoosAgendasData.value = data;
+          jesoosAgendasBadge.value = res.ok ? 'ok' : 'err';
+          nextTick(() => {
+            gsap.from('.agenda-header', { opacity: 0, y: -10, duration: 0.3 });
+            gsap.from('.scene-card', { opacity: 0, y: 20, duration: 0.3, stagger: 0.03, ease: 'power2.out' });
+          });
+        } catch(e) {
+          jesoosAgendasData.value = null;
+          jesoosStartResult.value = e.message;
+          jesoosAgendasBadge.value = 'err';
+        } finally { jesoosAgendasLoading.value = false; }
+      }
+
       onMounted(() => { connect(); tickInterval = setInterval(() => { timeTick.value++; }, 20000); });
       onUnmounted(() => { if (ws) ws.close(); clearInterval(tickInterval); playerStop(); });
 
@@ -1033,7 +1301,15 @@
         playerLastFragSize, playerLogs, playerNpTitle, playerNpArtist,
         isPlaying, playerVolume, isWaveformActive, playerStreamLabel,
         waveformCanvas, playerAudio, playerLogEl,
-        togglePlay, updateVolume, playerServerAction, playerOnStationChange, copyPlayerLog
+        togglePlay, updateVolume, playerServerAction, playerOnStationChange, copyPlayerLog,
+        // jesoos
+        jesoosBrand, jesoosStatus, jesoosStartLoading, jesoosStartResult, jesoosStartBadge,
+        jesoosAgendasLoading, jesoosAgendasData, jesoosAgendasBadge,
+        jesoosExpandedScenes, jesoosJsonDumpExpanded,
+        jesoosAgendaBrand, jesoosAgenda,
+        jesoosFormatDuration, jesoosFormatTime, jesoosSceneType,
+        setJesoosSceneRef, jesoosToggleScene, jesoosToggleJsonDump,
+        jesoosStart, jesoosFetchAgendas
       };
     }
   });
