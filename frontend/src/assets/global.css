@@ -117,13 +117,6 @@ body::after {
 .status-dot.disconnected { background: var(--accent3); }
 .status-dot.connecting   { background: var(--amber); }
 .status-text { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 1px; color: var(--text-muted); }
-.host-row { display: flex; gap: 6px; align-items: center; }
-.host-input {
-  flex: 1; font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.5px;
-  background: rgba(255,255,255,0.04); border: 1px solid var(--border-bright);
-  color: var(--text-muted); padding: 5px 8px; border-radius: 3px; outline: none; min-width: 0;
-}
-.host-input:focus { border-color: var(--accent); color: var(--text); }
 .reconnect-btn {
   font-family: var(--mono); font-size: 0.6rem; padding: 5px 8px; border-radius: 3px;
   border: 1px solid var(--border-bright); background: transparent; color: var(--text-dim);
