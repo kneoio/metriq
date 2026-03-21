@@ -12,6 +12,10 @@ import TracesView from '@/views/TracesView.vue'
 import AivoxView  from '@/views/AivoxView.vue'
 import JesoosView from '@/views/JesoosView.vue'
 
+// Build info
+const appVersion = __APP_VERSION__
+const buildTime  = __BUILD_TIME__
+
 // Stores
 const metriq = useMetriqStore()
 const conn   = useConnectionStore()
@@ -231,7 +235,7 @@ onUnmounted(() => conn.disconnect())
 
       <!-- ── Version ── -->
       <div style="padding:4px 12px;font-family:var(--mono);font-size:0.55rem;color:var(--text-muted);opacity:0.5;">
-        v{{ __APP_VERSION__ }} · {{ __BUILD_TIME__ }}
+        v{{ appVersion }} · {{ buildTime }}
       </div>
 
       <!-- ── WS status (always visible) ── -->
