@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import gsap from 'gsap'
 import { useMetriqStore } from '@/stores/metriq'
 import { useTracesStore } from '@/stores/traces'
@@ -10,13 +10,10 @@ import type { EventEntry } from '@/types'
 const metriq = useMetriqStore()
 const traces = useTracesStore()
 
-// ── State ─────────────────────────────────────────────────────────────────────
-const expandedTraceIds = reactive(new Set<number>())
-const flowContainerEl  = ref<HTMLElement | null>(null)
+const flowContainerEl = ref<HTMLElement | null>(null)
+const dialogEntry     = ref<EventEntry | null>(null)
+const copyLabel       = ref('COPY')
 
-import { ref } from 'vue'
-
-// ── Computed ──────────────────────────────────────────────────────────────────
 const eventsForSelectedTrace = computed((): EventEntry[] => {
   if (!traces.selectedTraceId) return []
   return ((metriq.byTrace[traces.selectedTraceId] ?? []) as EventEntry[])
@@ -24,10 +21,8 @@ const eventsForSelectedTrace = computed((): EventEntry[] => {
     .sort((a, b) => a.receivedAt.getTime() - b.receivedAt.getTime())
 })
 
-// Reset expanded trace nodes when trace changes
-watch(() => traces.selectedTraceId, () => { expandedTraceIds.clear() })
+watch(() => traces.selectedTraceId, () => { dialogEntry.value = null })
 
-// ── GSAP: animate newest flow node ────────────────────────────────────────────
 watch(() => eventsForSelectedTrace.value.length, (len, prev) => {
   if (len > (prev ?? 0)) {
     nextTick(() => {
@@ -39,24 +34,32 @@ watch(() => eventsForSelectedTrace.value.length, (len, prev) => {
   }
 })
 
-// ── Methods ───────────────────────────────────────────────────────────────────
-function toggleFlowNode(id: number) {
-  if (expandedTraceIds.has(id)) expandedTraceIds.delete(id)
-  else expandedTraceIds.add(id)
+function openDialog(entry: EventEntry) {
+  dialogEntry.value = entry
+  copyLabel.value = 'COPY'
 }
 
-function copyJson(btn: EventTarget | null, json: string) {
-  const el = btn as HTMLButtonElement
-  navigator.clipboard.writeText(json ?? '').then(() => {
-    const orig = el.textContent ?? ''
-    el.textContent = 'copied'
-    setTimeout(() => { el.textContent = orig }, 1800)
+function closeDialog() {
+  dialogEntry.value = null
+}
+
+function copyJson() {
+  if (!dialogEntry.value) return
+  const json = JSON.stringify(dialogEntry.value.data.payload ?? dialogEntry.value.data, null, 2)
+  navigator.clipboard.writeText(json).then(() => {
+    copyLabel.value = 'COPIED'
+    setTimeout(() => { copyLabel.value = 'COPY' }, 1800)
   })
 }
 
 function deltaMs(prev: EventEntry, curr: EventEntry): string {
   return flowTimeDelta(prev.receivedAt.getTime(), curr.receivedAt.getTime())
 }
+
+const dialogJson = computed(() => {
+  if (!dialogEntry.value) return ''
+  return JSON.stringify(dialogEntry.value.data.payload ?? dialogEntry.value.data, null, 2)
+})
 </script>
 
 <template>
@@ -78,9 +81,9 @@ function deltaMs(prev: EventEntry, curr: EventEntry): string {
               <span>→</span>
               <span v-if="traces.showFlowTiming" class="flow-arrow-time">{{ deltaMs(eventsForSelectedTrace[idx - 1], entry) }}</span>
             </div>
-            <div class="flow-node"
-              :class="{ expanded: expandedTraceIds.has(entry.id), 'is-error': isError(entry.data.type as string) }">
-              <div class="flow-node-header" @click="toggleFlowNode(entry.id)">
+            <div class="flow-node" :class="{ 'is-error': isError(entry.data.type as string) }"
+              @click="openDialog(entry)" style="cursor:pointer;">
+              <div class="flow-node-header">
                 <div class="flow-node-seq">#{{ idx + 1 }}</div>
                 <div class="flow-node-type" :style="isError(entry.data.type as string) ? 'color:var(--accent3)' : ''">
                   {{ (entry.data.type || 'UNKNOWN').toUpperCase() }}</div>
@@ -88,21 +91,67 @@ function deltaMs(prev: EventEntry, curr: EventEntry): string {
                 <div class="flow-node-code" v-if="entry.data.code">{{ entry.data.code }}</div>
                 <div class="flow-node-time">{{ relTime(entry.receivedAt) }}</div>
               </div>
-              <div v-if="expandedTraceIds.has(entry.id)" class="flow-node-payload">
-                <div class="flow-payload-meta">
-                  <div class="meta-pair"><span class="meta-key">trace</span><span class="meta-val" style="font-size:0.6rem;word-break:break-all;">{{ entry.data.traceId || '—' }}</span></div>
-                  <div class="meta-pair"><span class="meta-key">code</span><span class="meta-val">{{ entry.data.code || '—' }}</span></div>
-                  <div class="meta-pair"><span class="meta-key">time</span><span class="meta-val">{{ entry.receivedAt.toLocaleTimeString() }}</span></div>
-                </div>
-                <div v-if="entry.data.payload" class="payload-json-wrap">
-                  <pre class="payload-json" style="font-size:0.65rem;max-height:200px;">{{ JSON.stringify(entry.data.payload, null, 2) }}</pre>
-                  <button class="copy-btn" @click.stop="copyJson($event.target, JSON.stringify(entry.data.payload, null, 2))">copy</button>
-                </div>
-              </div>
             </div>
           </template>
         </div>
       </div>
     </template>
+
+    <!-- ── Modal dialog ── -->
+    <Teleport to="body">
+      <div v-if="dialogEntry" class="modal-backdrop" @click.self="closeDialog">
+        <div class="modal-box">
+          <div class="modal-header">
+            <div class="modal-meta">
+              <span class="modal-type" :style="isError(dialogEntry.data.type as string) ? 'color:var(--accent3)' : 'color:var(--accent)'">
+                {{ (dialogEntry.data.type || 'UNKNOWN').toUpperCase() }}
+              </span>
+              <span v-html="servicePillHtml(dialogEntry.data.serviceId as string)"></span>
+              <span v-if="dialogEntry.data.code" class="modal-code">{{ dialogEntry.data.code }}</span>
+              <span class="modal-time">{{ dialogEntry.receivedAt.toLocaleTimeString() }}</span>
+            </div>
+            <div class="modal-actions">
+              <button class="action-btn" @click="copyJson">{{ copyLabel }}</button>
+              <button class="modal-close" @click="closeDialog">✕</button>
+            </div>
+          </div>
+          <pre class="modal-json">{{ dialogJson }}</pre>
+        </div>
+      </div>
+    </Teleport>
   </main>
 </template>
+
+<style scoped>
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-box {
+  background: var(--surface); border: 1px solid var(--border-bright);
+  border-radius: 6px; width: min(720px, 92vw); max-height: 80vh;
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap;
+}
+.modal-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.modal-type { font-family: var(--mono); font-size: 0.7rem; font-weight: 600; letter-spacing: 1px; }
+.modal-code { font-family: var(--mono); font-size: 0.65rem; color: var(--amber); }
+.modal-time { font-family: var(--mono); font-size: 0.6rem; color: var(--text-dim); }
+.modal-actions { display: flex; align-items: center; gap: 8px; }
+.modal-close {
+  background: none; border: 1px solid var(--border); color: var(--text-dim);
+  font-size: 0.7rem; cursor: pointer; padding: 3px 8px; border-radius: 3px;
+  transition: all 0.15s;
+}
+.modal-close:hover { border-color: var(--accent3); color: var(--accent3); }
+.modal-json {
+  font-family: var(--mono); font-size: 0.68rem; line-height: 1.6;
+  color: var(--text-muted); padding: 16px; overflow: auto;
+  white-space: pre; flex: 1;
+}
+</style>
