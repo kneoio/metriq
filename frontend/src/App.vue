@@ -234,9 +234,6 @@ onUnmounted(() => conn.disconnect())
         <div class="status-row">
           <div class="status-dot" :class="conn.status"></div>
           <span class="status-text">{{ conn.status }}</span>
-        </div>
-        <div class="host-row">
-          <input class="host-input" v-model="conn.wsHost" @keydown.enter="conn.reconnect()" placeholder="host:port" spellcheck="false" />
           <button class="reconnect-btn" @click="conn.reconnect()" title="Reconnect">↺</button>
         </div>
       </div>

@@ -5,10 +5,7 @@ import { useMetriqStore } from './metriq'
 
 export const useConnectionStore = defineStore('connection', () => {
   // ── State ──────────────────────────────────────────────────────────────────
-  const status  = ref<ConnectionStatus>('connecting')
-  const wsHost  = ref<string>(
-    localStorage.getItem('metriq_ws_host') ?? window.location.host
-  )
+  const status = ref<ConnectionStatus>('connecting')
 
   let ws: WebSocket | null = null
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null
@@ -16,10 +13,10 @@ export const useConnectionStore = defineStore('connection', () => {
   // ── Connect ────────────────────────────────────────────────────────────────
   function connect() {
     const metriq = useMetriqStore()
-    const host   = wsHost.value.trim() || window.location.host
+    const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws'
     status.value = 'connecting'
 
-    ws = new WebSocket(`ws://${host}/metriq/ws/metrics`)
+    ws = new WebSocket(`${scheme}://${window.location.host}/metriq/ws/metrics`)
 
     ws.onopen = () => {
       status.value = 'connected'
@@ -44,14 +41,9 @@ export const useConnectionStore = defineStore('connection', () => {
   }
 
   // ── Reconnect (manual) ────────────────────────────────────────────────────
-  function reconnect(newHost?: string) {
-    if (newHost !== undefined) wsHost.value = newHost
-    const host = wsHost.value.trim() || window.location.host
-    localStorage.setItem('metriq_ws_host', host)
-
+  function reconnect() {
     if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null }
     if (ws) { ws.onclose = null; ws.close(); ws = null }
-
     connect()
   }
 
@@ -62,5 +54,5 @@ export const useConnectionStore = defineStore('connection', () => {
     status.value = 'disconnected'
   }
 
-  return { status, wsHost, connect, reconnect, disconnect }
+  return { status, connect, reconnect, disconnect }
 })
