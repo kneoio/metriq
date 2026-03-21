@@ -229,6 +229,11 @@ onUnmounted(() => conn.disconnect())
         </div>
       </template>
 
+      <!-- ── Version ── -->
+      <div style="padding:4px 12px;font-family:var(--mono);font-size:0.55rem;color:var(--text-muted);opacity:0.5;">
+        v{{ __APP_VERSION__ }} · {{ __BUILD_TIME__ }}
+      </div>
+
       <!-- ── WS status (always visible) ── -->
       <div class="status-indicator">
         <div class="status-row">
