@@ -188,14 +188,11 @@ function togglePlay() {
 function updateVolume() { if (playerAudio.value) playerAudio.value.volume = Number(playerVolume.value) }
 
 async function playerServerAction(method: 'POST' | 'DELETE') {
-  const brand = aivox.station
-  playerLog(`${method === 'POST' ? 'starting' : 'stopping'} server stream [${brand}]`, 'info')
-  try {
-    const r = await fetch('/aivox/' + brand + '/command/', { method })
-    const text = await r.text()
-    playerLog(`server ${r.status}: ${text}`, r.ok ? 'ok' : 'error')
-    if (r.ok) gsap.fromTo('.player-card', { borderColor: 'rgba(33,150,243,0.8)' }, { borderColor: 'rgba(51,51,51,1)', duration: 1.2 })
-  } catch (e: any) { playerLog('server action failed: ' + e.message, 'error') }
+  playerLog(`${method === 'POST' ? 'starting' : 'stopping'} server stream [${aivox.station}]`, 'info')
+  await aivox.serverAction(method)
+  playerLog('server: ' + aivox.cmdStatus, aivox.cmdStatus.startsWith('error') ? 'error' : 'ok')
+  if (!aivox.cmdStatus.startsWith('error'))
+    gsap.fromTo('.player-card', { borderColor: 'rgba(33,150,243,0.8)' }, { borderColor: 'rgba(51,51,51,1)', duration: 1.2 })
 }
 
 function copyPlayerLog() {

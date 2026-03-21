@@ -2,10 +2,17 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "Metriq (Quarkus dev)",
-      "runtimeExecutable": "cmd",
-      "runtimeArgs": ["/c", "mvn", "quarkus:dev"],
+      "name": "Quarkus Backend",
+      "runtimeExecutable": "mvn",
+      "runtimeArgs": ["quarkus:dev"],
       "port": 38790
+    },
+    {
+      "name": "Vite Frontend",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js", "run", "dev"],
+      "cwd": "frontend",
+      "port": 5173
     }
   ]
 }

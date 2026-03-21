@@ -128,6 +128,20 @@ onUnmounted(() => conn.disconnect())
         </div>
         <div class="sidebar-divider"></div>
         <div class="filter-section">
+          <div class="filter-label">Quick start</div>
+          <div class="select-wrap" style="margin-bottom:6px;">
+            <select class="station-select" v-model="aivox.station">
+              <option v-for="s in STATION_LIST" :key="s" :value="s">{{ s }}</option>
+            </select>
+          </div>
+          <div class="btn-row">
+            <button class="action-btn" @click="aivox.serverAction('POST')">▶ start</button>
+            <button class="action-btn danger" @click="aivox.serverAction('DELETE')">■ stop</button>
+          </div>
+          <div v-if="aivox.cmdStatus" class="filter-label" style="margin-top:4px;opacity:0.7;">{{ aivox.cmdStatus }}</div>
+        </div>
+        <div class="sidebar-divider"></div>
+        <div class="filter-section">
           <div class="filter-label">Filter by service</div>
           <div class="filter-tags">
             <span v-for="svc in SERVICE_OPTIONS" :key="svc.value" class="filter-tag"
