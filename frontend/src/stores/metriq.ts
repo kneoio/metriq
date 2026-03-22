@@ -3,6 +3,13 @@ import { defineStore } from 'pinia'
 import type { MetricEventData, EventEntry } from '@/types'
 import { isError } from '@/utils/service'
 
+// Shape returned by GET /metriq/api/snapshot
+interface Snapshot {
+  events:  MetricEventData[]
+  byBrand: Record<string, MetricEventData[]>
+  byTrace: Record<string, MetricEventData[]>
+}
+
 export const useMetriqStore = defineStore('metriq', () => {
   // ── State ──────────────────────────────────────────────────────────────────
   const events              = ref<EventEntry[]>([])
@@ -36,7 +43,59 @@ export const useMetriqStore = defineStore('metriq', () => {
     })
   )
 
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function makeEntry(data: MetricEventData): EventEntry {
+    // _receivedAt is stamped by the BE EventStore; fall back to now
+    const ts = (data as any)._receivedAt
+    const receivedAt = ts ? new Date(ts) : new Date()
+    return { data, receivedAt, id: receivedAt.getTime() + Math.random() }
+  }
+
+  function registerMeta(data: MetricEventData) {
+    const type  = (data.type      ?? 'UNKNOWN').toUpperCase()
+    const brand = (data.brandName ?? '').trim()
+    if (!knownTypes.value.includes(type))   knownTypes.value.push(type)
+    if (brand && !knownBrands.value.includes(brand)) knownBrands.value.push(brand)
+  }
+
   // ── Actions ────────────────────────────────────────────────────────────────
+
+  /**
+   * Seed the store from a BE snapshot (called once on WS connect).
+   * Completely replaces existing state so the FE stays thin and in sync.
+   */
+  function seedFromSnapshot(snapshot: Snapshot) {
+    // Clear
+    events.value = []
+    totalCount.value = 0
+    errorCount.value = 0
+    recentTimestamps.value = []
+    knownTypes.value = []
+    knownBrands.value = []
+    Object.keys(byBrand).forEach(k => delete byBrand[k])
+    Object.keys(byTrace).forEach(k => delete byTrace[k])
+
+    // Seed global event list (newest first from BE)
+    ;(snapshot.events ?? []).forEach(data => {
+      registerMeta(data)
+      if (isError(data.type)) errorCount.value++
+      events.value.push(makeEntry(data))
+      totalCount.value++
+    })
+
+    // Seed byBrand (oldest-first lists from BE)
+    Object.entries(snapshot.byBrand ?? {}).forEach(([brand, evts]) => {
+      byBrand[brand] = evts.map(makeEntry)
+      if (!knownBrands.value.includes(brand)) knownBrands.value.push(brand)
+    })
+
+    // Seed byTrace
+    Object.entries(snapshot.byTrace ?? {}).forEach(([traceId, evts]) => {
+      byTrace[traceId] = evts.map(makeEntry)
+    })
+  }
+
+  /** Live event from WebSocket — appended on top of existing state. */
   function ingestEvent(data: MetricEventData) {
     const now = Date.now()
     totalCount.value++
@@ -44,34 +103,29 @@ export const useMetriqStore = defineStore('metriq', () => {
     recentTimestamps.value = recentTimestamps.value.filter(t => now - t < 60_000)
 
     if (isError(data.type)) errorCount.value++
+    registerMeta(data)
 
-    const type = (data.type ?? 'UNKNOWN').toUpperCase()
-    if (!knownTypes.value.includes(type)) knownTypes.value.push(type)
+    const entry = makeEntry(data)
 
-    const brand = (data.brandName ?? '').trim()
-    if (brand && !knownBrands.value.includes(brand)) knownBrands.value.push(brand)
-
-    const entry: EventEntry = { data, receivedAt: new Date(), id: now + Math.random() }
+    // ── global list ──
     events.value.unshift(entry)
     if (events.value.length > 120) events.value.pop()
-
-    // Drop events older than 15 min
     const cutoff = now - 15 * 60 * 1000
     events.value = events.value.filter(e => e.receivedAt.getTime() > cutoff)
 
-    // ── Feed byBrand ──
+    // ── byBrand ──
+    const brand = (data.brandName ?? '').trim()
     if (brand) {
       if (!byBrand[brand]) byBrand[brand] = []
       byBrand[brand].push(entry)
       if (byBrand[brand].length > 500) byBrand[brand].shift()
     }
 
-    // ── Feed byTrace ──
+    // ── byTrace ──
     const traceId = String(data.traceId ?? '').trim()
-    if (traceId) {
+    if (traceId && traceId !== 'null') {
       if (!byTrace[traceId]) byTrace[traceId] = []
       byTrace[traceId].push(entry)
-      // Cap total traces at 200 — evict oldest
       const keys = Object.keys(byTrace)
       if (keys.length > 200) {
         const oldest = keys.reduce((a, b) =>
@@ -92,7 +146,6 @@ export const useMetriqStore = defineStore('metriq', () => {
     activeFilter.value = 'all'
     activeBrandFilter.value = 'all'
     activeServiceFilter.value = 'all'
-    // Clear reactive maps
     Object.keys(byBrand).forEach(k => delete byBrand[k])
     Object.keys(byTrace).forEach(k => delete byTrace[k])
   }
@@ -106,6 +159,7 @@ export const useMetriqStore = defineStore('metriq', () => {
     activeFilter, activeBrandFilter, activeServiceFilter,
     knownTypes, knownBrands, byBrand, byTrace,
     rateCount, filteredEvents,
-    ingestEvent, clearAllEvents, setFilter, setBrandFilter, setServiceFilter,
+    seedFromSnapshot, ingestEvent, clearAllEvents,
+    setFilter, setBrandFilter, setServiceFilter,
   }
 })

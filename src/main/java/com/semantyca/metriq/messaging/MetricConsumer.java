@@ -3,6 +3,7 @@ package com.semantyca.metriq.messaging;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.semantyca.mixpla.dto.queue.metric.MetricEventDTO;
+import com.semantyca.metriq.store.EventStore;
 import com.semantyca.metriq.ws.BrandMetricWebSocket;
 import com.semantyca.metriq.ws.MetricWebSocket;
 import io.smallrye.mutiny.Uni;
@@ -20,6 +21,9 @@ public class MetricConsumer {
             .registerModule(new JavaTimeModule());
 
     @Inject
+    EventStore eventStore;
+
+    @Inject
     MetricWebSocket metricWebSocket;
 
     @Inject
@@ -32,7 +36,10 @@ public class MetricConsumer {
         return Uni.createFrom().item(() -> {
                     try {
                         String raw = new String(payload);
-                        //LOGGER.info("Received metric event: " + raw);
+
+                        // Store first — before broadcasting — so any REST client
+                        // connecting concurrently already sees the event.
+                        eventStore.add(raw);
 
                         MetricEventDTO dto = parseDto(payload);
                         String brand = dto != null ? dto.brandName() : extractBrand(raw);

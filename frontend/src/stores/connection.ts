@@ -18,8 +18,20 @@ export const useConnectionStore = defineStore('connection', () => {
 
     ws = new WebSocket(`${scheme}://${window.location.host}/metriq/ws/metrics`)
 
-    ws.onopen = () => {
+    ws.onopen = async () => {
       status.value = 'connected'
+      // Seed Pinia from BE snapshot so any client connecting at any time
+      // immediately gets full historical data — not just events since page load.
+      try {
+        const res = await fetch('/metriq/api/snapshot')
+        if (res.ok) {
+          metriq.seedFromSnapshot(await res.json())
+        } else {
+          console.warn('[metriq] snapshot fetch returned', res.status)
+        }
+      } catch (e) {
+        console.warn('[metriq] snapshot fetch failed — will rely on live WS only', e)
+      }
     }
 
     ws.onmessage = (msg: MessageEvent) => {
