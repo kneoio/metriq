@@ -12,7 +12,8 @@ const traces = useTracesStore()
 
 const flowContainerEl = ref<HTMLElement | null>(null)
 const dialogEntry     = ref<EventEntry | null>(null)
-const copyLabel       = ref('COPY')
+const copyLabel         = ref('COPY')
+const snapshotLabel     = ref('SNAPSHOT')
 
 const eventsForSelectedTrace = computed((): EventEntry[] => {
   if (!traces.selectedTraceId) return []
@@ -52,6 +53,30 @@ function copyJson() {
   })
 }
 
+function copySnapshot() {
+  const events = eventsForSelectedTrace.value
+  const brand  = events.find(e => e.data.brandName)?.data.brandName ?? null
+  const snapshot = {
+    traceId:    traces.selectedTraceId,
+    brand,
+    snapshotAt: new Date().toISOString(),
+    eventCount: events.length,
+    events: events.map((e, idx) => ({
+      seq:       idx + 1,
+      receivedAt: e.receivedAt.toISOString(),
+      type:      e.data.type ?? null,
+      brandName: e.data.brandName ?? null,
+      serviceId: e.data.serviceId ?? null,
+      code:      e.data.code ?? null,
+      payload:   e.data.payload ?? e.data,
+    })),
+  }
+  navigator.clipboard.writeText(JSON.stringify(snapshot, null, 2)).then(() => {
+    snapshotLabel.value = 'COPIED!'
+    setTimeout(() => { snapshotLabel.value = 'SNAPSHOT' }, 1800)
+  })
+}
+
 function deltaMs(prev: EventEntry, curr: EventEntry): string {
   return flowTimeDelta(prev.receivedAt.getTime(), curr.receivedAt.getTime())
 }
@@ -73,6 +98,7 @@ const dialogJson = computed(() => {
         <span class="trace-header-label">trace</span>
         <span class="trace-header-id">{{ traces.selectedTraceId }}</span>
         <span class="trace-event-count">{{ eventsForSelectedTrace.length }} events</span>
+        <button class="action-btn snapshot-btn" @click="copySnapshot">{{ snapshotLabel }}</button>
       </div>
       <div class="flow-scroll">
         <div class="flow-container" ref="flowContainerEl">
@@ -125,6 +151,8 @@ const dialogJson = computed(() => {
 </template>
 
 <style scoped>
+.snapshot-btn { margin-left: auto; }
+
 .modal-backdrop {
   position: fixed; inset: 0; z-index: 1000;
   background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
