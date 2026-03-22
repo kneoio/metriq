@@ -81,9 +81,13 @@ onUnmounted(() => conn.disconnect())
       </div>
 
       <nav class="nav-menu">
+        <!-- Global view -->
         <div class="nav-item" :class="{ active: activeView === 'stream' }" @click="activeView = 'stream'">
           <span class="nav-dot"></span>All Metrics
         </div>
+
+        <!-- Brand-context views -->
+        <div class="nav-section-label">{{ context.activeBrand }}</div>
         <div class="nav-item" :class="{ active: activeView === 'traces' }" @click="activeView = 'traces'">
           <span class="nav-dot"></span>Traces
         </div>
@@ -142,20 +146,6 @@ onUnmounted(() => conn.disconnect())
 
       <!-- ── Aivox sidebar ── -->
       <template v-else-if="activeView === 'player'">
-        <div class="sidebar-section">
-          <div class="stat-item">
-            <span class="stat-label">frags loaded</span>
-            <span class="stat-value">{{ aivox.fragCount }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">last frag</span>
-            <span class="stat-value amber small">{{ aivox.lastFragSize }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">errors</span>
-            <span class="stat-value red">{{ aivox.errorCount }}</span>
-          </div>
-        </div>
         <div class="status-indicator" style="border-top:1px solid var(--border);">
           <div class="status-row">
             <div class="status-dot" :class="aivox.status"></div>
