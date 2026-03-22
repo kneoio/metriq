@@ -246,6 +246,11 @@ onUnmounted(() => conn.disconnect())
           :title="aivox.isPlaying ? 'Pause stream' : 'Play stream'">
           {{ aivox.isPlaying ? '❚❚' : '▶' }}
         </button>
+        <div class="now-playing" v-if="aivox.npTitle && aivox.npTitle !== '—'">
+          <span class="np-title">{{ aivox.npTitle }}</span>
+          <span class="np-sep" v-if="aivox.npArtist && aivox.npArtist !== '—'">·</span>
+          <span class="np-artist" v-if="aivox.npArtist && aivox.npArtist !== '—'">{{ aivox.npArtist }}</span>
+        </div>
         <div class="live-badge" v-show="aivox.isPlaying">
           <div class="live-dot"></div><span>LIVE</span>
         </div>
@@ -342,5 +347,33 @@ onUnmounted(() => conn.disconnect())
   height: 14px;
   background: var(--border, #333);
   margin: 0 2px;
+}
+
+.now-playing {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 220px;
+  overflow: hidden;
+}
+.np-title {
+  font-family: var(--mono, monospace);
+  font-size: 0.6rem;
+  color: var(--accent, #2196F3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.np-sep {
+  font-size: 0.55rem;
+  color: var(--text-dim, #555);
+}
+.np-artist {
+  font-family: var(--mono, monospace);
+  font-size: 0.6rem;
+  color: var(--text-muted, #888);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

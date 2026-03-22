@@ -18,6 +18,7 @@ export const useAivoxStore = defineStore('aivox', () => {
       const r    = await fetch('/aivox/' + station.value + '/command/', { method })
       const text = await r.text()
       cmdStatus.value = r.ok ? (method === 'POST' ? 'started' : 'stopped') : 'error: ' + text
+      if (r.ok && method === 'DELETE') stopStream()   // stop local player when server stops
     } catch (e: any) {
       cmdStatus.value = 'error: ' + e.message
     }
@@ -35,16 +36,19 @@ export const useAivoxStore = defineStore('aivox', () => {
   const analyser          = shallowRef<AnalyserNode | null>(null)
 
   // Callbacks registered by GlobalPlayer once it mounts
-  let _toggle: (() => void) | null = null
+  let _toggle: (() => void) | null        = null
   let _load:   ((src: string) => void) | null = null
+  let _stop:   (() => void) | null        = null
 
-  function registerPlayer(fns: { toggle: () => void; load: (src: string) => void }) {
+  function registerPlayer(fns: { toggle: () => void; load: (src: string) => void; stop: () => void }) {
     _toggle = fns.toggle
     _load   = fns.load
+    _stop   = fns.stop
   }
 
   function togglePlay()            { _toggle?.() }
   function loadStream(src: string) { _load?.(src) }
+  function stopStream()            { _stop?.() }
 
   function log(msg: string, type: PlayerLogLine['type'] = 'info') {
     const now = new Date()
@@ -59,6 +63,6 @@ export const useAivoxStore = defineStore('aivox', () => {
     // player
     isPlaying, npTitle, npArtist, playerStreamLabel, playerLogs,
     isWaveformActive, playerVolume, analyser,
-    registerPlayer, togglePlay, loadStream, log,
+    registerPlayer, togglePlay, loadStream, stopStream, log,
   }
 })

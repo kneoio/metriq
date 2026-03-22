@@ -61,15 +61,37 @@ function bindAudioEvents() {
 }
 
 // ── Now playing ──────────────────────────────────────────────────────────────
-function updateNowPlaying(frag: any) {
-  const title = frag.title || ''; if (!title) return
-  const di    = title.indexOf(' - ')
-  const t     = di !== -1 ? title.slice(0, di).trim() : title.trim()
-  const ar    = di !== -1 ? title.slice(di + 3).trim() : ''
+function setNowPlaying(t: string, ar: string) {
   if (t === aivox.npTitle && ar === aivox.npArtist) return
   aivox.npTitle  = t  || '—'
   aivox.npArtist = ar || '—'
-  aivox.log('now playing: ' + title, 'ok')
+  aivox.log('now playing: ' + [t, ar].filter(Boolean).join(' — '), 'ok')
+}
+
+function updateNowPlayingFromExtInf(frag: any) {
+  const title = frag.title || ''; if (!title) return
+  const di = title.indexOf(' - ')
+  setNowPlaying(
+    di !== -1 ? title.slice(0, di).trim() : title.trim(),
+    di !== -1 ? title.slice(di + 3).trim() : ''
+  )
+}
+
+function updateNowPlayingFromID3(data: Uint8Array) {
+  try {
+    const txt = new TextDecoder('latin1').decode(data)
+    const getTag = (tag: string) => {
+      const idx = txt.indexOf(tag); if (idx === -1) return ''
+      // skip 10-byte frame header, then skip encoding byte
+      const start = idx + 10 + 1
+      const end   = txt.indexOf('\0', start + 1)
+      return txt.slice(start, end > start ? end : start + 100)
+        .replace(/[^\x20-\x7E\u00C0-\u024F]/g, '').trim()
+    }
+    const t  = getTag('TIT2')
+    const ar = getTag('TPE1')
+    if (t || ar) setNowPlaying(t, ar)
+  } catch { /* ignore malformed ID3 */ }
 }
 
 // ── Stop / Load ───────────────────────────────────────────────────────────────
@@ -114,7 +136,10 @@ function playerLoad(src: string) {
     const kb = ((((d as any).stats?.loaded ?? 0) / 1024)).toFixed(1)
     aivox.log(`frag [sn=${d.frag.sn}] ${kb} KB`, 'ok')
     aivox.lastFragSize = kb + ' KB'
-    updateNowPlaying(d.frag)
+    updateNowPlayingFromExtInf(d.frag)
+  })
+  pHls.on(Hls.Events.FRAG_PARSING_METADATA, (_e, d) => {
+    d.samples?.forEach((s: any) => { if (s.data) updateNowPlayingFromID3(s.data) })
   })
   pHls.on(Hls.Events.ERROR, (_e, data) => {
     if (pHlsDestroyed) return
@@ -148,7 +173,7 @@ watch(() => aivox.station, () => {
 
 onMounted(() => {
   // Register controls so the store (and topbar play button) can call them
-  aivox.registerPlayer({ toggle: togglePlay, load: playerLoad })
+  aivox.registerPlayer({ toggle: togglePlay, load: playerLoad, stop: playerStop })
 })
 
 onUnmounted(() => { playerStop() })
