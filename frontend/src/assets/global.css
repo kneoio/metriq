@@ -95,9 +95,13 @@ body::after {
 }
 .trace-item:hover { border-color: var(--border-bright); }
 .trace-item.active { border-color: var(--accent); background: rgba(33,150,243,0.05); }
+.trace-item.multi { border-color: rgba(245,166,35,0.3); }
+.trace-item.multi .trace-item-id { color: var(--amber); }
+.trace-item.multi:hover { border-color: var(--amber); }
 .trace-item-id { font-family: var(--mono); font-size: 0.58rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .trace-item-meta { display: flex; gap: 8px; align-items: center; }
 .trace-count-badge { font-family: var(--mono); font-size: 0.55rem; padding: 1px 6px; border-radius: 10px; background: rgba(33,150,243,0.12); color: var(--accent2); border: 1px solid rgba(33,150,243,0.2); }
+.trace-count-badge.multi-badge { background: rgba(245,166,35,0.15); color: var(--amber); border-color: rgba(245,166,35,0.35); }
 .trace-time-label { font-family: var(--mono); font-size: 0.55rem; color: var(--text-dim); }
 
 /* ── Service pills ── */

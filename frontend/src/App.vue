@@ -193,10 +193,10 @@ onUnmounted(() => conn.disconnect())
         <div class="trace-list">
           <div v-if="tracesForSelectedBrand.length === 0" class="sidebar-empty">no traces</div>
           <div v-for="t in tracesForSelectedBrand" :key="t.id" class="trace-item"
-            :class="{ active: traces.selectedTraceId === t.id }" @click="traces.selectedTraceId = t.id">
+            :class="{ active: traces.selectedTraceId === t.id, multi: t.count > 1 }" @click="traces.selectedTraceId = t.id">
             <div class="trace-item-id">{{ t.id }}</div>
             <div class="trace-item-meta">
-              <span class="trace-count-badge">{{ t.count }}</span>
+              <span class="trace-count-badge" :class="{ 'multi-badge': t.count > 1 }">{{ t.count }}</span>
               <span class="trace-time-label">{{ relTime(t.lastTime) }}</span>
             </div>
           </div>
