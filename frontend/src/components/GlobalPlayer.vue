@@ -6,9 +6,11 @@
  */
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import Hls from 'hls.js'
-import { useAivoxStore } from '@/stores/aivox'
+import { useAivoxStore }   from '@/stores/aivox'
+import { useContextStore } from '@/stores/context'
 
-const aivox = useAivoxStore()
+const aivox   = useAivoxStore()
+const context = useContextStore()
 
 const audioEl = ref<HTMLAudioElement | null>(null)
 
@@ -156,9 +158,11 @@ function playerLoad(src: string) {
 }
 
 // ── Controls ──────────────────────────────────────────────────────────────────
+function streamUrl() { return `/stream/${context.activeBrand}/stream.m3u8` }
+
 function togglePlay() {
   const a = audioEl.value; if (!a) return
-  if (!a.src && !pHls) { playerLoad(`/stream/${aivox.station}/stream.m3u8`); return }
+  if (!a.src && !pHls) { playerLoad(streamUrl()); return }
   if (a.paused) a.play().catch(e => aivox.log('play() rejected: ' + e.message, 'warn'))
   else a.pause()
 }
@@ -166,9 +170,12 @@ function togglePlay() {
 // Volume sync
 watch(() => aivox.playerVolume, v => { if (audioEl.value) audioEl.value.volume = Number(v) })
 
-// Station change → reload if already playing
-watch(() => aivox.station, () => {
-  if (pHls && !pHlsDestroyed) playerLoad(`/stream/${aivox.station}/stream.m3u8`)
+// Brand context change → stop player (user presses play again for the new brand)
+watch(() => context.activeBrand, () => {
+  if (!pHlsDestroyed) {
+    aivox.log(`brand → ${context.activeBrand}, stopping player`, 'info')
+    playerStop()
+  }
 })
 
 onMounted(() => {

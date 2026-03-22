@@ -1,11 +1,13 @@
 import { ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
+import { useContextStore } from '@/stores/context'
 import type { PlayerLogLine } from '@/types'
 
 export const useAivoxStore = defineStore('aivox', () => {
 
-  // ── Server / stream state ────────────────────────────────────────────────────
-  const station      = ref('lumisonic')
+  const context = useContextStore()
+
+  // ── Stream state ─────────────────────────────────────────────────────────────
   const fragCount    = ref(0)
   const lastFragSize = ref('—')
   const errorCount   = ref(0)
@@ -15,7 +17,7 @@ export const useAivoxStore = defineStore('aivox', () => {
   async function serverAction(method: 'POST' | 'DELETE') {
     cmdStatus.value = method === 'POST' ? 'starting…' : 'stopping…'
     try {
-      const r    = await fetch('/aivox/' + station.value + '/command/', { method })
+      const r    = await fetch('/aivox/' + context.activeBrand + '/command/', { method })
       const text = await r.text()
       cmdStatus.value = r.ok ? (method === 'POST' ? 'started' : 'stopped') : 'error: ' + text
       if (r.ok && method === 'DELETE') stopStream()   // stop local player when server stops
@@ -36,9 +38,9 @@ export const useAivoxStore = defineStore('aivox', () => {
   const analyser          = shallowRef<AnalyserNode | null>(null)
 
   // Callbacks registered by GlobalPlayer once it mounts
-  let _toggle: (() => void) | null        = null
+  let _toggle: (() => void) | null            = null
   let _load:   ((src: string) => void) | null = null
-  let _stop:   (() => void) | null        = null
+  let _stop:   (() => void) | null            = null
 
   function registerPlayer(fns: { toggle: () => void; load: (src: string) => void; stop: () => void }) {
     _toggle = fns.toggle
@@ -58,8 +60,8 @@ export const useAivoxStore = defineStore('aivox', () => {
   }
 
   return {
-    // server
-    station, fragCount, lastFragSize, errorCount, status, cmdStatus, serverAction,
+    // stream
+    fragCount, lastFragSize, errorCount, status, cmdStatus, serverAction,
     // player
     isPlaying, npTitle, npArtist, playerStreamLabel, playerLogs,
     isWaveformActive, playerVolume, analyser,

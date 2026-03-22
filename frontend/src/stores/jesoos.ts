@@ -1,17 +1,19 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
+import { useContextStore } from '@/stores/context'
 
 export const useJesoosStore = defineStore('jesoos', () => {
-  const brand      = ref('lumisonic')
+
+  const context    = useContextStore()
   const status     = ref('idle')
-  const cmdStatus  = ref('')          // 'pending' | 'ok' | 'err' | ''
+  const cmdStatus  = ref('')
   const cmdResult  = ref<unknown>(null)
 
   async function command(cmd: string) {
     cmdStatus.value = 'pending'
     cmdResult.value = null
     try {
-      const res  = await fetch(`/jesoos/${brand.value}/${cmd}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+      const res  = await fetch(`/jesoos/${context.activeBrand}/${cmd}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
       const data = await res.json()
       cmdResult.value = data
       cmdStatus.value = res.ok ? 'ok' : 'err'
@@ -29,5 +31,5 @@ export const useJesoosStore = defineStore('jesoos', () => {
   const enableDj  = () => command('enabledj')
   const disableDj = () => command('disabledj')
 
-  return { brand, status, cmdStatus, cmdResult, start, stop, enableDj, disableDj }
+  return { status, cmdStatus, cmdResult, start, stop, enableDj, disableDj }
 })

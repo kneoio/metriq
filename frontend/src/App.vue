@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue'
-import { useMetriqStore } from '@/stores/metriq'
+import { useMetriqStore }    from '@/stores/metriq'
 import { useConnectionStore } from '@/stores/connection'
-import { useAivoxStore  } from '@/stores/aivox'
-import { useJesoosStore } from '@/stores/jesoos'
-import { useTracesStore } from '@/stores/traces'
+import { useAivoxStore }     from '@/stores/aivox'
+import { useJesoosStore }    from '@/stores/jesoos'
+import { useTracesStore }    from '@/stores/traces'
+import { useContextStore }   from '@/stores/context'
 import { SERVICE_OPTIONS, STATION_LIST } from '@/utils/service'
 import { relTime } from '@/utils/time'
 import StreamView   from '@/views/StreamView.vue'
@@ -18,27 +19,24 @@ const appVersion = __APP_VERSION__
 const buildTime  = __BUILD_TIME__
 
 // Stores
-const metriq = useMetriqStore()
-const conn   = useConnectionStore()
-const aivox  = useAivoxStore()
-const jesoos = useJesoosStore()
-const traces = useTracesStore()
+const metriq   = useMetriqStore()
+const conn     = useConnectionStore()
+const aivox    = useAivoxStore()
+const jesoos   = useJesoosStore()
+const traces   = useTracesStore()
+const context  = useContextStore()
 
 // Derive the active view from connection store (single source of truth nav)
 import { ref, watch } from 'vue'
 type View = 'stream' | 'traces' | 'player' | 'jesoos'
 const activeView = ref<View>('stream')
 
-// Traces sidebar computed
-const traceBrands = computed(() => Object.keys(metriq.byBrand))
-
+// Traces sidebar: always follows the global brand context
 const tracesForSelectedBrand = computed(() => {
   const allEntries = Object.entries(metriq.byTrace)
-  const filtered = (!traces.selectedBrand || traces.selectedBrand === 'all')
-    ? allEntries
-    : allEntries.filter(([, evts]) =>
-        (evts as any[]).some((e: any) => (e.data.brandName ?? '').trim() === traces.selectedBrand)
-      )
+  const filtered = allEntries.filter(([, evts]) =>
+    (evts as any[]).some((e: any) => (e.data.brandName ?? '').trim() === context.activeBrand)
+  )
   return filtered
     .map(([id, evts]) => ({
       id,
@@ -48,8 +46,8 @@ const tracesForSelectedBrand = computed(() => {
     .sort((a, b) => (b.lastTime?.getTime() ?? 0) - (a.lastTime?.getTime() ?? 0))
 })
 
-// Reset trace selection when brand filter changes
-watch(() => traces.selectedBrand, () => { traces.selectedTraceId = null })
+// Reset selected trace when brand context changes
+watch(() => context.activeBrand, () => { traces.selectedTraceId = null })
 
 // Stream sidebar: GSAP display values live in StreamView, but we need a ref to call clearAll
 const streamViewRef = ref<InstanceType<typeof StreamView> | null>(null)
@@ -179,15 +177,8 @@ onUnmounted(() => conn.disconnect())
       <!-- ── Traces sidebar ── -->
       <template v-else>
         <div class="filter-section" style="padding-bottom:8px;">
-          <div class="filter-label">Filter by brand</div>
-          <div class="brand-tabs" style="padding:0;">
-            <span v-if="traceBrands.length === 0" class="sidebar-empty">no data yet</span>
-            <template v-else>
-              <span class="brand-tab" :class="{ active: traces.selectedBrand === 'all' }" @click="traces.selectedBrand = 'all'">all</span>
-              <span v-for="brand in traceBrands" :key="brand" class="brand-tab"
-                :class="{ active: traces.selectedBrand === brand }" @click="traces.selectedBrand = brand">{{ brand }}</span>
-            </template>
-          </div>
+          <div class="filter-label">brand context</div>
+          <div class="brand-context-label">{{ context.activeBrand }}</div>
         </div>
         <div class="sidebar-divider"></div>
         <div class="trace-list">
@@ -225,7 +216,7 @@ onUnmounted(() => conn.disconnect())
       <div class="topbar-left">
         <span class="topbar-title">{{ topbarTitle }}</span>
         <div class="aivox-cmd-bar">
-          <select class="station-select-mini" v-model="aivox.station">
+          <select class="station-select-mini" v-model="context.activeBrand">
             <option v-for="s in STATION_LIST" :key="s" :value="s">{{ s }}</option>
           </select>
           <button class="action-btn-mini" @click="aivox.serverAction('POST')">▶ Start stream</button>
@@ -340,6 +331,14 @@ onUnmounted(() => conn.disconnect())
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.brand-context-label {
+  font-family: var(--mono, monospace);
+  font-size: 0.65rem;
+  color: var(--accent, #2196F3);
+  letter-spacing: 0.5px;
+  padding: 2px 0;
 }
 
 .topbar-sep {
