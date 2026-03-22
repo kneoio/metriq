@@ -98,7 +98,12 @@ const dialogJson = computed(() => {
         <span class="trace-header-label">trace</span>
         <span class="trace-header-id">{{ traces.selectedTraceId }}</span>
         <span class="trace-event-count">{{ eventsForSelectedTrace.length }} events</span>
-        <button class="action-btn snapshot-btn" @click="copySnapshot">{{ snapshotLabel }}</button>
+        <div class="trace-header-actions">
+          <button class="action-btn"
+            :style="traces.showFlowTiming ? 'border-color:var(--accent);color:var(--accent)' : ''"
+            @click="traces.showFlowTiming = !traces.showFlowTiming">⏱ TIMING</button>
+          <button class="action-btn" @click="copySnapshot">{{ snapshotLabel }}</button>
+        </div>
       </div>
       <div class="flow-scroll">
         <div class="flow-container" ref="flowContainerEl">
@@ -154,7 +159,7 @@ const dialogJson = computed(() => {
 </template>
 
 <style scoped>
-.snapshot-btn { margin-left: auto; }
+.trace-header-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 
 .modal-backdrop {
   position: fixed; inset: 0; z-index: 1000;

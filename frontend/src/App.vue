@@ -237,36 +237,37 @@ onUnmounted(() => conn.disconnect())
 
     <!-- ── Topbar ── -->
     <header class="topbar">
-      <span class="topbar-title">{{ topbarTitle }}</span>
-      <div class="topbar-right">
 
-        <!-- Aivox global controls — always visible -->
-        <div class="aivox-quick-bar">
+      <!-- Left: title + server command controls -->
+      <div class="topbar-left">
+        <span class="topbar-title">{{ topbarTitle }}</span>
+        <div class="aivox-cmd-bar">
           <select class="station-select-mini" v-model="aivox.station">
             <option v-for="s in STATION_LIST" :key="s" :value="s">{{ s }}</option>
           </select>
           <button class="action-btn-mini" @click="aivox.serverAction('POST')">▶ start</button>
           <button class="action-btn-mini danger" @click="aivox.serverAction('DELETE')">■ stop</button>
           <span v-if="aivox.cmdStatus" class="cmd-status-mini">{{ aivox.cmdStatus }}</span>
-          <div class="topbar-sep"></div>
-          <button class="play-btn-mini" :class="{ active: aivox.isPlaying }" @click="aivox.togglePlay()"
-            :title="aivox.isPlaying ? 'Pause stream' : 'Play stream'">
-            {{ aivox.isPlaying ? '❚❚' : '▶' }}
-          </button>
-          <div class="live-badge" v-show="aivox.isPlaying">
-            <div class="live-dot"></div><span>LIVE</span>
-          </div>
         </div>
+      </div>
 
+      <!-- Right: player + view actions + conn status -->
+      <div class="topbar-right">
+        <button class="play-btn-mini" :class="{ active: aivox.isPlaying }" @click="aivox.togglePlay()"
+          :title="aivox.isPlaying ? 'Pause stream' : 'Play stream'">
+          {{ aivox.isPlaying ? '❚❚' : '▶' }}
+        </button>
+        <div class="live-badge" v-show="aivox.isPlaying">
+          <div class="live-dot"></div><span>LIVE</span>
+        </div>
+        <div class="topbar-sep"></div>
         <button v-if="activeView === 'stream'" class="clear-btn" @click="clearAll">CLEAR</button>
-        <button v-if="activeView === 'traces'" class="clear-btn"
-          :style="traces.showFlowTiming ? 'border-color:var(--accent);color:var(--accent)' : ''"
-          @click="traces.showFlowTiming = !traces.showFlowTiming">⏱ TIMING</button>
         <div class="live-badge">
           <div class="live-dot" v-show="conn.status === 'connected'"></div>
           <span>{{ conn.status === 'connected' ? 'LIVE' : conn.status.toUpperCase() }}</span>
         </div>
       </div>
+
     </header>
 
     <!-- ── Active view ── -->
@@ -282,8 +283,15 @@ onUnmounted(() => conn.disconnect())
 </template>
 
 <style scoped>
-/* ── Aivox quick bar in topbar ───────────────────────────────────────────── */
-.aivox-quick-bar {
+/* ── Topbar left / right split ───────────────────────────────────────────── */
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* ── Aivox server command bar (left side) ────────────────────────────────── */
+.aivox-cmd-bar {
   display: flex;
   align-items: center;
   gap: 6px;
