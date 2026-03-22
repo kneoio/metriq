@@ -88,6 +88,7 @@ const dialogJson = computed(() => {
                 <div class="flow-node-type" :style="isError(entry.data.type as string) ? 'color:var(--accent3)' : ''">
                   {{ (entry.data.type || 'UNKNOWN').toUpperCase() }}</div>
                 <span v-html="servicePillHtml(entry.data.serviceId as string)"></span>
+                <div class="flow-node-brand" v-if="entry.data.brandName">{{ entry.data.brandName }}</div>
                 <div class="flow-node-code" v-if="entry.data.code">{{ entry.data.code }}</div>
                 <div class="flow-node-time">{{ relTime(entry.receivedAt) }}</div>
               </div>
@@ -107,6 +108,7 @@ const dialogJson = computed(() => {
                 {{ (dialogEntry.data.type || 'UNKNOWN').toUpperCase() }}
               </span>
               <span v-html="servicePillHtml(dialogEntry.data.serviceId as string)"></span>
+              <span v-if="dialogEntry.data.brandName" class="modal-brand">{{ dialogEntry.data.brandName }}</span>
               <span v-if="dialogEntry.data.code" class="modal-code">{{ dialogEntry.data.code }}</span>
               <span class="modal-time">{{ dialogEntry.receivedAt.toLocaleTimeString() }}</span>
             </div>
@@ -140,6 +142,7 @@ const dialogJson = computed(() => {
 }
 .modal-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .modal-type { font-family: var(--mono); font-size: 0.7rem; font-weight: 600; letter-spacing: 1px; }
+.modal-brand { font-family: var(--mono); font-size: 0.65rem; color: var(--text-muted); letter-spacing: 0.5px; }
 .modal-code { font-family: var(--mono); font-size: 0.65rem; color: var(--amber); }
 .modal-time { font-family: var(--mono); font-size: 0.6rem; color: var(--text-dim); }
 .modal-actions { display: flex; align-items: center; gap: 8px; }

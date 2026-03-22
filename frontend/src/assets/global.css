@@ -206,6 +206,7 @@ body::after {
 .flow-node-header { padding: 10px 12px; display: flex; flex-direction: column; gap: 5px; }
 .flow-node-seq { font-family: var(--mono); font-size: 0.5rem; letter-spacing: 1px; color: var(--text-dim); }
 .flow-node-type { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.5px; color: var(--accent); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.flow-node-brand { font-family: var(--mono); font-size: 0.6rem; color: var(--text-muted); letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .flow-node-code { font-family: var(--mono); font-size: 0.58rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .flow-node-time { font-family: var(--mono); font-size: 0.55rem; color: var(--text-dim); }
 .flow-node-payload { border-top: 1px solid var(--border); padding: 12px; background: var(--surface2); max-height: 300px; overflow-y: auto; }
