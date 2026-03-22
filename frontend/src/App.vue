@@ -34,15 +34,12 @@ const activeView = ref<View>('stream')
 // Traces sidebar: always follows the global brand context
 const tracesForSelectedBrand = computed(() => {
   const allEntries = Object.entries(metriq.byTrace)
-  const filtered = allEntries.filter(([, evts]) =>
-    (evts as any[]).some((e: any) => (e.data.brandName ?? '').trim() === context.activeBrand)
-  )
-  return filtered
-    .map(([id, evts]) => ({
-      id,
-      count: (evts as any[]).length,
-      lastTime: (evts as any[])[(evts as any[]).length - 1]?.receivedAt as Date | undefined,
-    }))
+  return allEntries
+    .map(([id, evts]) => {
+      const brandEvts = (evts as any[]).filter((e: any) => (e.data.brandName ?? '').trim() === context.activeBrand)
+      return { id, count: brandEvts.length, lastTime: brandEvts[brandEvts.length - 1]?.receivedAt as Date | undefined }
+    })
+    .filter(t => t.count > 0)
     .sort((a, b) => (b.lastTime?.getTime() ?? 0) - (a.lastTime?.getTime() ?? 0))
 })
 
