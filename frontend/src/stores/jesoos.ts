@@ -29,8 +29,5 @@ export const useJesoosStore = defineStore('jesoos', () => {
   const enableDj  = () => command('enabledj')
   const disableDj = () => command('disabledj')
 
-  // startResult kept as alias for backward-compat with JesoosView result panel
-  const startResult = cmdResult
-
-  return { brand, status, cmdStatus, cmdResult, startResult, start, stop, enableDj, disableDj }
+  return { brand, status, cmdStatus, cmdResult, start, stop, enableDj, disableDj }
 })

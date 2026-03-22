@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed, nextTick } from 'vue'
 import gsap from 'gsap'
-import { useJesoosStore } from '@/stores/jesoos'
-
-const jesoos = useJesoosStore()
-
 // ── Local state ───────────────────────────────────────────────────────────────
 const jesoosAgendasLoading   = ref(false)
 const jesoosAgendasData      = ref<Record<string, any> | null>(null)
@@ -101,20 +97,6 @@ async function jesoosFetchAgendas() {
   <main class="jesoos-main">
     <div class="actions-row">
       <button class="action-btn secondary" @click="jesoosFetchAgendas">view agendas</button>
-    </div>
-
-    <div class="result-panel">
-      <div class="panel-header">
-        <span class="panel-title">start result</span>
-        <span v-if="jesoos.cmdStatus" class="panel-badge" :class="jesoos.cmdStatus">
-          {{ jesoos.cmdStatus === 'ok' ? 'ok' : jesoos.cmdStatus === 'err' ? 'error' : 'pending' }}
-        </span>
-      </div>
-      <div class="panel-body">
-        <pre v-if="jesoos.startResult !== null" class="json-code"
-          :style="jesoos.cmdStatus === 'err' ? 'color:var(--accent3)' : ''">{{ typeof jesoos.startResult === 'string' ? jesoos.startResult : JSON.stringify(jesoos.startResult, null, 2) }}</pre>
-        <div v-else class="panel-empty">no result yet</div>
-      </div>
     </div>
 
     <div class="result-panel">
