@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import gsap from 'gsap'
 import { useMetriqStore } from '@/stores/metriq'
 import { useTracesStore } from '@/stores/traces'
@@ -43,6 +43,12 @@ function openDialog(entry: EventEntry) {
 function closeDialog() {
   dialogEntry.value = null
 }
+
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' && dialogEntry.value) closeDialog()
+}
+onMounted(()   => window.addEventListener('keydown', onKeydown))
+onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
 function copyJson() {
   if (!dialogEntry.value) return
