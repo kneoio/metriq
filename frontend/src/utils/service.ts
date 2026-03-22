@@ -32,6 +32,10 @@ export function isError(type: string | undefined | null): boolean {
   return t.includes('ERROR') || t.includes('FAIL')
 }
 
+export function isDebug(type: string | undefined | null): boolean {
+  return (type ?? '').toUpperCase().includes('DEBUG')
+}
+
 export interface ServiceOption {
   value: string
   label: string

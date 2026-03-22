@@ -203,6 +203,8 @@ body::after {
 .flow-node.expanded { border-color: var(--accent2); }
 .flow-node.is-error { border-color: rgba(250,109,109,0.35); }
 .flow-node.is-error:hover, .flow-node.is-error.expanded { border-color: var(--accent3); }
+.flow-node.is-debug { opacity: 0.6; }
+.flow-node.is-debug:hover { opacity: 1; }
 .flow-node-header { padding: 10px 12px; display: flex; flex-direction: column; gap: 5px; }
 .flow-node-seq { font-family: var(--mono); font-size: 0.5rem; letter-spacing: 1px; color: var(--text-dim); }
 .flow-node-type { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.5px; color: var(--accent); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

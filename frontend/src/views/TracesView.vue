@@ -3,7 +3,7 @@ import { ref, computed, watch, nextTick } from 'vue'
 import gsap from 'gsap'
 import { useMetriqStore } from '@/stores/metriq'
 import { useTracesStore } from '@/stores/traces'
-import { servicePillHtml, isError } from '@/utils/service'
+import { servicePillHtml, isError, isDebug } from '@/utils/service'
 import { relTime, flowTimeDelta } from '@/utils/time'
 import type { EventEntry } from '@/types'
 
@@ -107,11 +107,13 @@ const dialogJson = computed(() => {
               <span>→</span>
               <span v-if="traces.showFlowTiming" class="flow-arrow-time">{{ deltaMs(eventsForSelectedTrace[idx - 1], entry) }}</span>
             </div>
-            <div class="flow-node" :class="{ 'is-error': isError(entry.data.type as string) }"
+            <div class="flow-node"
+              :class="{ 'is-error': isError(entry.data.type as string), 'is-debug': isDebug(entry.data.type as string) }"
               @click="openDialog(entry)" style="cursor:pointer;">
               <div class="flow-node-header">
                 <div class="flow-node-seq">#{{ idx + 1 }}</div>
-                <div class="flow-node-type" :style="isError(entry.data.type as string) ? 'color:var(--accent3)' : ''">
+                <div class="flow-node-type"
+                  :style="isError(entry.data.type as string) ? 'color:var(--accent3)' : isDebug(entry.data.type as string) ? 'color:var(--text-dim)' : ''">
                   {{ (entry.data.type || 'UNKNOWN').toUpperCase() }}</div>
                 <span v-html="servicePillHtml(entry.data.serviceId as string)"></span>
                 <div class="flow-node-brand" v-if="entry.data.brandName">{{ entry.data.brandName }}</div>
@@ -130,7 +132,8 @@ const dialogJson = computed(() => {
         <div class="modal-box">
           <div class="modal-header">
             <div class="modal-meta">
-              <span class="modal-type" :style="isError(dialogEntry.data.type as string) ? 'color:var(--accent3)' : 'color:var(--accent)'">
+              <span class="modal-type"
+                :style="isError(dialogEntry.data.type as string) ? 'color:var(--accent3)' : isDebug(dialogEntry.data.type as string) ? 'color:var(--text-dim)' : 'color:var(--accent)'">
                 {{ (dialogEntry.data.type || 'UNKNOWN').toUpperCase() }}
               </span>
               <span v-html="servicePillHtml(dialogEntry.data.serviceId as string)"></span>
