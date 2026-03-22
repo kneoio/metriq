@@ -110,6 +110,10 @@ function playerStop() {
   aivox.status            = 'stopped'
   aivox.isPlaying         = false
   aivox.playerStreamLabel = '—'
+  aivox.npTitle           = ''
+  aivox.npArtist          = ''
+  aivox.fragCount         = 0
+  aivox.lastFragSize      = '—'
   aivox.log('stopped.', 'info')
 }
 
@@ -170,12 +174,10 @@ function togglePlay() {
 // Volume sync
 watch(() => aivox.playerVolume, v => { if (audioEl.value) audioEl.value.volume = Number(v) })
 
-// Brand context change → stop player (user presses play again for the new brand)
+// Brand context change → always stop and clear state
 watch(() => context.activeBrand, () => {
-  if (!pHlsDestroyed) {
-    aivox.log(`brand → ${context.activeBrand}, stopping player`, 'info')
-    playerStop()
-  }
+  aivox.log(`brand → ${context.activeBrand}, stopping player`, 'info')
+  playerStop()
 })
 
 onMounted(() => {
