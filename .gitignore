@@ -32,3 +32,4 @@ src/main/resources/application-prod.properties
 /temp/
 /temp_soundfragments_storage/
 /sessions_data/chat-sessions.db
+/src/main/resources/META-INF/resources/assets/
