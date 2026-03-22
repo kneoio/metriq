@@ -7,10 +7,11 @@ import { useJesoosStore } from '@/stores/jesoos'
 import { useTracesStore } from '@/stores/traces'
 import { SERVICE_OPTIONS, STATION_LIST } from '@/utils/service'
 import { relTime } from '@/utils/time'
-import StreamView from '@/views/StreamView.vue'
-import TracesView from '@/views/TracesView.vue'
-import AivoxView  from '@/views/AivoxView.vue'
-import JesoosView from '@/views/JesoosView.vue'
+import StreamView   from '@/views/StreamView.vue'
+import TracesView   from '@/views/TracesView.vue'
+import AivoxView    from '@/views/AivoxView.vue'
+import JesoosView   from '@/views/JesoosView.vue'
+import GlobalPlayer from '@/components/GlobalPlayer.vue'
 
 // Build info
 const appVersion = __APP_VERSION__
@@ -132,20 +133,6 @@ onUnmounted(() => conn.disconnect())
         </div>
         <div class="sidebar-divider"></div>
         <div class="filter-section">
-          <div class="filter-label">Quick start</div>
-          <div class="select-wrap" style="margin-bottom:6px;">
-            <select class="station-select" v-model="aivox.station">
-              <option v-for="s in STATION_LIST" :key="s" :value="s">{{ s }}</option>
-            </select>
-          </div>
-          <div class="btn-row">
-            <button class="action-btn" @click="aivox.serverAction('POST')">▶ start</button>
-            <button class="action-btn danger" @click="aivox.serverAction('DELETE')">■ stop</button>
-          </div>
-          <div v-if="aivox.cmdStatus" class="filter-label" style="margin-top:4px;opacity:0.7;">{{ aivox.cmdStatus }}</div>
-        </div>
-        <div class="sidebar-divider"></div>
-        <div class="filter-section">
           <div class="filter-label">Filter by service</div>
           <div class="filter-tags">
             <span v-for="svc in SERVICE_OPTIONS" :key="svc.value" class="filter-tag"
@@ -252,13 +239,29 @@ onUnmounted(() => conn.disconnect())
     <header class="topbar">
       <span class="topbar-title">{{ topbarTitle }}</span>
       <div class="topbar-right">
+
+        <!-- Aivox global controls — always visible -->
+        <div class="aivox-quick-bar">
+          <select class="station-select-mini" v-model="aivox.station">
+            <option v-for="s in STATION_LIST" :key="s" :value="s">{{ s }}</option>
+          </select>
+          <button class="action-btn-mini" @click="aivox.serverAction('POST')">▶ start</button>
+          <button class="action-btn-mini danger" @click="aivox.serverAction('DELETE')">■ stop</button>
+          <span v-if="aivox.cmdStatus" class="cmd-status-mini">{{ aivox.cmdStatus }}</span>
+          <div class="topbar-sep"></div>
+          <button class="play-btn-mini" :class="{ active: aivox.isPlaying }" @click="aivox.togglePlay()"
+            :title="aivox.isPlaying ? 'Pause stream' : 'Play stream'">
+            {{ aivox.isPlaying ? '❚❚' : '▶' }}
+          </button>
+          <div class="live-badge" v-show="aivox.isPlaying">
+            <div class="live-dot"></div><span>LIVE</span>
+          </div>
+        </div>
+
         <button v-if="activeView === 'stream'" class="clear-btn" @click="clearAll">CLEAR</button>
         <button v-if="activeView === 'traces'" class="clear-btn"
           :style="traces.showFlowTiming ? 'border-color:var(--accent);color:var(--accent)' : ''"
           @click="traces.showFlowTiming = !traces.showFlowTiming">⏱ TIMING</button>
-        <div v-if="activeView === 'player'" class="live-badge" v-show="aivox.status === 'playing'">
-          <div class="live-dot"></div><span>LIVE</span>
-        </div>
         <div class="live-badge">
           <div class="live-dot" v-show="conn.status === 'connected'"></div>
           <span>{{ conn.status === 'connected' ? 'LIVE' : conn.status.toUpperCase() }}</span>
@@ -272,5 +275,75 @@ onUnmounted(() => conn.disconnect())
     <AivoxView  v-else-if="activeView === 'player'" />
     <JesoosView v-else-if="activeView === 'jesoos'" />
 
+    <!-- Always mounted — keeps HLS alive regardless of active view -->
+    <GlobalPlayer />
+
   </div>
 </template>
+
+<style scoped>
+/* ── Aivox quick bar in topbar ───────────────────────────────────────────── */
+.aivox-quick-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.station-select-mini {
+  background: var(--surface, #242424);
+  color: var(--text, #e0e0e0);
+  border: 1px solid var(--border, #333);
+  border-radius: 4px;
+  font-family: var(--mono, monospace);
+  font-size: 0.65rem;
+  padding: 2px 4px;
+  cursor: pointer;
+  max-width: 110px;
+}
+
+.action-btn-mini {
+  background: transparent;
+  color: var(--text, #e0e0e0);
+  border: 1px solid var(--border, #444);
+  border-radius: 4px;
+  font-family: var(--mono, monospace);
+  font-size: 0.65rem;
+  padding: 2px 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+}
+.action-btn-mini:hover        { border-color: var(--accent, #2196F3); color: var(--accent, #2196F3); }
+.action-btn-mini.danger:hover { border-color: var(--accent3, #fa6d6d); color: var(--accent3, #fa6d6d); }
+
+.play-btn-mini {
+  background: transparent;
+  color: var(--text, #e0e0e0);
+  border: 1px solid var(--border, #444);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  padding: 2px 9px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  min-width: 32px;
+}
+.play-btn-mini:hover  { border-color: var(--accent, #2196F3); color: var(--accent, #2196F3); }
+.play-btn-mini.active { border-color: var(--accent, #2196F3); color: var(--accent, #2196F3); }
+
+.cmd-status-mini {
+  font-family: var(--mono, monospace);
+  font-size: 0.6rem;
+  color: var(--text-muted, #666);
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-sep {
+  width: 1px;
+  height: 14px;
+  background: var(--border, #333);
+  margin: 0 2px;
+}
+</style>

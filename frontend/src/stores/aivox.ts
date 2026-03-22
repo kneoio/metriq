@@ -1,13 +1,16 @@
-import { ref } from 'vue'
+import { ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
+import type { PlayerLogLine } from '@/types'
 
 export const useAivoxStore = defineStore('aivox', () => {
+
+  // ── Server / stream state ────────────────────────────────────────────────────
   const station      = ref('lumisonic')
   const fragCount    = ref(0)
   const lastFragSize = ref('—')
   const errorCount   = ref(0)
   const status       = ref('idle')
-  const cmdStatus    = ref('')   // last server command result
+  const cmdStatus    = ref('')
 
   async function serverAction(method: 'POST' | 'DELETE') {
     cmdStatus.value = method === 'POST' ? 'starting…' : 'stopping…'
@@ -20,5 +23,42 @@ export const useAivoxStore = defineStore('aivox', () => {
     }
   }
 
-  return { station, fragCount, lastFragSize, errorCount, status, cmdStatus, serverAction }
+  // ── Player state (global — persists across navigation) ────────────────────────
+  const isPlaying         = ref(false)
+  const npTitle           = ref('')
+  const npArtist          = ref('')
+  const playerStreamLabel = ref('—')
+  const playerLogs        = ref<PlayerLogLine[]>([])
+  const isWaveformActive  = ref(false)
+  const playerVolume      = ref(1)
+  // shallowRef so Vue doesn't try to deep-observe the AnalyserNode DOM object
+  const analyser          = shallowRef<AnalyserNode | null>(null)
+
+  // Callbacks registered by GlobalPlayer once it mounts
+  let _toggle: (() => void) | null = null
+  let _load:   ((src: string) => void) | null = null
+
+  function registerPlayer(fns: { toggle: () => void; load: (src: string) => void }) {
+    _toggle = fns.toggle
+    _load   = fns.load
+  }
+
+  function togglePlay()            { _toggle?.() }
+  function loadStream(src: string) { _load?.(src) }
+
+  function log(msg: string, type: PlayerLogLine['type'] = 'info') {
+    const now = new Date()
+    const ts  = now.toTimeString().slice(0, 8) + '.' + String(now.getMilliseconds()).padStart(3, '0')
+    playerLogs.value.push({ ts, msg, type })
+    if (playerLogs.value.length > 200) playerLogs.value.shift()
+  }
+
+  return {
+    // server
+    station, fragCount, lastFragSize, errorCount, status, cmdStatus, serverAction,
+    // player
+    isPlaying, npTitle, npArtist, playerStreamLabel, playerLogs,
+    isWaveformActive, playerVolume, analyser,
+    registerPlayer, togglePlay, loadStream, log,
+  }
 })
