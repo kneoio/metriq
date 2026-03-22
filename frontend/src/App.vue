@@ -245,9 +245,12 @@ onUnmounted(() => conn.disconnect())
           <select class="station-select-mini" v-model="aivox.station">
             <option v-for="s in STATION_LIST" :key="s" :value="s">{{ s }}</option>
           </select>
-          <button class="action-btn-mini" @click="aivox.serverAction('POST')">▶ start</button>
-          <button class="action-btn-mini danger" @click="aivox.serverAction('DELETE')">■ stop</button>
+          <button class="action-btn-mini" @click="aivox.serverAction('POST')">▶ Start stream</button>
+          <button class="action-btn-mini danger" @click="aivox.serverAction('DELETE')">■ Stop stream</button>
           <span v-if="aivox.cmdStatus" class="cmd-status-mini">{{ aivox.cmdStatus }}</span>
+          <div class="topbar-sep"></div>
+          <button class="action-btn-mini" @click="jesoos.start()">▶ Start script</button>
+          <span v-if="jesoos.cmdStatus" class="cmd-status-mini">{{ jesoos.cmdStatus }}</span>
         </div>
       </div>
 

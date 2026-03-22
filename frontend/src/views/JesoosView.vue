@@ -6,9 +6,6 @@ import { useJesoosStore } from '@/stores/jesoos'
 const jesoos = useJesoosStore()
 
 // ── Local state ───────────────────────────────────────────────────────────────
-const jesoosStartLoading     = ref(false)
-const jesoosStartResult      = ref<unknown>(null)
-const jesoosStartBadge       = ref('')
 const jesoosAgendasLoading   = ref(false)
 const jesoosAgendasData      = ref<Record<string, any> | null>(null)
 const jesoosAgendasBadge     = ref('')
@@ -83,18 +80,6 @@ function jesoosToggleJsonDump() {
 }
 
 // ── API actions ───────────────────────────────────────────────────────────────
-async function jesoosStart() {
-  jesoosStartLoading.value = true; jesoosStartBadge.value = 'pending'; jesoos.status = 'running'
-  try {
-    const res  = await fetch(`/jesoos/${jesoos.brand}/start`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
-    const data = await res.json()
-    jesoosStartResult.value = data; jesoosStartBadge.value = res.ok ? 'ok' : 'err'
-    jesoos.status = res.ok ? 'running' : 'error'
-  } catch (e: any) {
-    jesoosStartResult.value = e.message; jesoosStartBadge.value = 'err'; jesoos.status = 'error'
-  } finally { jesoosStartLoading.value = false }
-}
-
 async function jesoosFetchAgendas() {
   jesoosAgendasLoading.value = true; jesoosAgendasBadge.value = 'pending'
   jesoosExpandedScenes.clear(); jesoosJsonDumpExpanded.value = false
@@ -107,7 +92,7 @@ async function jesoosFetchAgendas() {
       gsap.from('.scene-card',    { opacity: 0, y: 20,  duration: 0.3, stagger: 0.03, ease: 'power2.out' })
     })
   } catch (e: any) {
-    jesoosAgendasData.value = null; jesoosStartResult.value = e.message; jesoosAgendasBadge.value = 'err'
+    jesoosAgendasData.value = null; jesoosAgendasBadge.value = 'err'
   } finally { jesoosAgendasLoading.value = false }
 }
 </script>
@@ -115,21 +100,19 @@ async function jesoosFetchAgendas() {
 <template>
   <main class="jesoos-main">
     <div class="actions-row">
-      <button class="action-btn primary" @click="jesoosStart" :disabled="jesoosStartLoading">▶ start</button>
       <button class="action-btn secondary" @click="jesoosFetchAgendas">view agendas</button>
     </div>
 
     <div class="result-panel">
       <div class="panel-header">
         <span class="panel-title">start result</span>
-        <span v-if="jesoosStartBadge" class="panel-badge" :class="jesoosStartBadge">
-          {{ jesoosStartBadge === 'ok' ? 'ok' : jesoosStartBadge === 'err' ? 'error' : 'pending' }}
+        <span v-if="jesoos.cmdStatus" class="panel-badge" :class="jesoos.cmdStatus">
+          {{ jesoos.cmdStatus === 'ok' ? 'ok' : jesoos.cmdStatus === 'err' ? 'error' : 'pending' }}
         </span>
       </div>
       <div class="panel-body">
-        <div v-if="jesoosStartLoading" class="loading-text"><span class="spinner"></span>fetching</div>
-        <pre v-else-if="jesoosStartResult !== null" class="json-code"
-          :style="jesoosStartBadge === 'err' ? 'color:var(--accent3)' : ''">{{ typeof jesoosStartResult === 'string' ? jesoosStartResult : JSON.stringify(jesoosStartResult, null, 2) }}</pre>
+        <pre v-if="jesoos.startResult !== null" class="json-code"
+          :style="jesoos.cmdStatus === 'err' ? 'color:var(--accent3)' : ''">{{ typeof jesoos.startResult === 'string' ? jesoos.startResult : JSON.stringify(jesoos.startResult, null, 2) }}</pre>
         <div v-else class="panel-empty">no result yet</div>
       </div>
     </div>
