@@ -145,15 +145,6 @@ onUnmounted(() => conn.disconnect())
       <!-- ── Aivox sidebar ── -->
       <template v-else-if="activeView === 'player'">
         <div class="sidebar-section">
-          <span class="section-label">Station</span>
-          <div class="select-wrap">
-            <select class="station-select" v-model="aivox.station">
-              <option v-for="s in STATION_LIST" :key="s" :value="s">{{ s }}</option>
-            </select>
-          </div>
-        </div>
-        <div class="sidebar-divider"></div>
-        <div class="sidebar-section">
           <div class="stat-item">
             <span class="stat-label">frags loaded</span>
             <span class="stat-value">{{ aivox.fragCount }}</span>
@@ -177,14 +168,6 @@ onUnmounted(() => conn.disconnect())
 
       <!-- ── Jesoos sidebar ── -->
       <template v-else-if="activeView === 'jesoos'">
-        <div class="sidebar-section">
-          <span class="section-label">Brand</span>
-          <div class="select-wrap">
-            <select class="station-select" v-model="jesoos.brand">
-              <option v-for="s in STATION_LIST" :key="s" :value="s">{{ s }}</option>
-            </select>
-          </div>
-        </div>
         <div class="status-indicator" style="border-top:1px solid var(--border);">
           <div class="status-row">
             <div class="status-dot" :class="jesoos.status"></div>
@@ -250,6 +233,9 @@ onUnmounted(() => conn.disconnect())
           <span v-if="aivox.cmdStatus" class="cmd-status-mini">{{ aivox.cmdStatus }}</span>
           <div class="topbar-sep"></div>
           <button class="action-btn-mini" @click="jesoos.start()">▶ Start script</button>
+          <button class="action-btn-mini danger" @click="jesoos.stop()">■ Stop script</button>
+          <button class="action-btn-mini" @click="jesoos.enableDj()">🎙 DJ on</button>
+          <button class="action-btn-mini danger" @click="jesoos.disableDj()">🎙 DJ off</button>
           <span v-if="jesoos.cmdStatus" class="cmd-status-mini">{{ jesoos.cmdStatus }}</span>
         </div>
       </div>
