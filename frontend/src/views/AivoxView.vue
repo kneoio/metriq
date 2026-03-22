@@ -16,10 +16,11 @@ function drawWaveform() {
   const ctx = canvas.getContext('2d')!
   const W = canvas.offsetWidth, H = canvas.offsetHeight
   canvas.width = W; canvas.height = H
-  const buf = new Uint8Array(analyser.frequencyBinCount)
+  const node = analyser                        // narrowed: definitely not null
+  const buf = new Uint8Array(node.frequencyBinCount)
   function frame() {
     pAnimId = requestAnimationFrame(frame)
-    analyser.getByteFrequencyData(buf)
+    node.getByteFrequencyData(buf)
     ctx.clearRect(0, 0, W, H)
     const bw = W / buf.length
     buf.forEach((v, i) => {
