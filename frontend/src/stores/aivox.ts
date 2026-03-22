@@ -41,16 +41,19 @@ export const useAivoxStore = defineStore('aivox', () => {
   let _toggle: (() => void) | null            = null
   let _load:   ((src: string) => void) | null = null
   let _stop:   (() => void) | null            = null
+  let _reset:  (() => void) | null            = null
 
-  function registerPlayer(fns: { toggle: () => void; load: (src: string) => void; stop: () => void }) {
+  function registerPlayer(fns: { toggle: () => void; load: (src: string) => void; stop: () => void; reset: () => void }) {
     _toggle = fns.toggle
     _load   = fns.load
     _stop   = fns.stop
+    _reset  = fns.reset
   }
 
   function togglePlay()            { _toggle?.() }
   function loadStream(src: string) { _load?.(src) }
   function stopStream()            { _stop?.() }
+  function resetPlayer()           { _reset?.() }
 
   function log(msg: string, type: PlayerLogLine['type'] = 'info') {
     const now = new Date()
@@ -65,6 +68,6 @@ export const useAivoxStore = defineStore('aivox', () => {
     // player
     isPlaying, npTitle, npArtist, playerStreamLabel, playerLogs,
     isWaveformActive, playerVolume, analyser,
-    registerPlayer, togglePlay, loadStream, stopStream, log,
+    registerPlayer, togglePlay, loadStream, stopStream, resetPlayer, log,
   }
 })

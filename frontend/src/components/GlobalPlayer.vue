@@ -117,6 +117,14 @@ function playerStop() {
   aivox.log('stopped.', 'info')
 }
 
+function playerReset() {
+  playerStop()
+  aivox.playerLogs.splice(0)   // clear log history for a clean slate
+  aivox.errorCount = 0
+  aivox.status     = 'idle'
+  aivox.log('player reset — press play to reconnect', 'info')
+}
+
 function playerLoad(src: string) {
   playerStop(); pHlsDestroyed = false
   aivox.log('─── load: ' + src, 'info')
@@ -182,7 +190,7 @@ watch(() => context.activeBrand, () => {
 
 onMounted(() => {
   // Register controls so the store (and topbar play button) can call them
-  aivox.registerPlayer({ toggle: togglePlay, load: playerLoad, stop: playerStop })
+  aivox.registerPlayer({ toggle: togglePlay, load: playerLoad, stop: playerStop, reset: playerReset })
 })
 
 onUnmounted(() => { playerStop() })

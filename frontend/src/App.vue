@@ -224,6 +224,7 @@ onUnmounted(() => conn.disconnect())
           :title="aivox.isPlaying ? 'Pause stream' : 'Play stream'">
           {{ aivox.isPlaying ? '❚❚' : '▶' }}
         </button>
+        <button class="reset-btn-mini" @click="aivox.resetPlayer()" title="Reset player — clears HLS state for a fresh reconnect">↺</button>
         <div class="now-playing" v-if="aivox.npTitle && aivox.npTitle !== '—'"
           :title="`${aivox.npTitle}${aivox.npArtist && aivox.npArtist !== '—' ? ' · ' + aivox.npArtist : ''}`">
           <span class="np-text">{{ aivox.npTitle }}{{ aivox.npArtist && aivox.npArtist !== '—' ? ' · ' + aivox.npArtist : '' }}</span>
@@ -308,6 +309,17 @@ onUnmounted(() => conn.disconnect())
 }
 .play-btn-mini:hover  { border-color: var(--accent, #2196F3); color: var(--accent, #2196F3); }
 .play-btn-mini.active { border-color: var(--accent, #2196F3); color: var(--accent, #2196F3); }
+.reset-btn-mini {
+  background: transparent;
+  color: var(--text-dim, #888);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  padding: 2px 5px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.reset-btn-mini:hover { color: var(--amber, #f5a623); }
 
 .cmd-status-mini {
   font-family: var(--mono, monospace);
