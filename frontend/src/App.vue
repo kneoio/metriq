@@ -176,6 +176,8 @@ onUnmounted(() => conn.disconnect())
             <div class="trace-item-meta">
               <span class="trace-count-badge" :class="{ 'multi-badge': t.count > 1 }">{{ t.count }}</span>
               <span class="trace-time-label">{{ relTime(t.lastTime) }}</span>
+              <button class="trace-delete-btn" title="Delete trace"
+                @click.stop="metriq.deleteTrace(t.id); if (traces.selectedTraceId === t.id) traces.selectedTraceId = null">🗑</button>
             </div>
           </div>
         </div>

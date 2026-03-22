@@ -108,6 +108,12 @@ public class EventStore {
         return new ArrayList<>(byTrace.getOrDefault(traceId, Collections.emptyList()));
     }
 
+    public synchronized boolean deleteTrace(String traceId) {
+        boolean removed = byTrace.remove(traceId) != null;
+        if (removed) traceOrder.remove(traceId);
+        return removed;
+    }
+
     public Set<String> getKnownBrands() {
         return byBrand.keySet();
     }

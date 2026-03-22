@@ -137,6 +137,13 @@ export const useMetriqStore = defineStore('metriq', () => {
     }
   }
 
+  async function deleteTrace(traceId: string) {
+    try {
+      await fetch(`/metriq/api/traces/${encodeURIComponent(traceId)}`, { method: 'DELETE' })
+    } catch { /* best-effort */ }
+    delete byTrace[traceId]
+  }
+
   function clearAllEvents() {
     events.value = []
     totalCount.value = 0
@@ -159,7 +166,7 @@ export const useMetriqStore = defineStore('metriq', () => {
     activeFilter, activeBrandFilter, activeServiceFilter,
     knownTypes, knownBrands, byBrand, byTrace,
     rateCount, filteredEvents,
-    seedFromSnapshot, ingestEvent, clearAllEvents,
+    seedFromSnapshot, ingestEvent, clearAllEvents, deleteTrace,
     setFilter, setBrandFilter, setServiceFilter,
   }
 })

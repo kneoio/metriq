@@ -5,6 +5,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -76,6 +77,18 @@ public class MetricEventResource {
     @Path("/traces/{traceId}")
     public Response getTrace(@PathParam("traceId") String traceId) {
         return json(toArray(eventStore.getByTrace(traceId)));
+    }
+
+    /** Delete a trace from the in-memory store. */
+    @DELETE
+    @Path("/traces/{traceId}")
+    public Response deleteTrace(@PathParam("traceId") String traceId) {
+        boolean removed = eventStore.deleteTrace(traceId);
+        return removed
+                ? Response.noContent().build()
+                : Response.status(Response.Status.NOT_FOUND)
+                          .entity("{\"error\":\"trace not found\"}")
+                          .type(MediaType.APPLICATION_JSON).build();
     }
 
     /** Known brand names. */
