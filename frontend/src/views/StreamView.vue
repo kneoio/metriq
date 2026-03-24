@@ -16,12 +16,12 @@ let tickInterval: ReturnType<typeof setInterval> | null = null
 let clearing = false
 
 // ── GSAP number tweens ────────────────────────────────────────────────────────
-const displayTotal  = ref(0)
-const displayRate   = ref(0)
-const displayErrors = ref(0)
-const totalTarget  = { v: 0 }
-const rateTarget   = { v: 0 }
-const errorsTarget = { v: 0 }
+const displayTotal  = ref(store.totalCount)
+const displayRate   = ref(store.rateCount)
+const displayErrors = ref(store.errorCount)
+const totalTarget  = { v: store.totalCount }
+const rateTarget   = { v: store.rateCount }
+const errorsTarget = { v: store.errorCount }
 
 watch(() => store.totalCount, v => gsap.to(totalTarget,  { v, duration: 0.4, ease: 'power2.out', onUpdate() { displayTotal.value  = Math.round(totalTarget.v)  } }))
 watch(() => store.rateCount,  v => gsap.to(rateTarget,   { v, duration: 0.4, ease: 'power2.out', onUpdate() { displayRate.value   = Math.round(rateTarget.v)   } }))

@@ -20,7 +20,7 @@ export const useAivoxStore = defineStore('aivox', () => {
       const r    = await fetch('/aivox/' + context.activeBrand + '/command/', { method })
       const text = await r.text()
       cmdStatus.value = r.ok ? (method === 'POST' ? 'started' : 'stopped') : 'error: ' + text
-      if (r.ok && method === 'DELETE') stopStream()   // stop local player when server stops
+      if (r.ok && method === 'DELETE') { stopStream(); resetPlayer() }  // stop + reset local player when server stops
     } catch (e: any) {
       cmdStatus.value = 'error: ' + e.message
     }
