@@ -210,9 +210,9 @@ onUnmounted(() => conn.disconnect())
       <!-- Right: player + view actions + conn status -->
       <div class="topbar-right">
         <div class="topbar-stats">
-          <span class="topbar-stat"><span class="tstat-label">rcvd</span><span class="tstat-value">{{ displayTotal }}</span></span>
-          <span class="topbar-stat"><span class="tstat-label">/min</span><span class="tstat-value amber">{{ displayRate }}</span></span>
-          <span class="topbar-stat"><span class="tstat-label">err</span><span class="tstat-value red">{{ displayErrors }}</span></span>
+          <span class="topbar-stat"><span class="tstat-label">rcvd</span><span class="tstat-value">{{ metriq.totalCount }}</span></span>
+          <span class="topbar-stat"><span class="tstat-label">/min</span><span class="tstat-value amber">{{ metriq.rateCount }}</span></span>
+          <span class="topbar-stat"><span class="tstat-label">err</span><span class="tstat-value red">{{ metriq.errorCount }}</span></span>
         </div>
         <div class="topbar-sep"></div>
         <button class="play-btn-mini" :class="{ active: aivox.isPlaying }" @click="aivox.togglePlay()"
