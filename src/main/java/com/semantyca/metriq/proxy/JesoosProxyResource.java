@@ -17,7 +17,7 @@ public class JesoosProxyResource {
 
     private static final Logger LOG = Logger.getLogger(JesoosProxyResource.class);
 
-    @ConfigProperty(name = "metriq.jesoos.url", defaultValue = "http://localhost:38799")
+    @ConfigProperty(name = "metriq.jesoos.url", defaultValue = "http://localhost:38797")
     String jesoosUrl;
 
     @Inject

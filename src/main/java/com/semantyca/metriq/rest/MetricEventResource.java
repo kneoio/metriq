@@ -13,13 +13,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-/**
- * REST API for reading the in-memory EventStore.
- *
- * Primary use-case: clients (metriq FE, Knox dashboard) call
- * GET /metriq/api/snapshot once on connect to seed their local cache,
- * then follow live updates over the WebSocket.
- */
 @Path("/metriq/api")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
@@ -28,10 +21,6 @@ public class MetricEventResource {
     @Inject
     EventStore eventStore;
 
-    /**
-     * Full snapshot — one call to seed the entire client state.
-     * Returns: { events: [...], byBrand: { brand: [...] }, byTrace: { id: [...] } }
-     */
     @GET
     @Path("/snapshot")
     public Response getSnapshot() {
@@ -49,21 +38,18 @@ public class MetricEventResource {
                 .put("byTrace", byTrace));
     }
 
-    /** Last 120 events (global, newest first). */
     @GET
     @Path("/events")
     public Response getEvents() {
         return json(toArray(eventStore.getAll()));
     }
 
-    /** Events for a specific brand (up to 500, oldest first). */
     @GET
     @Path("/events/{brand}")
     public Response getEventsByBrand(@PathParam("brand") String brand) {
         return json(toArray(eventStore.getByBrand(brand)));
     }
 
-    /** All traces as a map of traceId → event list. */
     @GET
     @Path("/traces")
     public Response getTraces() {
@@ -72,14 +58,12 @@ public class MetricEventResource {
         return json(result);
     }
 
-    /** Events for one specific trace. */
     @GET
     @Path("/traces/{traceId}")
     public Response getTrace(@PathParam("traceId") String traceId) {
         return json(toArray(eventStore.getByTrace(traceId)));
     }
 
-    /** Delete a trace from the in-memory store. */
     @DELETE
     @Path("/traces/{traceId}")
     public Response deleteTrace(@PathParam("traceId") String traceId) {
@@ -91,7 +75,6 @@ public class MetricEventResource {
                           .type(MediaType.APPLICATION_JSON).build();
     }
 
-    /** Known brand names. */
     @GET
     @Path("/brands")
     public Response getBrands() {
@@ -99,8 +82,6 @@ public class MetricEventResource {
         eventStore.getKnownBrands().forEach(arr::add);
         return json(arr);
     }
-
-    // ── helpers ───────────────────────────────────────────────────────────────
 
     private static JsonArray toArray(Iterable<JsonObject> items) {
         JsonArray arr = new JsonArray();
