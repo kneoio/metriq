@@ -49,11 +49,6 @@ watch(() => context.activeBrand, () => { traces.selectedTraceId = null })
 // Stream sidebar: GSAP display values live in StreamView, but we need a ref to call clearAll
 const streamViewRef = ref<InstanceType<typeof StreamView> | null>(null)
 
-// Stream display totals are exposed from StreamView
-const displayTotal  = computed(() => (streamViewRef.value as any)?.displayTotal ?? 0)
-const displayRate   = computed(() => (streamViewRef.value as any)?.displayRate  ?? 0)
-const displayErrors = computed(() => (streamViewRef.value as any)?.displayErrors ?? 0)
-
 function clearAll() { (streamViewRef.value as any)?.clearAll?.() }
 
 const topbarTitle = computed(() => ({
