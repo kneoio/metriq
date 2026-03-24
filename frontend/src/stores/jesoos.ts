@@ -26,10 +26,26 @@ export const useJesoosStore = defineStore('jesoos', () => {
     }
   }
 
+  async function stopAll() {
+    cmdStatus.value = 'pending'
+    cmdResult.value = null
+    try {
+      const res  = await fetch('/jesoos/stop-all', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+      const data = await res.json()
+      cmdResult.value = data
+      cmdStatus.value = res.ok ? 'ok' : 'err'
+      if (res.ok) status.value = 'idle'
+    } catch (e: any) {
+      cmdResult.value = e.message
+      cmdStatus.value = 'err'
+      status.value    = 'error'
+    }
+  }
+
   const start     = () => command('start')
   const stop      = () => command('stop')
   const enableDj  = () => command('enabledj')
   const disableDj = () => command('disabledj')
 
-  return { status, cmdStatus, cmdResult, start, stop, enableDj, disableDj }
+  return { status, cmdStatus, cmdResult, start, stop, stopAll, enableDj, disableDj }
 })

@@ -2,7 +2,7 @@
 import { ref, reactive, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import gsap from 'gsap'
 import { useMetriqStore } from '@/stores/metriq'
-import { servicePillHtml, isError, isDebug } from '@/utils/service'
+import { servicePillHtml, isError, isWarning, isDebug } from '@/utils/service'
 import { relTime, formatTs } from '@/utils/time'
 
 const store = useMetriqStore()
@@ -107,6 +107,7 @@ defineExpose({ displayTotal, displayRate, displayErrors, clearAll })
             <span class="brand-cell">{{ entry.data.brandName || '—' }}</span>
             <span class="type-cell"
               :style="isError(entry.data.type as string) ? 'color:var(--accent3);background:rgba(250,109,109,0.12);border-color:rgba(250,109,109,0.3)'
+                    : isWarning(entry.data.type as string) ? 'color:var(--amber);background:rgba(245,166,35,0.12);border-color:rgba(245,166,35,0.3)'
                     : isDebug(entry.data.type as string) ? 'color:var(--text-dim);background:rgba(176,176,176,0.06);border-color:rgba(176,176,176,0.15)'
                     : ''">
               {{ (entry.data.type || 'UNKNOWN').toUpperCase() }}</span>

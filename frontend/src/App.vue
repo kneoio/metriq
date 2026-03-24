@@ -98,20 +98,6 @@ onUnmounted(() => conn.disconnect())
 
       <!-- ── Stream sidebar ── -->
       <template v-if="activeView === 'stream'">
-        <div class="sidebar-stats">
-          <div class="stat-item">
-            <span class="stat-label">total received</span>
-            <span class="stat-value">{{ displayTotal }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">last minute</span>
-            <span class="stat-value amber">{{ displayRate }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">error types</span>
-            <span class="stat-value red">{{ displayErrors }}</span>
-          </div>
-        </div>
         <div class="sidebar-divider"></div>
         <div class="filter-section">
           <div class="filter-label">Filter by type</div>
@@ -216,12 +202,19 @@ onUnmounted(() => conn.disconnect())
           <button class="action-btn-mini danger" @click="jesoos.stop()">■ Stop script</button>
           <button class="action-btn-mini" @click="jesoos.enableDj()">🎙 DJ on</button>
           <button class="action-btn-mini danger" @click="jesoos.disableDj()">🎙 DJ off</button>
+          <button class="action-btn-mini danger" @click="jesoos.stopAll()">■ Stop all</button>
           <span v-if="jesoos.cmdStatus" class="cmd-status-mini">{{ jesoos.cmdStatus }}</span>
         </div>
       </div>
 
       <!-- Right: player + view actions + conn status -->
       <div class="topbar-right">
+        <div class="topbar-stats">
+          <span class="topbar-stat"><span class="tstat-label">rcvd</span><span class="tstat-value">{{ displayTotal }}</span></span>
+          <span class="topbar-stat"><span class="tstat-label">/min</span><span class="tstat-value amber">{{ displayRate }}</span></span>
+          <span class="topbar-stat"><span class="tstat-label">err</span><span class="tstat-value red">{{ displayErrors }}</span></span>
+        </div>
+        <div class="topbar-sep"></div>
         <button class="play-btn-mini" :class="{ active: aivox.isPlaying }" @click="aivox.togglePlay()"
           :title="aivox.isPlaying ? 'Pause stream' : 'Play stream'">
           {{ aivox.isPlaying ? '❚❚' : '▶' }}
@@ -347,6 +340,35 @@ onUnmounted(() => conn.disconnect())
   background: var(--border, #333);
   margin: 0 2px;
 }
+
+.topbar-stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.topbar-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0px;
+  line-height: 1.1;
+}
+.tstat-label {
+  font-family: var(--mono, monospace);
+  font-size: 0.5rem;
+  letter-spacing: 1.5px;
+  color: var(--text-muted, #666);
+  text-transform: uppercase;
+}
+.tstat-value {
+  font-family: var(--mono, monospace);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent, #2196F3);
+  line-height: 1;
+}
+.tstat-value.amber { color: var(--amber, #f5a623); }
+.tstat-value.red   { color: var(--accent3, #fa6d6d); }
 
 .now-playing {
   max-width: 200px;
