@@ -60,4 +60,20 @@ public class JesoosProxyResource {
                         .build())
                 .onFailure().recoverWithItem(e -> Response.serverError().entity("{\"error\":\"" + e.getMessage() + "\"}").build());
     }
+
+    @POST
+    @Path("/stop-all")
+    @Produces("application/json")
+    public Uni<Response> stopAll() {
+        String url = jesoosUrl + "/jesoos/stop-all";
+        LOG.infof("Proxying POST → %s", url);
+        return client.postAbs(url)
+                .putHeader("Content-Type", "application/json")
+                .send()
+                .map(r -> Response.status(r.statusCode())
+                        .entity(r.bodyAsString())
+                        .header("Content-Type", "application/json")
+                        .build())
+                .onFailure().recoverWithItem(e -> Response.serverError().entity("{\"error\":\"" + e.getMessage() + "\"}").build());
+    }
 }
