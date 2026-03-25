@@ -3,12 +3,14 @@ import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import gsap from 'gsap'
 import { useMetriqStore } from '@/stores/metriq'
 import { useTracesStore } from '@/stores/traces'
+import { useContextStore } from '@/stores/context'
 import { servicePillHtml, isError, isWarning, isDebug } from '@/utils/service'
 import { relTime, flowTimeDelta } from '@/utils/time'
 import type { EventEntry } from '@/types'
 
-const metriq = useMetriqStore()
-const traces = useTracesStore()
+const metriq   = useMetriqStore()
+const traces   = useTracesStore()
+const context  = useContextStore()
 
 const flowContainerEl = ref<HTMLElement | null>(null)
 const dialogEntry     = ref<EventEntry | null>(null)
@@ -18,6 +20,7 @@ const snapshotLabel     = ref('SNAPSHOT')
 const eventsForSelectedTrace = computed((): EventEntry[] => {
   if (!traces.selectedTraceId) return []
   return ((metriq.byTrace[traces.selectedTraceId] ?? []) as EventEntry[])
+    .filter(e => (e.data.brandName ?? '').trim() === context.activeBrand)
     .slice()
     .sort((a, b) => a.receivedAt.getTime() - b.receivedAt.getTime())
 })
