@@ -55,8 +55,17 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
 function copyJson() {
   if (!dialogEntry.value) return
-  const json = JSON.stringify(dialogEntry.value.data.payload ?? dialogEntry.value.data, null, 2)
-  navigator.clipboard.writeText(json).then(() => {
+  const d = dialogEntry.value
+  const out = {
+    type:      d.data.type      ?? null,
+    brand:     d.data.brandName ?? null,
+    service:   d.data.serviceId ?? null,
+    code:      d.data.code      ?? null,
+    traceId:   d.data.traceId   ?? null,
+    receivedAt: d.receivedAt.toISOString(),
+    payload:   d.data.payload   ?? d.data,
+  }
+  navigator.clipboard.writeText(JSON.stringify(out, null, 2)).then(() => {
     copyLabel.value = 'COPIED'
     setTimeout(() => { copyLabel.value = 'COPY' }, 1800)
   })
@@ -92,7 +101,16 @@ function deltaMs(prev: EventEntry, curr: EventEntry): string {
 
 const dialogJson = computed(() => {
   if (!dialogEntry.value) return ''
-  return JSON.stringify(dialogEntry.value.data.payload ?? dialogEntry.value.data, null, 2)
+  const d = dialogEntry.value
+  return JSON.stringify({
+    type:      d.data.type      ?? null,
+    brand:     d.data.brandName ?? null,
+    service:   d.data.serviceId ?? null,
+    code:      d.data.code      ?? null,
+    traceId:   d.data.traceId   ?? null,
+    receivedAt: d.receivedAt.toISOString(),
+    payload:   d.data.payload   ?? d.data,
+  }, null, 2)
 })
 </script>
 
