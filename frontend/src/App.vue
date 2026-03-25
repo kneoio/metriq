@@ -53,7 +53,7 @@ function clearAll() { (streamViewRef.value as any)?.clearAll?.() }
 
 const topbarTitle = computed(() => ({
   stream: 'ALL METRICS',
-  traces: 'TRACE FLOW',
+  traces: '',
   player: 'AIVOX CONTROL',
   jesoos: 'JESOOS CONTROL',
 }[activeView.value]))
