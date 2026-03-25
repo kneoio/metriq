@@ -94,3 +94,5 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             kubectl rollout restart deployment/metriq -n default
+            kubectl wait --for=condition=available deployment/metriq -n default --timeout=120s
+            k3s crictl rmi --prune
