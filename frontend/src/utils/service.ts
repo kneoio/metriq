@@ -40,6 +40,10 @@ export function isDebug(type: string | undefined | null): boolean {
   return (type ?? '').toUpperCase().includes('DEBUG')
 }
 
+export function isImportantInfo(type: string | undefined | null): boolean {
+  return (type ?? '').toUpperCase().includes('IMPORTANT')
+}
+
 export interface ServiceOption {
   value: string
   label: string

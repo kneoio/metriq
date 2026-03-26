@@ -4,7 +4,7 @@ import gsap from 'gsap'
 import { useMetriqStore } from '@/stores/metriq'
 import { useTracesStore } from '@/stores/traces'
 import { useContextStore } from '@/stores/context'
-import { servicePillHtml, isError, isWarning, isDebug } from '@/utils/service'
+import { servicePillHtml, isError, isWarning, isDebug, isImportantInfo } from '@/utils/service'
 import { relTime, flowTimeDelta } from '@/utils/time'
 import type { EventEntry } from '@/types'
 
@@ -145,7 +145,7 @@ const dialogJson = computed(() => {
               <div class="flow-node-header">
                 <div class="flow-node-seq">#{{ idx + 1 }}</div>
                 <div class="flow-node-type"
-                  :style="isError(entry.data.type as string) ? 'color:var(--accent3)' : isWarning(entry.data.type as string) ? 'color:var(--amber)' : isDebug(entry.data.type as string) ? 'color:var(--text-dim)' : ''">
+                  :style="isError(entry.data.type as string) ? 'color:var(--accent3)' : isWarning(entry.data.type as string) ? 'color:var(--amber)' : isDebug(entry.data.type as string) ? 'color:var(--text-dim)' : isImportantInfo(entry.data.type as string) ? 'color:var(--green)' : ''">
                   {{ (entry.data.type || 'UNKNOWN').toUpperCase() }}</div>
                 <span v-html="servicePillHtml(entry.data.serviceId as string)"></span>
                 <div class="flow-node-brand" v-if="entry.data.brandName">{{ entry.data.brandName }}</div>
@@ -165,7 +165,7 @@ const dialogJson = computed(() => {
           <div class="modal-header">
             <div class="modal-meta">
               <span class="modal-type"
-                :style="isError(dialogEntry.data.type as string) ? 'color:var(--accent3)' : isWarning(dialogEntry.data.type as string) ? 'color:var(--amber)' : isDebug(dialogEntry.data.type as string) ? 'color:var(--text-dim)' : 'color:var(--accent)'">
+                :style="isError(dialogEntry.data.type as string) ? 'color:var(--accent3)' : isWarning(dialogEntry.data.type as string) ? 'color:var(--amber)' : isDebug(dialogEntry.data.type as string) ? 'color:var(--text-dim)' : isImportantInfo(dialogEntry.data.type as string) ? 'color:var(--green)' : 'color:var(--accent)'">
                 {{ (dialogEntry.data.type || 'UNKNOWN').toUpperCase() }}
               </span>
               <span v-html="servicePillHtml(dialogEntry.data.serviceId as string)"></span>
