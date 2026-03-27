@@ -219,7 +219,7 @@ async function jesoosFetchAgendas() {
                 <span class="scene-time">
                   {{ fmtTimeArr(scene.scheduledStartTime) }}<span class="scene-time-sep">→</span>{{ fmtTimeArr(scene.scheduledEndTime) }}
                 </span>
-                <span v-if="sceneEffectiveStatus(scene)" class="entry-status" :class="statusClass(sceneEffectiveStatus(scene))">{{ sceneEffectiveStatus(scene).toLowerCase() }}</span>
+                <span v-if="sceneEffectiveStatus(scene)" class="scene-type-badge" :class="statusClass(sceneEffectiveStatus(scene))">{{ sceneEffectiveStatus(scene).toLowerCase() }}</span>
                 <span class="scene-title">{{ scene.title }}</span>
                 <span class="scene-duration">{{ jesoosFormatDuration(sceneEffectiveDuration(scene)) }}</span>
                 <span class="scene-songs" :class="{ 'scene-songs-empty': sceneEffectiveSongCount(scene) === 0 }">
