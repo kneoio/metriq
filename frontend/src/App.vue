@@ -139,6 +139,10 @@ onUnmounted(() => conn.disconnect())
             <div class="status-dot" :class="jesoos.status"></div>
             <span class="status-text">{{ jesoos.status }}</span>
           </div>
+          <div class="status-row" style="margin-top:6px;">
+            <div class="status-dot" :class="jesoos.djEnabled === null ? 'unknown' : jesoos.djEnabled ? 'connected' : 'disconnected'"></div>
+            <span class="status-text">DJ {{ jesoos.djEnabled === null ? '—' : jesoos.djEnabled ? 'on' : 'off' }}</span>
+          </div>
         </div>
       </template>
 

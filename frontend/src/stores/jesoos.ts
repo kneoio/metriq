@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import { defineStore } from 'pinia'
 import { useContextStore } from '@/stores/context'
 
@@ -8,6 +8,21 @@ export const useJesoosStore = defineStore('jesoos', () => {
   const status     = ref('idle')
   const cmdStatus  = ref('')
   const cmdResult  = ref<unknown>(null)
+  const djEnabled  = ref<boolean | null>(null)
+
+  async function pollDjStatus() {
+    try {
+      const res = await fetch(`/jesoos/${context.activeBrand}/dj-status`)
+      const text = (await res.text()).trim()
+      djEnabled.value = text === 'true'
+    } catch {
+      djEnabled.value = null
+    }
+  }
+
+  pollDjStatus()
+  const _djPoll = setInterval(pollDjStatus, 60_000)
+  onUnmounted(() => clearInterval(_djPoll))
 
   async function command(cmd: string) {
     cmdStatus.value = 'pending'
@@ -47,5 +62,5 @@ export const useJesoosStore = defineStore('jesoos', () => {
   const enableDj  = () => command('enabledj')
   const disableDj = () => command('disabledj')
 
-  return { status, cmdStatus, cmdResult, start, stop, stopAll, enableDj, disableDj }
+  return { status, cmdStatus, cmdResult, djEnabled, start, stop, stopAll, enableDj, disableDj }
 })
