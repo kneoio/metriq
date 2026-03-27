@@ -36,12 +36,11 @@ function fmtDurSec(sec: number): string {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
-function jesoosSceneType(title: string): string {
-  const t = (title ?? '').toLowerCase()
-  if (t.includes('news'))                                            return 'news'
-  if (t.includes('weather'))                                         return 'weather'
-  if (t.includes('greeting') || t.includes('bye') || t.includes('night')) return 'greeting'
-  return 'music'
+const STATUS_PRIORITY = ['EMITTING', 'FAILED', 'SCHEDULED', 'PENDING', 'COMPLETED', 'SKIPPED']
+
+function sceneEffectiveStatus(scene: any): string {
+  const statuses = new Set((scene.timeline ?? []).map((b: any) => b.status).filter(Boolean))
+  return STATUS_PRIORITY.find(s => statuses.has(s)) ?? ''
 }
 
 function strategyAbbr(s: string): string {
@@ -220,7 +219,7 @@ async function jesoosFetchAgendas() {
                 <span class="scene-time">
                   {{ fmtTimeArr(scene.scheduledStartTime) }}<span class="scene-time-sep">→</span>{{ fmtTimeArr(scene.scheduledEndTime) }}
                 </span>
-                <span class="scene-type-badge" :class="jesoosSceneType(scene.title)">{{ jesoosSceneType(scene.title) }}</span>
+                <span v-if="sceneEffectiveStatus(scene)" class="entry-status" :class="statusClass(sceneEffectiveStatus(scene))">{{ sceneEffectiveStatus(scene).toLowerCase() }}</span>
                 <span class="scene-title">{{ scene.title }}</span>
                 <span class="scene-duration">{{ jesoosFormatDuration(sceneEffectiveDuration(scene)) }}</span>
                 <span class="scene-songs" :class="{ 'scene-songs-empty': sceneEffectiveSongCount(scene) === 0 }">
