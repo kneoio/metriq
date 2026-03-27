@@ -203,6 +203,7 @@ onUnmounted(() => conn.disconnect())
           <button class="action-btn-mini danger" @click="jesoos.disableDj()">🎙 DJ off</button>
           <button class="action-btn-mini danger" @click="jesoos.stopAll()">■ Stop all</button>
           <span v-if="jesoos.cmdStatus" class="cmd-status-mini">{{ jesoos.cmdStatus }}</span>
+          <div class="dj-led" :class="jesoos.djEnabled === null ? 'unknown' : jesoos.djEnabled ? 'connected' : 'disconnected'" title="DJ status"></div>
         </div>
       </div>
 
@@ -289,6 +290,11 @@ onUnmounted(() => conn.disconnect())
 }
 .action-btn-mini:hover        { border-color: var(--accent, #2196F3); color: var(--accent, #2196F3); }
 .action-btn-mini.danger:hover { border-color: var(--accent3, #fa6d6d); color: var(--accent3, #fa6d6d); }
+
+.dj-led { width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); flex-shrink: 0; transition: background 0.3s; }
+.dj-led.connected    { background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse-dot 2s ease-in-out infinite; }
+.dj-led.disconnected { background: var(--accent3); }
+.dj-led.unknown      { background: var(--text-dim); }
 
 .play-btn-mini {
   background: transparent;

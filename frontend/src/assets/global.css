@@ -2,7 +2,7 @@
   --bg: #1a1a1a; --surface: #2a2a2a; --surface2: #1a1a1a;
   --border: #333333; --border-bright: #444444;
   --accent: #2196F3; --accent2: #42A5F5; --accent3: #fa6d6d;
-  --amber: #f5a623; --purple: #b084ff; --green: #34d399;
+  --amber: #f5a623; --purple: #b084ff; --green: #34d399; --cyan: #26c6da;
   --text: #f0f0f0; --text-muted: #d0d0d0; --text-dim: #b0b0b0;
   --mono: 'IBM Plex Mono', monospace; --sans: 'Space Grotesk', sans-serif;
 }
