@@ -48,8 +48,10 @@ function strategyAbbr(s: string): string {
   const map: Record<string, string> = {
     SONG_ONLY:             'only',
     SONG_INTRO_SONG:       'intro',
+    INTRO_SONG:            'intro',
     INTRO_SONG_INTRO_SONG: 'i·s·i',
     SONG_CROSSFADE_SONG:   'xfade',
+    FILLER_JINGLE:         'jingle',
   }
   return map[s] ?? s
 }
@@ -58,17 +60,19 @@ function strategyClass(s: string): string {
   if (s === 'SONG_CROSSFADE_SONG')   return 'strat-xfade'
   if (s === 'INTRO_SONG_INTRO_SONG') return 'strat-isi'
   if (s === 'SONG_INTRO_SONG')       return 'strat-intro'
+  if (s === 'INTRO_SONG')            return 'strat-intro'
+  if (s === 'FILLER_JINGLE')         return 'strat-jingle'
   return 'strat-only'
 }
 
-function batchGroups(timeline: any[]): Array<{ batchId: number; songs: any[] }> {
+function batchGroups(timeline: any[]): Array<{ batchId: number; blocks: any[] }> {
   const map = new Map<number, any[]>()
   for (const item of (timeline ?? [])) {
     const b = item.batchId ?? 0
     if (!map.has(b)) map.set(b, [])
     map.get(b)!.push(item)
   }
-  return Array.from(map.entries()).map(([batchId, songs]) => ({ batchId, songs }))
+  return Array.from(map.entries()).map(([batchId, blocks]) => ({ batchId, blocks }))
 }
 
 function copyJson(btn: EventTarget | null, json: string) {
@@ -214,21 +218,26 @@ async function jesoosFetchAgendas() {
                   <div class="timeline-groups">
                     <div v-for="group in batchGroups(scene.timeline)" :key="group.batchId" class="batch-group">
                       <div class="batch-label">batch {{ group.batchId }}</div>
-                      <div v-for="song in group.songs" :key="song.id" class="song-row">
-                        <span class="song-seq">#{{ song.sequenceNumber }}</span>
-                        <span class="song-emit-time">{{ fmtTimeArr(song.scheduledEmissionTime) }}</span>
-                        <div class="song-info">
-                          <span class="song-title">{{ song.songTitle }}</span>
-                          <span class="song-artist">{{ song.artist }}</span>
+                      <div v-for="block in group.blocks" :key="block.id" class="block-item">
+                        <div class="block-header">
+                          <span class="song-seq">#{{ block.sequenceNumber }}</span>
+                          <span class="song-emit-time">{{ fmtTimeArr(block.scheduledEmissionTime) }}</span>
+                          <span class="song-strategy" :class="strategyClass(block.mixingStrategy)">
+                            {{ strategyAbbr(block.mixingStrategy) }}
+                          </span>
+                          <span class="song-flags">
+                            <span v-if="block.hasIntro"  class="flag flag-intro">I</span>
+                            <span v-if="block.hasJingle" class="flag flag-jingle">J</span>
+                          </span>
+                          <span class="song-dur">{{ fmtDurSec(block.durationSeconds) }}</span>
                         </div>
-                        <span class="song-dur">{{ fmtDurSec(song.durationSeconds) }}</span>
-                        <span class="song-strategy" :class="strategyClass(song.mixingStrategy)">
-                          {{ strategyAbbr(song.mixingStrategy) }}
-                        </span>
-                        <span class="song-flags">
-                          <span v-if="song.hasIntro"  class="flag flag-intro">I</span>
-                          <span v-if="song.hasJingle" class="flag flag-jingle">J</span>
-                        </span>
+                        <div v-for="song in block.songs" :key="song.songId" class="song-row">
+                          <div class="song-info">
+                            <span class="song-title">{{ song.songTitle }}</span>
+                            <span class="song-artist">{{ song.artist }}</span>
+                          </div>
+                          <span class="song-dur">{{ fmtDurSec(song.durationSeconds) }}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -292,16 +301,30 @@ async function jesoosFetchAgendas() {
   border-left: 2px solid var(--border-bright); margin-bottom: 2px; margin-left: 2px;
 }
 
+/* ── Block item (timeline block containing songs) ── */
+.block-item {
+  display: flex; flex-direction: column; gap: 1px;
+  border-left: 2px solid var(--border-bright); padding-left: 8px; margin-bottom: 6px;
+}
+
+.block-header {
+  display: grid;
+  grid-template-columns: 28px 44px 52px 32px 1fr;
+  align-items: center; gap: 8px;
+  padding: 4px 6px; border-radius: 3px;
+  background: rgba(255,255,255,0.03);
+}
+
 .song-row {
   display: grid;
-  grid-template-columns: 28px 44px 1fr 42px 48px 36px;
-  align-items: center; gap: 10px;
-  padding: 6px 10px; border-radius: 4px;
-  background: rgba(255,255,255,0.02);
+  grid-template-columns: 1fr 42px;
+  align-items: center; gap: 8px;
+  padding: 4px 6px 4px 12px; border-radius: 3px;
+  background: rgba(255,255,255,0.015);
   border: 1px solid transparent;
   transition: border-color 0.15s, background 0.15s;
 }
-.song-row:hover { background: rgba(255,255,255,0.04); border-color: var(--border); }
+.song-row:hover { background: rgba(255,255,255,0.035); border-color: var(--border); }
 
 .song-seq       { font-family: var(--mono); font-size: 0.6rem; color: var(--text-dim); text-align: right; }
 .song-emit-time { font-family: var(--mono); font-size: 0.62rem; color: var(--accent2); letter-spacing: 0.5px; }
@@ -317,10 +340,11 @@ async function jesoosFetchAgendas() {
   padding: 2px 6px; border-radius: 3px; border: 1px solid; text-align: center;
   white-space: nowrap;
 }
-.strat-only  { color: var(--text-dim);  border-color: rgba(255,255,255,0.1); background: transparent; }
-.strat-intro { color: var(--accent);    border-color: rgba(33,150,243,0.3);  background: rgba(33,150,243,0.06); }
-.strat-isi   { color: var(--purple);    border-color: rgba(176,132,255,0.3); background: rgba(176,132,255,0.06); }
-.strat-xfade { color: var(--amber);     border-color: rgba(245,166,35,0.3);  background: rgba(245,166,35,0.06); }
+.strat-only   { color: var(--text-dim);  border-color: rgba(255,255,255,0.1); background: transparent; }
+.strat-intro  { color: var(--accent);    border-color: rgba(33,150,243,0.3);  background: rgba(33,150,243,0.06); }
+.strat-isi    { color: var(--purple);    border-color: rgba(176,132,255,0.3); background: rgba(176,132,255,0.06); }
+.strat-xfade  { color: var(--amber);     border-color: rgba(245,166,35,0.3);  background: rgba(245,166,35,0.06); }
+.strat-jingle { color: var(--green);     border-color: rgba(76,175,80,0.3);   background: rgba(76,175,80,0.06); }
 
 .song-flags { display: flex; gap: 3px; }
 .flag {
