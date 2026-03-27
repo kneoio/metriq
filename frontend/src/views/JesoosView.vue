@@ -217,7 +217,7 @@ async function jesoosFetchAgendas() {
               <!-- scene row header -->
               <div class="scene-row" @click="jesoosToggleScene(idx)">
                 <span class="scene-time">
-                  {{ fmtTimeArr(scene.scheduledStartTime) }}<span class="scene-time-sep">→</span>{{ fmtTimeArr(scene.scheduledEndTime) }}
+                  {{ fmtTimeArr(scene.firstEmissionTime) }}<span class="scene-time-sep">→</span>{{ fmtTimeArr(scene.lastEmissionTime) }}
                 </span>
                 <span v-if="sceneEffectiveStatus(scene)" class="scene-type-badge" :class="statusClass(sceneEffectiveStatus(scene))">{{ sceneEffectiveStatus(scene).toLowerCase() }}</span>
                 <span class="scene-title">{{ scene.title }}</span>
