@@ -75,14 +75,29 @@ function sceneEffectiveDuration(scene: any): number {
   return (scene.timeline ?? []).reduce((a: number, b: any) => a + (b.durationSeconds ?? 0), 0)
 }
 
-function batchGroups(timeline: any[]): Array<{ batchId: number; blocks: any[] }> {
-  const map = new Map<number, any[]>()
-  for (const item of (timeline ?? [])) {
-    const b = item.batchId ?? 0
-    if (!map.has(b)) map.set(b, [])
-    map.get(b)!.push(item)
+const STATUSES = ['PENDING', 'SCHEDULED', 'EMITTING', 'COMPLETED', 'FAILED', 'SKIPPED'] as const
+const jesoosStatusFilter = reactive(new Set<string>())
+
+function toggleStatusFilter(s: string) {
+  if (jesoosStatusFilter.has(s)) jesoosStatusFilter.delete(s)
+  else jesoosStatusFilter.add(s)
+}
+
+function filteredTimeline(timeline: any[]): any[] {
+  if (!jesoosStatusFilter.size) return timeline ?? []
+  return (timeline ?? []).filter(b => jesoosStatusFilter.has(b.status))
+}
+
+function statusClass(s: string): string {
+  const map: Record<string, string> = {
+    PENDING:   'st-pending',
+    SCHEDULED: 'st-scheduled',
+    EMITTING:  'st-emitting',
+    COMPLETED: 'st-completed',
+    FAILED:    'st-failed',
+    SKIPPED:   'st-skipped',
   }
-  return Array.from(map.entries()).map(([batchId, blocks]) => ({ batchId, blocks }))
+  return map[s] ?? 'st-pending'
 }
 
 function copyJson(btn: EventTarget | null, json: string) {
@@ -183,6 +198,18 @@ async function jesoosFetchAgendas() {
             </div>
           </div>
 
+          <!-- ── Status filter ── -->
+          <div class="status-filter-bar">
+            <button v-for="s in STATUSES" :key="s"
+              class="status-filter-btn" :class="[statusClass(s), { active: jesoosStatusFilter.has(s) }]"
+              @click="toggleStatusFilter(s)">
+              {{ s.toLowerCase() }}
+            </button>
+            <button v-if="jesoosStatusFilter.size" class="status-filter-clear" @click="jesoosStatusFilter.clear()">
+              clear
+            </button>
+          </div>
+
           <!-- ── Scenes ── -->
           <div class="scenes-list">
             <div v-for="(scene, idx) in jesoosAgenda.scenes" :key="scene.id"
@@ -217,18 +244,15 @@ async function jesoosFetchAgendas() {
                     <span class="tl-stat">{{ sceneEffectiveSongCount(scene) }} songs</span>
                     <span class="tl-dot">·</span>
                     <span class="tl-stat">{{ jesoosFormatDuration(sceneEffectiveDuration(scene)) }}</span>
-                    <span class="tl-dot">·</span>
-                    <span class="tl-stat tl-built" :class="{ 'tl-built-ok': scene.timelineBuilt }">
-                      {{ scene.timelineBuilt ? 'timeline built' : 'not built' }}
+                    <span v-if="jesoosStatusFilter.size" class="tl-dot">·</span>
+                    <span v-if="jesoosStatusFilter.size" class="tl-stat tl-filtered">
+                      {{ filteredTimeline(scene.timeline).length }} / {{ scene.timeline.length }} shown
                     </span>
-                    <span class="tl-dot">·</span>
-                    <span class="tl-stat">{{ batchGroups(scene.timeline).length }} batches</span>
                   </div>
 
-                  <div class="timeline-groups">
-                    <div v-for="group in batchGroups(scene.timeline)" :key="group.batchId" class="batch-group">
-                      <div class="batch-label">batch {{ group.batchId }}</div>
-                      <div v-for="block in group.blocks" :key="block.id" class="block-item">
+                  <div class="timeline-entries">
+                    <template v-if="filteredTimeline(scene.timeline).length">
+                      <div v-for="block in filteredTimeline(scene.timeline)" :key="block.id" class="block-item">
                         <div class="block-header">
                           <span class="song-seq">#{{ block.sequenceNumber }}</span>
                           <span class="song-emit-time">{{ fmtTimeArr(block.scheduledEmissionTime) }}</span>
@@ -240,6 +264,7 @@ async function jesoosFetchAgendas() {
                             <span v-if="block.hasJingle" class="flag flag-jingle">J</span>
                           </span>
                           <span class="song-dur">{{ fmtDurSec(block.durationSeconds) }}</span>
+                          <span class="entry-status" :class="statusClass(block.status)">{{ (block.status ?? '').toLowerCase() }}</span>
                         </div>
                         <div v-for="song in block.songs" :key="song.songId" class="song-row">
                           <div class="song-info">
@@ -249,7 +274,8 @@ async function jesoosFetchAgendas() {
                           <span class="song-dur">{{ fmtDurSec(song.durationSeconds) }}</span>
                         </div>
                       </div>
-                    </div>
+                    </template>
+                    <div v-else class="timeline-empty">no entries match filter</div>
                   </div>
                 </template>
               </div>
@@ -296,33 +322,51 @@ async function jesoosFetchAgendas() {
   border-bottom: 1px solid var(--border);
   font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.5px;
 }
-.tl-stat { color: var(--text-dim); }
-.tl-dot  { color: var(--border-bright); }
-.tl-built-ok { color: var(--green); }
+.tl-stat     { color: var(--text-dim); }
+.tl-dot      { color: var(--border-bright); }
+.tl-filtered { color: var(--amber); }
 
-/* ── Timeline groups ── */
-.timeline-groups { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
-
-.batch-group { display: flex; flex-direction: column; gap: 1px; }
-
-.batch-label {
-  font-family: var(--mono); font-size: 0.58rem; letter-spacing: 1.5px; text-transform: uppercase;
-  color: var(--text-dim); padding: 4px 6px 2px;
-  border-left: 2px solid var(--border-bright); margin-bottom: 2px; margin-left: 2px;
+/* ── Status filter bar ── */
+.status-filter-bar {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 8px 16px; border-bottom: 1px solid var(--border);
 }
+.status-filter-btn {
+  font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.5px;
+  padding: 2px 8px; border-radius: 3px; border: 1px solid; cursor: pointer;
+  background: transparent; transition: background 0.15s, opacity 0.15s;
+  opacity: 0.5;
+}
+.status-filter-btn.active { opacity: 1; }
+.status-filter-clear {
+  font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.5px;
+  padding: 2px 8px; border-radius: 3px; border: 1px solid var(--border);
+  color: var(--text-dim); background: transparent; cursor: pointer; margin-left: 4px;
+}
+.status-filter-clear:hover { border-color: var(--border-bright); color: var(--text); }
 
-/* ── Block item (timeline block containing songs) ── */
+/* ── Timeline entries ── */
+.timeline-entries { padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; }
+
+/* ── Block item (timeline entry containing songs) ── */
 .block-item {
   display: flex; flex-direction: column; gap: 1px;
-  border-left: 2px solid var(--border-bright); padding-left: 8px; margin-bottom: 6px;
+  border-left: 2px solid var(--border-bright); padding-left: 8px;
 }
 
 .block-header {
   display: grid;
-  grid-template-columns: 28px 44px 52px 32px 1fr;
+  grid-template-columns: 28px 44px 52px 32px 1fr max-content;
   align-items: center; gap: 8px;
   padding: 4px 6px; border-radius: 3px;
   background: rgba(255,255,255,0.03);
+}
+
+/* ── Entry status badge ── */
+.entry-status {
+  font-family: var(--mono); font-size: 0.56rem; letter-spacing: 0.5px;
+  padding: 2px 6px; border-radius: 3px; border: 1px solid; text-align: center;
+  white-space: nowrap;
 }
 
 .song-row {
@@ -363,6 +407,14 @@ async function jesoosFetchAgendas() {
 }
 .flag-intro  { background: rgba(33,150,243,0.2); color: var(--accent2); }
 .flag-jingle { background: rgba(245,166,35,0.2);  color: var(--amber); }
+
+/* ── Status colors (shared: filter buttons + entry badges) ── */
+.st-pending   { color: var(--text-dim);  border-color: rgba(255,255,255,0.12); }
+.st-scheduled { color: var(--accent);    border-color: rgba(33,150,243,0.35);  background: rgba(33,150,243,0.06); }
+.st-emitting  { color: var(--green);     border-color: rgba(76,175,80,0.4);    background: rgba(76,175,80,0.08); }
+.st-completed { color: var(--text-dim);  border-color: rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); }
+.st-failed    { color: var(--red,#f44);  border-color: rgba(244,67,54,0.4);    background: rgba(244,67,54,0.07); }
+.st-skipped   { color: var(--text-dim);  border-color: rgba(255,255,255,0.08); opacity: 0.6; }
 
 /* ── Empty timeline ── */
 .timeline-empty {
