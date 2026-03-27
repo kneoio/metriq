@@ -65,6 +65,16 @@ function strategyClass(s: string): string {
   return 'strat-only'
 }
 
+function sceneEffectiveSongCount(scene: any): number {
+  if (scene.totalSongs > 0) return scene.totalSongs
+  return (scene.timeline ?? []).reduce((a: number, b: any) => a + (b.songs?.length ?? 0), 0)
+}
+
+function sceneEffectiveDuration(scene: any): number {
+  if (scene.durationSeconds > 0) return scene.durationSeconds
+  return (scene.timeline ?? []).reduce((a: number, b: any) => a + (b.durationSeconds ?? 0), 0)
+}
+
 function batchGroups(timeline: any[]): Array<{ batchId: number; blocks: any[] }> {
   const map = new Map<number, any[]>()
   for (const item of (timeline ?? [])) {
@@ -164,11 +174,11 @@ async function jesoosFetchAgendas() {
               </div>
               <div class="stat-box">
                 <span class="stat-label">Duration</span>
-                <span class="stat-value">{{ jesoosFormatDuration(jesoosAgenda.scenes.reduce((a: number, s: any) => a + s.durationSeconds, 0)) }}</span>
+                <span class="stat-value">{{ jesoosFormatDuration(jesoosAgenda.scenes.reduce((a: number, s: any) => a + sceneEffectiveDuration(s), 0)) }}</span>
               </div>
               <div class="stat-box">
                 <span class="stat-label">Songs</span>
-                <span class="stat-value">{{ jesoosAgenda.scenes.reduce((a: number, s: any) => a + s.totalSongs, 0) }}</span>
+                <span class="stat-value">{{ jesoosAgenda.scenes.reduce((a: number, s: any) => a + sceneEffectiveSongCount(s), 0) }}</span>
               </div>
             </div>
           </div>
@@ -185,9 +195,9 @@ async function jesoosFetchAgendas() {
                 </span>
                 <span class="scene-type-badge" :class="jesoosSceneType(scene.title)">{{ jesoosSceneType(scene.title) }}</span>
                 <span class="scene-title">{{ scene.title }}</span>
-                <span class="scene-duration">{{ jesoosFormatDuration(scene.durationSeconds) }}</span>
-                <span class="scene-songs" :class="{ 'scene-songs-empty': scene.totalSongs === 0 }">
-                  {{ scene.totalSongs }} songs
+                <span class="scene-duration">{{ jesoosFormatDuration(sceneEffectiveDuration(scene)) }}</span>
+                <span class="scene-songs" :class="{ 'scene-songs-empty': sceneEffectiveSongCount(scene) === 0 }">
+                  {{ sceneEffectiveSongCount(scene) }} songs
                 </span>
                 <span class="chevron-cell" :class="{ 'chevron-open': jesoosExpandedScenes.has(idx) }">›</span>
               </div>
@@ -197,16 +207,16 @@ async function jesoosFetchAgendas() {
                 :ref="(el: any) => setJesoosSceneRef(idx, el)">
 
                 <!-- no songs -->
-                <div v-if="scene.totalSongs === 0" class="timeline-empty">
+                <div v-if="!scene.timeline?.length" class="timeline-empty">
                   no songs in this scene
                 </div>
 
                 <!-- song timeline -->
                 <template v-else>
                   <div class="timeline-bar">
-                    <span class="tl-stat">{{ scene.totalSongs }} songs</span>
+                    <span class="tl-stat">{{ sceneEffectiveSongCount(scene) }} songs</span>
                     <span class="tl-dot">·</span>
-                    <span class="tl-stat">{{ jesoosFormatDuration(scene.durationSeconds) }}</span>
+                    <span class="tl-stat">{{ jesoosFormatDuration(sceneEffectiveDuration(scene)) }}</span>
                     <span class="tl-dot">·</span>
                     <span class="tl-stat tl-built" :class="{ 'tl-built-ok': scene.timelineBuilt }">
                       {{ scene.timelineBuilt ? 'timeline built' : 'not built' }}
