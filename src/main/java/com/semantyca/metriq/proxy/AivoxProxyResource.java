@@ -31,9 +31,9 @@ public class AivoxProxyResource {
     }
 
     @POST
-    @Path("/aivox/{brand}/command/")
+    @Path("/aivox/{brand}/start")
     public Uni<Response> startStream(@PathParam("brand") String brand) {
-        String url = aivoxUrl + "/aivox/" + brand + "/command/";
+        String url = aivoxUrl + "/aivox/" + brand + "/start";
         LOG.infof("Proxying POST → %s", url);
         return client.postAbs(url).putHeader("X-Client-ID", "mixpla-web").send()
                 .map(r -> Response.status(r.statusCode()).entity(r.bodyAsString()).build())
@@ -41,9 +41,9 @@ public class AivoxProxyResource {
     }
 
     @DELETE
-    @Path("/aivox/{brand}/command/")
+    @Path("/aivox/{brand}/stop")
     public Uni<Response> stopStream(@PathParam("brand") String brand) {
-        String url = aivoxUrl + "/aivox/" + brand + "/command/";
+        String url = aivoxUrl + "/aivox/" + brand + "/stop";
         LOG.infof("Proxying DELETE → %s", url);
         return client.deleteAbs(url).putHeader("X-Client-ID", "mixpla-web").send()
                 .map(r -> Response.status(r.statusCode()).entity(r.bodyAsString()).build())

@@ -46,6 +46,54 @@ public class JesoosProxyResource {
                 .onFailure().recoverWithItem(e -> Response.serverError().entity("{\"error\":\"" + e.getMessage() + "\"}").build());
     }
 
+    @POST
+    @Path("/{brand}/enable-dj")
+    @Produces("application/json")
+    public Uni<Response> enableDj(@PathParam("brand") String brand) {
+        String url = jesoosUrl + "/jesoos/" + brand + "/enable-dj";
+        LOG.infof("Proxying POST → %s", url);
+        return client.postAbs(url)
+                .putHeader("Content-Type", "application/json")
+                .send()
+                .map(r -> Response.status(r.statusCode())
+                        .entity(r.bodyAsString())
+                        .header("Content-Type", "application/json")
+                        .build())
+                .onFailure().recoverWithItem(e -> Response.serverError().entity("{\"error\":\"" + e.getMessage() + "\"}").build());
+    }
+
+    @POST
+    @Path("/{brand}/disable-dj")
+    @Produces("application/json")
+    public Uni<Response> disableDj(@PathParam("brand") String brand) {
+        String url = jesoosUrl + "/jesoos/" + brand + "/disable-dj";
+        LOG.infof("Proxying POST → %s", url);
+        return client.postAbs(url)
+                .putHeader("Content-Type", "application/json")
+                .send()
+                .map(r -> Response.status(r.statusCode())
+                        .entity(r.bodyAsString())
+                        .header("Content-Type", "application/json")
+                        .build())
+                .onFailure().recoverWithItem(e -> Response.serverError().entity("{\"error\":\"" + e.getMessage() + "\"}").build());
+    }
+
+    @POST
+    @Path("/{brand}/dj-status")
+    @Produces("application/json")
+    public Uni<Response> djStatus(@PathParam("brand") String brand) {
+        String url = jesoosUrl + "/jesoos/" + brand + "/dj-status";
+        LOG.infof("Proxying POST → %s", url);
+        return client.postAbs(url)
+                .putHeader("Content-Type", "application/json")
+                .send()
+                .map(r -> Response.status(r.statusCode())
+                        .entity(r.bodyAsString())
+                        .header("Content-Type", "application/json")
+                        .build())
+                .onFailure().recoverWithItem(e -> Response.serverError().entity("{\"error\":\"" + e.getMessage() + "\"}").build());
+    }
+
     @GET
     @Path("/agendas")
     @Produces("application/json")

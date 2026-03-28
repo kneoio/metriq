@@ -12,7 +12,7 @@ export const useJesoosStore = defineStore('jesoos', () => {
 
   async function pollDjStatus() {
     try {
-      const res = await fetch(`/jesoos/${context.activeBrand}/dj-status`)
+      const res = await fetch(`/jesoos/${context.activeBrand}/dj-status`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
       const text = (await res.text()).trim()
       djEnabled.value = text === 'true'
     } catch {
@@ -59,8 +59,8 @@ export const useJesoosStore = defineStore('jesoos', () => {
 
   const start     = () => command('start')
   const stop      = () => command('stop')
-  const enableDj  = () => command('enabledj')
-  const disableDj = () => command('disabledj')
+  const enableDj  = () => command('enable-dj')
+  const disableDj = () => command('disable-dj')
 
   return { status, cmdStatus, cmdResult, djEnabled, start, stop, stopAll, enableDj, disableDj }
 })

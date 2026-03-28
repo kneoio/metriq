@@ -15,9 +15,10 @@ export const useAivoxStore = defineStore('aivox', () => {
   const cmdStatus    = ref('')
 
   async function serverAction(method: 'POST' | 'DELETE') {
+    const cmd = method === 'POST' ? 'start' : 'stop'
     cmdStatus.value = method === 'POST' ? 'starting…' : 'stopping…'
     try {
-      const r    = await fetch('/aivox/' + context.activeBrand + '/command/', { method })
+      const r    = await fetch('/aivox/' + context.activeBrand + '/' + cmd, { method })
       const text = await r.text()
       cmdStatus.value = r.ok ? (method === 'POST' ? 'started' : 'stopped') : 'error: ' + text
       if (r.ok && method === 'DELETE') { stopStream(); resetPlayer() }  // stop + reset local player when server stops
