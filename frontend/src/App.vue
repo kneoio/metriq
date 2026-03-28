@@ -1,62 +1,52 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useMetriqStore }    from '@/stores/metriq'
 import { useConnectionStore } from '@/stores/connection'
-import { useAivoxStore }     from '@/stores/aivox'
-import { useJesoosStore }    from '@/stores/jesoos'
 import { useTracesStore }    from '@/stores/traces'
-import { useContextStore }   from '@/stores/context'
-import { SERVICE_OPTIONS, STATION_LIST } from '@/utils/service'
-import { relTime } from '@/utils/time'
-import StreamView   from '@/views/StreamView.vue'
-import TracesView   from '@/views/TracesView.vue'
-import AivoxView    from '@/views/AivoxView.vue'
-import JesoosView   from '@/views/JesoosView.vue'
-import GlobalPlayer from '@/components/GlobalPlayer.vue'
+import { useStationsStore }  from '@/stores/stations'
+import { SERVICE_OPTIONS }   from '@/utils/service'
+import { relTime }           from '@/utils/time'
+import StreamView    from '@/views/StreamView.vue'
+import TracesView    from '@/views/TracesView.vue'
+import AivoxView     from '@/views/AivoxView.vue'
+import JesoosView    from '@/views/JesoosView.vue'
+import DashboardView from '@/views/DashboardView.vue'
 
-// Build info
 const appVersion = __APP_VERSION__
 const buildTime  = __BUILD_TIME__
 
-// Stores
 const metriq   = useMetriqStore()
 const conn     = useConnectionStore()
-const aivox    = useAivoxStore()
-const jesoos   = useJesoosStore()
 const traces   = useTracesStore()
-const context  = useContextStore()
+const stations = useStationsStore()
 
-// Derive the active view from connection store (single source of truth nav)
-import { ref, watch } from 'vue'
-type View = 'stream' | 'traces' | 'player' | 'jesoos'
-const activeView = ref<View>('stream')
-
-// Traces sidebar: always follows the global brand context
+// Traces sidebar: filtered to active station
 const tracesForSelectedBrand = computed(() => {
   const allEntries = Object.entries(metriq.byTrace)
   return allEntries
     .map(([id, evts]) => {
-      const brandEvts = (evts as any[]).filter((e: any) => (e.data.brandName ?? '').trim() === context.activeBrand)
+      const brandEvts = (evts as any[]).filter((e: any) => (e.data.brandName ?? '').trim() === stations.activeStation)
       return { id, count: brandEvts.length, lastTime: brandEvts[brandEvts.length - 1]?.receivedAt as Date | undefined }
     })
     .filter(t => t.count > 0)
     .sort((a, b) => (b.lastTime?.getTime() ?? 0) - (a.lastTime?.getTime() ?? 0))
 })
 
-// Reset selected trace when brand context changes
-watch(() => context.activeBrand, () => { traces.selectedTraceId = null })
+watch(() => stations.activeStation, () => { traces.selectedTraceId = null })
 
-// Stream sidebar: GSAP display values live in StreamView, but we need a ref to call clearAll
 const streamViewRef = ref<InstanceType<typeof StreamView> | null>(null)
-
 function clearAll() { (streamViewRef.value as any)?.clearAll?.() }
 
-const topbarTitle = computed(() => ({
-  stream: 'ALL METRICS',
-  traces: '',
-  player: 'AIVOX CONTROL',
-  jesoos: 'JESOOS CONTROL',
-}[activeView.value]))
+const topbarTitle = computed(() => {
+  if (stations.topView === 'metrics') return 'ALL METRICS'
+  const labels: Record<string, string> = {
+    dashboard: stations.activeStation.toUpperCase(),
+    traces:    'TRACES',
+    aivox:     'AIVOX',
+    jesoos:    'JESOOS',
+  }
+  return labels[stations.activeStationView] ?? ''
+})
 
 onMounted(() => conn.connect())
 onUnmounted(() => conn.disconnect())
@@ -73,26 +63,43 @@ onUnmounted(() => conn.disconnect())
       </div>
 
       <nav class="nav-menu">
-        <!-- Global view -->
-        <div class="nav-item" :class="{ active: activeView === 'stream' }" @click="activeView = 'stream'">
+        <!-- Global metrics view -->
+        <div class="nav-item" :class="{ active: stations.topView === 'metrics' }" @click="stations.goToMetrics()">
           <span class="nav-dot"></span>All Metrics
         </div>
 
-        <!-- Brand-context views -->
-        <div class="nav-section-label">{{ context.activeBrand }}</div>
-        <div class="nav-item" :class="{ active: activeView === 'traces' }" @click="activeView = 'traces'">
-          <span class="nav-dot"></span>Traces
-        </div>
-        <div class="nav-item" :class="{ active: activeView === 'player' }" @click="activeView = 'player'">
-          <span class="nav-dot"></span>Aivox
-        </div>
-        <div class="nav-item" :class="{ active: activeView === 'jesoos' }" @click="activeView = 'jesoos'">
-          <span class="nav-dot"></span>Jesoos
+        <div class="sidebar-divider"></div>
+
+        <!-- One section per station -->
+        <div v-for="station in stations.stationList" :key="station" class="station-section">
+          <div class="station-header"
+            :class="{ active: stations.topView === 'station' && stations.activeStation === station }"
+            @click="stations.goToStation(station)">
+            <span class="station-chevron"
+              :class="{ open: stations.topView === 'station' && stations.activeStation === station }">›</span>
+            {{ station }}
+          </div>
+          <template v-if="stations.topView === 'station' && stations.activeStation === station">
+            <div class="nav-sub-item" :class="{ active: stations.activeStationView === 'dashboard' }" @click="stations.goToView('dashboard')">
+              <span class="nav-dot"></span>Dashboard
+            </div>
+            <div class="nav-sub-item" :class="{ active: stations.activeStationView === 'traces' }" @click="stations.goToView('traces')">
+              <span class="nav-dot"></span>Traces
+            </div>
+            <div class="nav-sub-item" :class="{ active: stations.activeStationView === 'aivox' }" @click="stations.goToView('aivox')">
+              <span class="nav-dot"></span>Aivox
+            </div>
+            <div class="nav-sub-item" :class="{ active: stations.activeStationView === 'jesoos' }" @click="stations.goToView('jesoos')">
+              <span class="nav-dot"></span>Jesoos
+            </div>
+          </template>
         </div>
       </nav>
 
-      <!-- ── Stream sidebar ── -->
-      <template v-if="activeView === 'stream'">
+      <!-- ── Sidebar secondary content ── -->
+
+      <!-- Metrics: filters -->
+      <template v-if="stations.topView === 'metrics'">
         <div class="sidebar-divider"></div>
         <div class="filter-section">
           <div class="filter-label">Filter by type</div>
@@ -122,41 +129,14 @@ onUnmounted(() => conn.disconnect())
         </div>
       </template>
 
-      <!-- ── Aivox sidebar ── -->
-      <template v-else-if="activeView === 'player'">
-        <div class="status-indicator" style="border-top:1px solid var(--border);">
-          <div class="status-row">
-            <div class="status-dot" :class="aivox.status"></div>
-            <span class="status-text">{{ aivox.status }}</span>
-          </div>
-        </div>
-      </template>
-
-      <!-- ── Jesoos sidebar ── -->
-      <template v-else-if="activeView === 'jesoos'">
-        <div class="status-indicator" style="border-top:1px solid var(--border);">
-          <div class="status-row">
-            <div class="status-dot" :class="jesoos.status"></div>
-            <span class="status-text">{{ jesoos.status }}</span>
-          </div>
-          <div class="status-row" style="margin-top:6px;">
-            <div class="status-dot" :class="jesoos.djEnabled === null ? 'unknown' : jesoos.djEnabled ? 'connected' : 'disconnected'"></div>
-            <span class="status-text">DJ {{ jesoos.djEnabled === null ? '—' : jesoos.djEnabled ? 'on' : 'off' }}</span>
-          </div>
-        </div>
-      </template>
-
-      <!-- ── Traces sidebar ── -->
-      <template v-else>
-        <div class="filter-section" style="padding-bottom:8px;">
-          <div class="filter-label">brand context</div>
-          <div class="brand-context-label">{{ context.activeBrand }}</div>
-        </div>
+      <!-- Traces: trace list -->
+      <template v-else-if="stations.topView === 'station' && stations.activeStationView === 'traces'">
         <div class="sidebar-divider"></div>
         <div class="trace-list">
           <div v-if="tracesForSelectedBrand.length === 0" class="sidebar-empty">no traces</div>
           <div v-for="t in tracesForSelectedBrand" :key="t.id" class="trace-item"
-            :class="{ active: traces.selectedTraceId === t.id, multi: t.count > 1 }" @click="traces.selectedTraceId = t.id">
+            :class="{ active: traces.selectedTraceId === t.id, multi: t.count > 1 }"
+            @click="traces.selectedTraceId = t.id">
             <div class="trace-item-id">{{ t.id }}</div>
             <div class="trace-item-meta">
               <span class="trace-count-badge" :class="{ 'multi-badge': t.count > 1 }">{{ t.count }}</span>
@@ -169,11 +149,11 @@ onUnmounted(() => conn.disconnect())
       </template>
 
       <!-- ── Version ── -->
-      <div style="padding:4px 12px;font-family:var(--mono);font-size:0.55rem;color:var(--text-muted);opacity:0.5;">
+      <div style="padding:4px 12px;font-family:var(--mono);font-size:0.55rem;color:var(--text-muted);opacity:0.5;margin-top:auto;">
         v{{ appVersion }} · {{ buildTime }}
       </div>
 
-      <!-- ── WS status (always visible) ── -->
+      <!-- ── WS status ── -->
       <div class="status-indicator">
         <div class="status-row">
           <div class="status-dot" :class="conn.status"></div>
@@ -185,29 +165,9 @@ onUnmounted(() => conn.disconnect())
 
     <!-- ── Topbar ── -->
     <header class="topbar">
-
-      <!-- Left: title + server command controls -->
       <div class="topbar-left">
         <span class="topbar-title">{{ topbarTitle }}</span>
-        <div class="aivox-cmd-bar">
-          <select class="station-select-mini" v-model="context.activeBrand">
-            <option v-for="s in STATION_LIST" :key="s" :value="s">{{ s }}</option>
-          </select>
-          <button class="action-btn-mini" @click="aivox.serverAction('POST')">▶ Start stream</button>
-          <button class="action-btn-mini danger" @click="aivox.serverAction('DELETE')">■ Stop stream</button>
-          <span v-if="aivox.cmdStatus" class="cmd-status-mini">{{ aivox.cmdStatus }}</span>
-          <div class="topbar-sep"></div>
-          <button class="action-btn-mini" @click="jesoos.start()">▶ Start script</button>
-          <button class="action-btn-mini danger" @click="jesoos.stop()">■ Stop script</button>
-          <button class="action-btn-mini" @click="jesoos.enableDj()">🎙 DJ on</button>
-          <button class="action-btn-mini danger" @click="jesoos.disableDj()">🎙 DJ off</button>
-          <button class="action-btn-mini danger" @click="jesoos.stopAll()">■ Stop all</button>
-          <span v-if="jesoos.cmdStatus" class="cmd-status-mini">{{ jesoos.cmdStatus }}</span>
-          <div class="dj-led" :class="jesoos.djEnabled === null ? 'unknown' : jesoos.djEnabled ? 'connected' : 'disconnected'" title="DJ status"></div>
-        </div>
       </div>
-
-      <!-- Right: player + view actions + conn status -->
       <div class="topbar-right">
         <div class="topbar-stats">
           <span class="topbar-stat"><span class="tstat-label">rcvd</span><span class="tstat-value">{{ metriq.totalCount }}</span></span>
@@ -215,177 +175,78 @@ onUnmounted(() => conn.disconnect())
           <span class="topbar-stat"><span class="tstat-label">err</span><span class="tstat-value red">{{ metriq.errorCount }}</span></span>
         </div>
         <div class="topbar-sep"></div>
-        <button class="play-btn-mini" :class="{ active: aivox.isPlaying }" @click="aivox.togglePlay()"
-          :title="aivox.isPlaying ? 'Pause stream' : 'Play stream'">
-          {{ aivox.isPlaying ? '❚❚' : '▶' }}
-        </button>
-        <button class="reset-btn-mini" @click="aivox.resetPlayer()" title="Reset player — clears HLS state for a fresh reconnect">↺</button>
-        <div class="now-playing" v-if="aivox.npTitle && aivox.npTitle !== '—'"
-          :title="`${aivox.npTitle}${aivox.npArtist && aivox.npArtist !== '—' ? ' · ' + aivox.npArtist : ''}`">
-          <span class="np-text">{{ aivox.npTitle }}{{ aivox.npArtist && aivox.npArtist !== '—' ? ' · ' + aivox.npArtist : '' }}</span>
-        </div>
-        <div class="live-badge" v-show="aivox.isPlaying">
-          <div class="live-dot"></div><span>LIVE</span>
-        </div>
-        <div class="topbar-sep"></div>
-        <button v-if="activeView === 'stream'" class="clear-btn" @click="clearAll">CLEAR</button>
+        <button v-if="stations.topView === 'metrics'" class="clear-btn" @click="clearAll">CLEAR</button>
         <div class="live-badge">
           <div class="live-dot" v-show="conn.status === 'connected'"></div>
           <span>{{ conn.status === 'connected' ? 'LIVE' : conn.status.toUpperCase() }}</span>
         </div>
       </div>
-
     </header>
 
     <!-- ── Active view ── -->
-    <StreamView v-if="activeView === 'stream'"   ref="streamViewRef" />
-    <TracesView v-else-if="activeView === 'traces'" />
-    <AivoxView  v-else-if="activeView === 'player'" />
-    <JesoosView v-else-if="activeView === 'jesoos'" />
-
-    <!-- Always mounted — keeps HLS alive regardless of active view -->
-    <GlobalPlayer />
+    <StreamView    v-if="stations.topView === 'metrics'"                                        ref="streamViewRef" />
+    <DashboardView v-else-if="stations.activeStationView === 'dashboard'" />
+    <TracesView    v-else-if="stations.activeStationView === 'traces'" />
+    <AivoxView     v-else-if="stations.activeStationView === 'aivox'" />
+    <JesoosView    v-else-if="stations.activeStationView === 'jesoos'" />
 
   </div>
 </template>
 
 <style scoped>
-/* ── Topbar left / right split ───────────────────────────────────────────── */
-.topbar-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
+/* ── Topbar left / right split ── */
+.topbar-left  { display: flex; align-items: center; gap: 14px; }
 
-/* ── Aivox server command bar (left side) ────────────────────────────────── */
-.aivox-cmd-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.station-select-mini {
-  background: var(--surface, #242424);
-  color: var(--text, #e0e0e0);
-  border: 1px solid var(--border, #333);
-  border-radius: 4px;
-  font-family: var(--mono, monospace);
-  font-size: 0.65rem;
-  padding: 2px 4px;
-  cursor: pointer;
-  max-width: 110px;
-}
-
-.action-btn-mini {
-  background: transparent;
-  color: var(--text, #e0e0e0);
-  border: 1px solid var(--border, #444);
-  border-radius: 4px;
-  font-family: var(--mono, monospace);
-  font-size: 0.65rem;
-  padding: 2px 7px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: border-color 0.15s, color 0.15s;
-}
-.action-btn-mini:hover        { border-color: var(--accent, #2196F3); color: var(--accent, #2196F3); }
-.action-btn-mini.danger:hover { border-color: var(--accent3, #fa6d6d); color: var(--accent3, #fa6d6d); }
-
-.dj-led { width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); flex-shrink: 0; transition: background 0.3s; }
-.dj-led.connected    { background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse-dot 2s ease-in-out infinite; }
-.dj-led.disconnected { background: var(--accent3); }
-.dj-led.unknown      { background: var(--text-dim); }
-
-.play-btn-mini {
-  background: transparent;
-  color: var(--text, #e0e0e0);
-  border: 1px solid var(--border, #444);
-  border-radius: 4px;
-  font-size: 0.7rem;
-  padding: 2px 9px;
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
-  min-width: 32px;
-}
-.play-btn-mini:hover  { border-color: var(--accent, #2196F3); color: var(--accent, #2196F3); }
-.play-btn-mini.active { border-color: var(--accent, #2196F3); color: var(--accent, #2196F3); }
-.reset-btn-mini {
-  background: transparent;
-  color: var(--text-dim, #888);
-  border: 1px solid transparent;
-  border-radius: 4px;
-  font-size: 0.85rem;
-  padding: 2px 5px;
-  cursor: pointer;
-  transition: color 0.15s;
-}
-.reset-btn-mini:hover { color: var(--amber, #f5a623); }
-
-.cmd-status-mini {
-  font-family: var(--mono, monospace);
-  font-size: 0.6rem;
-  color: var(--text-muted, #666);
-  max-width: 90px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.brand-context-label {
-  font-family: var(--mono, monospace);
-  font-size: 0.65rem;
-  color: var(--accent, #2196F3);
-  letter-spacing: 0.5px;
-  padding: 2px 0;
-}
-
-.topbar-sep {
-  width: 1px;
-  height: 14px;
-  background: var(--border, #333);
-  margin: 0 2px;
-}
-
-.topbar-stats {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.topbar-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0px;
-  line-height: 1.1;
-}
-.tstat-label {
-  font-family: var(--mono, monospace);
-  font-size: 0.5rem;
-  letter-spacing: 1.5px;
-  color: var(--text-muted, #666);
-  text-transform: uppercase;
-}
-.tstat-value {
-  font-family: var(--mono, monospace);
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--accent, #2196F3);
-  line-height: 1;
-}
+/* ── Topbar stats ── */
+.topbar-stats { display: flex; align-items: center; gap: 10px; }
+.topbar-stat  { display: flex; flex-direction: column; align-items: flex-end; gap: 0; line-height: 1.1; }
+.tstat-label  { font-family: var(--mono); font-size: 0.5rem; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; }
+.tstat-value  { font-family: var(--mono); font-size: 0.85rem; font-weight: 600; color: var(--accent); line-height: 1; }
 .tstat-value.amber { color: var(--amber, #f5a623); }
 .tstat-value.red   { color: var(--accent3, #fa6d6d); }
 
-.now-playing {
-  max-width: 200px;
-  overflow: hidden;
+.topbar-sep { width: 1px; height: 14px; background: var(--border, #333); margin: 0 2px; }
+
+/* ── Station nav ── */
+.station-section { display: flex; flex-direction: column; }
+
+.station-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s;
+  user-select: none;
 }
-.np-text {
-  font-family: var(--mono, monospace);
-  font-size: 0.6rem;
-  color: var(--accent, #2196F3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: block;
+.station-header:hover  { color: var(--text); }
+.station-header.active { color: var(--accent); }
+
+.station-chevron {
+  display: inline-block;
+  font-size: 0.7rem;
+  transition: transform 0.2s;
+  color: var(--text-dim);
+  flex-shrink: 0;
 }
+.station-chevron.open { transform: rotate(90deg); }
+
+.nav-sub-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 26px;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.nav-sub-item:hover  { color: var(--text); background: rgba(255,255,255,0.03); }
+.nav-sub-item.active { color: var(--accent); }
 </style>
