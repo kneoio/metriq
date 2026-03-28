@@ -47,6 +47,22 @@ public class JesoosProxyResource {
     }
 
     @POST
+    @Path("/{brand}/stop")
+    @Produces("application/json")
+    public Uni<Response> stop(@PathParam("brand") String brand) {
+        String url = jesoosUrl + "/jesoos/" + brand + "/stop";
+        LOG.infof("Proxying POST → %s", url);
+        return client.postAbs(url)
+                .putHeader("Content-Type", "application/json")
+                .send()
+                .map(r -> Response.status(r.statusCode())
+                        .entity(r.bodyAsString())
+                        .header("Content-Type", "application/json")
+                        .build())
+                .onFailure().recoverWithItem(e -> Response.serverError().entity("{\"error\":\"" + e.getMessage() + "\"}").build());
+    }
+
+    @POST
     @Path("/{brand}/enable-dj")
     @Produces("application/json")
     public Uni<Response> enableDj(@PathParam("brand") String brand) {
