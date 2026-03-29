@@ -11,6 +11,7 @@ import TracesView      from '@/views/TracesView.vue'
 import CronView        from '@/views/CronView.vue'
 import IndependentView from '@/views/IndependentView.vue'
 import DashboardView   from '@/views/DashboardView.vue'
+import AgendaView      from '@/views/AgendaView.vue'
 
 const appVersion = __APP_VERSION__
 const buildTime  = __BUILD_TIME__
@@ -44,6 +45,7 @@ const topbarTitle = computed(() => {
   if (stations.topView === 'metrics') return 'ALL METRICS'
   const labels: Record<string, string> = {
     dashboard:   stations.activeStation.toUpperCase(),
+    agenda:      'AGENDA',
     traces:      'TRACES',
     cron:        'CRON',
     independent: 'INDEPENDENT',
@@ -85,6 +87,9 @@ onUnmounted(() => conn.disconnect())
           <template v-if="stations.topView === 'station' && stations.activeStation === station">
             <div class="nav-sub-item" :class="{ active: stations.activeStationView === 'dashboard' }" @click="stations.goToView('dashboard')">
               <span class="nav-dot"></span>Dashboard
+            </div>
+            <div class="nav-sub-item" :class="{ active: stations.activeStationView === 'agenda' }" @click="stations.goToView('agenda')">
+              <span class="nav-dot"></span>Agenda
             </div>
             <div class="nav-sub-item" :class="{ active: stations.activeStationView === 'traces' }" @click="stations.goToView('traces')">
               <span class="nav-dot"></span>Traces
@@ -189,6 +194,7 @@ onUnmounted(() => conn.disconnect())
     <!-- ── Active view ── -->
     <StreamView      v-if="stations.topView === 'metrics'"                                          ref="streamViewRef" />
     <DashboardView   v-else-if="stations.activeStationView === 'dashboard'" />
+    <AgendaView      v-else-if="stations.activeStationView === 'agenda'" />
     <TracesView      v-else-if="stations.activeStationView === 'traces'" />
     <CronView        v-else-if="stations.activeStationView === 'cron'" />
     <IndependentView v-else-if="stations.activeStationView === 'independent'" />
