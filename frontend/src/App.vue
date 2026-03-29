@@ -6,11 +6,11 @@ import { useTracesStore }    from '@/stores/traces'
 import { useStationsStore }  from '@/stores/stations'
 import { SERVICE_OPTIONS }   from '@/utils/service'
 import { relTime }           from '@/utils/time'
-import StreamView    from '@/views/StreamView.vue'
-import TracesView    from '@/views/TracesView.vue'
-import AivoxView     from '@/views/AivoxView.vue'
-import JesoosView    from '@/views/JesoosView.vue'
-import DashboardView from '@/views/DashboardView.vue'
+import StreamView      from '@/views/StreamView.vue'
+import TracesView      from '@/views/TracesView.vue'
+import CronView        from '@/views/CronView.vue'
+import IndependentView from '@/views/IndependentView.vue'
+import DashboardView   from '@/views/DashboardView.vue'
 
 const appVersion = __APP_VERSION__
 const buildTime  = __BUILD_TIME__
@@ -25,7 +25,10 @@ const tracesForSelectedBrand = computed(() => {
   const allEntries = Object.entries(metriq.byTrace)
   return allEntries
     .map(([id, evts]) => {
-      const brandEvts = (evts as any[]).filter((e: any) => (e.data.brandName ?? '').trim() === stations.activeStation)
+      const brandEvts = (evts as any[]).filter((e: any) =>
+        (e.data.brandName   ?? '').trim() === stations.activeStation &&
+        (e.data.processType ?? '').toUpperCase() === 'FLOW'
+      )
       return { id, count: brandEvts.length, lastTime: brandEvts[brandEvts.length - 1]?.receivedAt as Date | undefined }
     })
     .filter(t => t.count > 0)
@@ -40,10 +43,10 @@ function clearAll() { (streamViewRef.value as any)?.clearAll?.() }
 const topbarTitle = computed(() => {
   if (stations.topView === 'metrics') return 'ALL METRICS'
   const labels: Record<string, string> = {
-    dashboard: stations.activeStation.toUpperCase(),
-    traces:    'TRACES',
-    aivox:     'AIVOX',
-    jesoos:    'JESOOS',
+    dashboard:   stations.activeStation.toUpperCase(),
+    traces:      'TRACES',
+    cron:        'CRON',
+    independent: 'INDEPENDENT',
   }
   return labels[stations.activeStationView] ?? ''
 })
@@ -86,11 +89,11 @@ onUnmounted(() => conn.disconnect())
             <div class="nav-sub-item" :class="{ active: stations.activeStationView === 'traces' }" @click="stations.goToView('traces')">
               <span class="nav-dot"></span>Traces
             </div>
-            <div class="nav-sub-item" :class="{ active: stations.activeStationView === 'aivox' }" @click="stations.goToView('aivox')">
-              <span class="nav-dot"></span>Aivox
+            <div class="nav-sub-item" :class="{ active: stations.activeStationView === 'cron' }" @click="stations.goToView('cron')">
+              <span class="nav-dot"></span>Cron
             </div>
-            <div class="nav-sub-item" :class="{ active: stations.activeStationView === 'jesoos' }" @click="stations.goToView('jesoos')">
-              <span class="nav-dot"></span>Jesoos
+            <div class="nav-sub-item" :class="{ active: stations.activeStationView === 'independent' }" @click="stations.goToView('independent')">
+              <span class="nav-dot"></span>Independent
             </div>
           </template>
         </div>
@@ -184,11 +187,11 @@ onUnmounted(() => conn.disconnect())
     </header>
 
     <!-- ── Active view ── -->
-    <StreamView    v-if="stations.topView === 'metrics'"                                        ref="streamViewRef" />
-    <DashboardView v-else-if="stations.activeStationView === 'dashboard'" />
-    <TracesView    v-else-if="stations.activeStationView === 'traces'" />
-    <AivoxView     v-else-if="stations.activeStationView === 'aivox'" />
-    <JesoosView    v-else-if="stations.activeStationView === 'jesoos'" />
+    <StreamView      v-if="stations.topView === 'metrics'"                                          ref="streamViewRef" />
+    <DashboardView   v-else-if="stations.activeStationView === 'dashboard'" />
+    <TracesView      v-else-if="stations.activeStationView === 'traces'" />
+    <CronView        v-else-if="stations.activeStationView === 'cron'" />
+    <IndependentView v-else-if="stations.activeStationView === 'independent'" />
 
   </div>
 </template>

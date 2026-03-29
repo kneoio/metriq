@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import gsap from 'gsap'
 import { useMetriqStore } from '@/stores/metriq'
 import { useTracesStore } from '@/stores/traces'
@@ -13,19 +13,18 @@ const traces   = useTracesStore()
 const context  = useContextStore()
 
 const flowContainerEl = ref<HTMLElement | null>(null)
-const dialogEntry     = ref<EventEntry | null>(null)
-const copyLabel         = ref('COPY')
-const snapshotLabel     = ref('SNAPSHOT')
+const snapshotLabel   = ref('SNAPSHOT')
 
 const eventsForSelectedTrace = computed((): EventEntry[] => {
   if (!traces.selectedTraceId) return []
   return ((metriq.byTrace[traces.selectedTraceId] ?? []) as EventEntry[])
-    .filter(e => (e.data.brandName ?? '').trim() === context.activeBrand)
+    .filter(e =>
+      (e.data.brandName   ?? '').trim().toUpperCase() === context.activeBrand.trim().toUpperCase() &&
+      (e.data.processType ?? '').toUpperCase() === 'FLOW'
+    )
     .slice()
     .sort((a, b) => a.receivedAt.getTime() - b.receivedAt.getTime())
 })
-
-watch(() => traces.selectedTraceId, () => { dialogEntry.value = null })
 
 watch(() => eventsForSelectedTrace.value.length, (len, prev) => {
   if (len > (prev ?? 0)) {
@@ -38,39 +37,6 @@ watch(() => eventsForSelectedTrace.value.length, (len, prev) => {
   }
 })
 
-function openDialog(entry: EventEntry) {
-  dialogEntry.value = entry
-  copyLabel.value = 'COPY'
-}
-
-function closeDialog() {
-  dialogEntry.value = null
-}
-
-function onKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape' && dialogEntry.value) closeDialog()
-}
-onMounted(()   => window.addEventListener('keydown', onKeydown))
-onUnmounted(() => window.removeEventListener('keydown', onKeydown))
-
-function copyJson() {
-  if (!dialogEntry.value) return
-  const d = dialogEntry.value
-  const out = {
-    type:      d.data.type      ?? null,
-    brand:     d.data.brandName ?? null,
-    service:   d.data.serviceId ?? null,
-    code:      d.data.code      ?? null,
-    traceId:   d.data.traceId   ?? null,
-    receivedAt: d.receivedAt.toISOString(),
-    payload:   d.data.payload   ?? d.data,
-  }
-  navigator.clipboard.writeText(JSON.stringify(out, null, 2)).then(() => {
-    copyLabel.value = 'COPIED'
-    setTimeout(() => { copyLabel.value = 'COPY' }, 1800)
-  })
-}
-
 function copySnapshot() {
   const events = eventsForSelectedTrace.value
   const brand  = events.find(e => e.data.brandName)?.data.brandName ?? null
@@ -80,13 +46,14 @@ function copySnapshot() {
     snapshotAt: new Date().toISOString(),
     eventCount: events.length,
     events: events.map((e, idx) => ({
-      seq:       idx + 1,
-      receivedAt: e.receivedAt.toISOString(),
-      type:      e.data.type ?? null,
-      brandName: e.data.brandName ?? null,
-      serviceId: e.data.serviceId ?? null,
-      code:      e.data.code ?? null,
-      payload:   e.data.payload ?? e.data,
+      seq:         idx + 1,
+      receivedAt:  e.receivedAt.toISOString(),
+      type:        e.data.type        ?? null,
+      processType: e.data.processType ?? null,
+      brandName:   e.data.brandName   ?? null,
+      serviceId:   e.data.serviceId   ?? null,
+      code:        e.data.code        ?? null,
+      payload:     e.data.payload     ?? e.data,
     })),
   }
   navigator.clipboard.writeText(JSON.stringify(snapshot, null, 2)).then(() => {
@@ -99,26 +66,20 @@ function deltaMs(prev: EventEntry, curr: EventEntry): string {
   return flowTimeDelta(prev.receivedAt.getTime(), curr.receivedAt.getTime())
 }
 
-const dialogJson = computed(() => {
-  if (!dialogEntry.value) return ''
-  const d = dialogEntry.value
-  return JSON.stringify({
-    type:      d.data.type      ?? null,
-    brand:     d.data.brandName ?? null,
-    service:   d.data.serviceId ?? null,
-    code:      d.data.code      ?? null,
-    traceId:   d.data.traceId   ?? null,
-    receivedAt: d.receivedAt.toISOString(),
-    payload:   d.data.payload   ?? d.data,
-  }, null, 2)
-})
+function formatPayload(entry: EventEntry): string {
+  return JSON.stringify(entry.data.payload ?? {}, null, 2)
+}
+
+function payloadLineCount(entry: EventEntry): number {
+  return formatPayload(entry).split('\n').length
+}
 </script>
 
 <template>
   <main class="traces-main">
     <div v-if="!traces.selectedTraceId || eventsForSelectedTrace.length === 0" class="empty-state">
       <div class="empty-icon">⬡</div>
-      <div class="empty-text">{{ traces.selectedTraceId ? 'no events' : 'select a trace' }}</div>
+      <div class="empty-text">{{ traces.selectedTraceId ? 'no flow events' : 'select a trace' }}</div>
     </div>
     <template v-else>
       <div class="trace-header-bar">
@@ -140,84 +101,47 @@ const dialogJson = computed(() => {
               <span v-if="traces.showFlowTiming" class="flow-arrow-time">{{ deltaMs(eventsForSelectedTrace[idx - 1], entry) }}</span>
             </div>
             <div class="flow-node"
-              :class="{ 'is-error': isError(entry.data.type as string), 'is-debug': isDebug(entry.data.type as string) }"
-              @click="openDialog(entry)" style="cursor:pointer;">
+              :class="{ 'is-error': isError(entry.data.type as string), 'is-debug': isDebug(entry.data.type as string) }">
               <div class="flow-node-header">
                 <div class="flow-node-seq">#{{ idx + 1 }}</div>
                 <div class="flow-node-type"
                   :style="isError(entry.data.type as string) ? 'color:var(--accent3)' : isWarning(entry.data.type as string) ? 'color:var(--amber)' : isDebug(entry.data.type as string) ? 'color:var(--text-dim)' : isImportantInfo(entry.data.type as string) ? 'color:var(--cyan)' : ''">
-                  {{ (entry.data.type || 'UNKNOWN').toUpperCase() }}</div>
+                  {{ (entry.data.type || 'UNKNOWN').toUpperCase() }}
+                </div>
                 <span v-html="servicePillHtml(entry.data.serviceId as string)"></span>
                 <div class="flow-node-brand" v-if="entry.data.brandName">{{ entry.data.brandName }}</div>
-                <div class="flow-node-code" v-if="entry.data.code">{{ entry.data.code }}</div>
+                <div class="flow-node-code"  v-if="entry.data.code">{{ entry.data.code }}</div>
                 <div class="flow-node-time">{{ relTime(entry.receivedAt) }}</div>
+              </div>
+              <div class="flow-node-payload" :class="{ 'payload-scroll': payloadLineCount(entry) > 100 }">
+                <pre class="payload-pre">{{ formatPayload(entry) }}</pre>
               </div>
             </div>
           </template>
         </div>
       </div>
     </template>
-
-    <!-- ── Modal dialog ── -->
-    <Teleport to="body">
-      <div v-if="dialogEntry" class="modal-backdrop" @click.self="closeDialog">
-        <div class="modal-box">
-          <div class="modal-header">
-            <div class="modal-meta">
-              <span class="modal-type"
-                :style="isError(dialogEntry.data.type as string) ? 'color:var(--accent3)' : isWarning(dialogEntry.data.type as string) ? 'color:var(--amber)' : isDebug(dialogEntry.data.type as string) ? 'color:var(--text-dim)' : isImportantInfo(dialogEntry.data.type as string) ? 'color:var(--cyan)' : 'color:var(--accent)'">
-                {{ (dialogEntry.data.type || 'UNKNOWN').toUpperCase() }}
-              </span>
-              <span v-html="servicePillHtml(dialogEntry.data.serviceId as string)"></span>
-              <span v-if="dialogEntry.data.brandName" class="modal-brand">{{ dialogEntry.data.brandName }}</span>
-              <span v-if="dialogEntry.data.code" class="modal-code">{{ dialogEntry.data.code }}</span>
-              <span class="modal-time">{{ dialogEntry.receivedAt.toLocaleTimeString() }}</span>
-            </div>
-            <div class="modal-actions">
-              <button class="action-btn" @click="copyJson">{{ copyLabel }}</button>
-              <button class="modal-close" @click="closeDialog">✕</button>
-            </div>
-          </div>
-          <pre class="modal-json">{{ dialogJson }}</pre>
-        </div>
-      </div>
-    </Teleport>
   </main>
 </template>
 
 <style scoped>
 .trace-header-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 
-.modal-backdrop {
-  position: fixed; inset: 0; z-index: 1000;
-  background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
-  display: flex; align-items: center; justify-content: center;
+.flow-node-payload {
+  border-top: 1px solid var(--border);
+  padding: 10px 14px;
+  background: rgba(0,0,0,0.15);
 }
-.modal-box {
-  background: var(--surface); border: 1px solid var(--border-bright);
-  border-radius: 6px; width: min(720px, 92vw); max-height: 80vh;
-  display: flex; flex-direction: column; overflow: hidden;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+.flow-node-payload.payload-scroll {
+  max-height: calc(100 * 1.6 * 0.68rem);
+  overflow-y: auto;
 }
-.modal-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 16px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap;
-}
-.modal-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.modal-type { font-family: var(--mono); font-size: 0.7rem; font-weight: 600; letter-spacing: 1px; }
-.modal-brand { font-family: var(--mono); font-size: 0.65rem; color: var(--text-muted); letter-spacing: 0.5px; }
-.modal-code { font-family: var(--mono); font-size: 0.65rem; color: var(--amber); }
-.modal-time { font-family: var(--mono); font-size: 0.6rem; color: var(--text-dim); }
-.modal-actions { display: flex; align-items: center; gap: 8px; }
-.modal-close {
-  background: none; border: 1px solid var(--border); color: var(--text-dim);
-  font-size: 0.7rem; cursor: pointer; padding: 3px 8px; border-radius: 3px;
-  transition: all 0.15s;
-}
-.modal-close:hover { border-color: var(--accent3); color: var(--accent3); }
-.modal-json {
-  font-family: var(--mono); font-size: 0.68rem; line-height: 1.6;
-  color: var(--text-muted); padding: 16px; overflow: auto;
-  white-space: pre; flex: 1;
+.payload-pre {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  white-space: pre;
+  margin: 0;
 }
 </style>

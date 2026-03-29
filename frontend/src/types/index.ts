@@ -1,13 +1,14 @@
 // ── Domain types ─────────────────────────────────────────────────────────────
 
 export interface MetricEventData {
-  type?:      string
-  brandName?: string
-  serviceId?: string
-  traceId?:   string | number
-  code?:      string
-  payload?:   unknown
-  timestamp?: number | string
+  type?:        string
+  processType?: string
+  brandName?:   string
+  serviceId?:   string
+  traceId?:     string | number
+  code?:        string
+  payload?:     unknown
+  timestamp?:   number | string
   [key: string]: unknown
 }
 
