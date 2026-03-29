@@ -1,4 +1,4 @@
-package com.semantyca.metriq.proxy;
+package com.semantyca.metriq.rest;
 
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.Vertx;
