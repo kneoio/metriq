@@ -20,30 +20,33 @@ function formatPayload(entry: EventEntry): string {
   const { _receivedAt, ...rest } = entry.data as any
   return JSON.stringify(rest, null, 2)
 }
-
 </script>
 
 <template>
-  <main class="process-main">
+  <main class="traces-main">
     <div v-if="events.length === 0" class="empty-state">
       <div class="empty-icon">⬡</div>
       <div class="empty-text">no cron events</div>
     </div>
-    <div v-else class="event-list">
-      <div v-for="entry in events" :key="entry.id" class="event-card"
-        :class="{ 'is-error': isError(entry.data.type as string), 'is-debug': isDebug(entry.data.type as string) }">
-        <div class="event-header">
-          <div class="event-type"
-            :style="isError(entry.data.type as string) ? 'color:var(--accent3)' : isWarning(entry.data.type as string) ? 'color:var(--amber)' : isDebug(entry.data.type as string) ? 'color:var(--text-dim)' : isImportantInfo(entry.data.type as string) ? 'color:var(--cyan)' : ''">
-            {{ (entry.data.type || 'UNKNOWN').toUpperCase() }}
+    <div v-else class="flow-scroll">
+      <div class="flow-container">
+        <div v-for="(entry, idx) in events" :key="entry.id"
+          class="flow-node"
+          :class="{ 'is-error': isError(entry.data.type as string), 'is-debug': isDebug(entry.data.type as string) }">
+          <div class="flow-node-header">
+            <div class="flow-node-seq">#{{ idx + 1 }}</div>
+            <div class="flow-node-type"
+              :style="isError(entry.data.type as string) ? 'color:var(--accent3)' : isWarning(entry.data.type as string) ? 'color:var(--amber)' : isDebug(entry.data.type as string) ? 'color:var(--text-dim)' : isImportantInfo(entry.data.type as string) ? 'color:var(--cyan)' : ''">
+              {{ (entry.data.type || 'UNKNOWN').toUpperCase() }}
+            </div>
+            <span v-html="servicePillHtml(entry.data.serviceId as string)"></span>
+            <div class="flow-node-brand" v-if="entry.data.brandName">{{ entry.data.brandName }}</div>
+            <div class="flow-node-code"  v-if="entry.data.code">{{ entry.data.code }}</div>
+            <div class="flow-node-time">{{ relTime(entry.receivedAt) }}</div>
           </div>
-          <span v-html="servicePillHtml(entry.data.serviceId as string)"></span>
-          <div class="event-brand" v-if="entry.data.brandName">{{ entry.data.brandName }}</div>
-          <div class="event-code"  v-if="entry.data.code">{{ entry.data.code }}</div>
-          <div class="event-time">{{ relTime(entry.receivedAt) }}</div>
-        </div>
-        <div class="event-payload">
-          <pre class="payload-pre">{{ formatPayload(entry) }}</pre>
+          <div class="flow-node-payload">
+            <pre class="payload-pre">{{ formatPayload(entry) }}</pre>
+          </div>
         </div>
       </div>
     </div>
@@ -51,49 +54,17 @@ function formatPayload(entry: EventEntry): string {
 </template>
 
 <style scoped>
-.process-main {
-  flex: 1;
-  padding: 20px 28px;
-  overflow-y: auto;
-}
-
-.event-list {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.event-card {
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  background: var(--surface);
-  overflow: hidden;
-  flex-shrink: 0;
+:deep(.flow-node) {
+  width: auto;
   min-width: 260px;
   max-width: 600px;
-  width: max-content;
 }
-.event-card.is-error { border-color: rgba(244,67,54,0.35); }
-.event-card.is-debug { opacity: 0.6; }
-
-.event-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  flex-wrap: wrap;
-}
-
-.event-type  { font-family: var(--mono); font-size: 0.7rem; font-weight: 600; letter-spacing: 1px; }
-.event-brand { font-family: var(--mono); font-size: 0.65rem; color: var(--text-muted); }
-.event-code  { font-family: var(--mono); font-size: 0.65rem; color: var(--amber); }
-.event-time  { font-family: var(--mono); font-size: 0.6rem; color: var(--text-dim); margin-left: auto; }
-
-.event-payload {
+.flow-node-payload {
   border-top: 1px solid var(--border);
   padding: 10px 14px;
   background: rgba(0,0,0,0.15);
+  max-height: none;
+  overflow: visible;
 }
 .payload-pre {
   font-family: var(--mono);
