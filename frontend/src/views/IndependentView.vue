@@ -17,12 +17,10 @@ const events = computed((): EventEntry[] =>
 )
 
 function formatPayload(entry: EventEntry): string {
-  return JSON.stringify(entry.data.payload ?? {}, null, 2)
+  const { _receivedAt, ...rest } = entry.data as any
+  return JSON.stringify(rest, null, 2)
 }
 
-function payloadLineCount(entry: EventEntry): number {
-  return formatPayload(entry).split('\n').length
-}
 </script>
 
 <template>
@@ -44,7 +42,7 @@ function payloadLineCount(entry: EventEntry): number {
           <div class="event-code"  v-if="entry.data.code">{{ entry.data.code }}</div>
           <div class="event-time">{{ relTime(entry.receivedAt) }}</div>
         </div>
-        <div class="event-payload" :class="{ 'payload-scroll': payloadLineCount(entry) > 100 }">
+        <div class="event-payload">
           <pre class="payload-pre">{{ formatPayload(entry) }}</pre>
         </div>
       </div>
@@ -97,10 +95,6 @@ function payloadLineCount(entry: EventEntry): number {
   border-top: 1px solid var(--border);
   padding: 10px 14px;
   background: rgba(0,0,0,0.15);
-}
-.event-payload.payload-scroll {
-  max-height: calc(100 * 1.6 * 0.58rem);
-  overflow-y: auto;
 }
 .payload-pre {
   font-family: var(--mono);
