@@ -55,8 +55,6 @@ function formatPayload(entry: EventEntry): string {
   flex: 1;
   padding: 20px 28px;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
 }
 
 .event-list {
@@ -71,6 +69,7 @@ function formatPayload(entry: EventEntry): string {
   border-radius: 5px;
   background: var(--surface);
   overflow: hidden;
+  flex-shrink: 0;
   min-width: 260px;
   max-width: 600px;
   width: max-content;
