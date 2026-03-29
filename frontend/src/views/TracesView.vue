@@ -127,21 +127,29 @@ function payloadLineCount(entry: EventEntry): number {
 <style scoped>
 .trace-header-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 
+/* override global 190px fixed width — let payload determine card width */
+:deep(.flow-node) {
+  width: auto;
+  min-width: 260px;
+  max-width: 600px;
+}
+
 .flow-node-payload {
   border-top: 1px solid var(--border);
   padding: 10px 14px;
   background: rgba(0,0,0,0.15);
 }
 .flow-node-payload.payload-scroll {
-  max-height: calc(100 * 1.6 * 0.68rem);
+  max-height: calc(100 * 1.6 * 0.58rem);
   overflow-y: auto;
 }
 .payload-pre {
   font-family: var(--mono);
-  font-size: 0.65rem;
+  font-size: 0.55rem;
   line-height: 1.6;
   color: var(--text-muted);
-  white-space: pre;
+  white-space: pre-wrap;
+  word-break: break-all;
   margin: 0;
 }
 </style>

@@ -64,6 +64,7 @@ function payloadLineCount(entry: EventEntry): number {
 .event-list {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 10px;
 }
 
@@ -72,6 +73,9 @@ function payloadLineCount(entry: EventEntry): number {
   border-radius: 5px;
   background: var(--surface);
   overflow: hidden;
+  min-width: 260px;
+  max-width: 600px;
+  width: max-content;
 }
 .event-card.is-error { border-color: rgba(244,67,54,0.35); }
 .event-card.is-debug { opacity: 0.6; }
@@ -100,10 +104,11 @@ function payloadLineCount(entry: EventEntry): number {
 }
 .payload-pre {
   font-family: var(--mono);
-  font-size: 0.65rem;
+  font-size: 0.55rem;
   line-height: 1.6;
   color: var(--text-muted);
-  white-space: pre;
+  white-space: pre-wrap;
+  word-break: break-all;
   margin: 0;
 }
 </style>
