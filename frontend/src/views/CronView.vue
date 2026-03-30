@@ -30,8 +30,9 @@ function formatPayload(entry: EventEntry): string {
     </div>
     <div v-else class="flow-scroll">
       <div class="flow-container">
-        <div v-for="(entry, idx) in events" :key="entry.id"
-          class="flow-node"
+        <template v-for="(entry, idx) in events" :key="entry.id">
+        <div v-if="idx > 0" class="flow-arrow"><span>→</span></div>
+        <div class="flow-node"
           :class="{ 'is-error': isError(entry.data.type as string), 'is-debug': isDebug(entry.data.type as string) }">
           <div class="flow-node-header">
             <div class="flow-node-seq">#{{ idx + 1 }}</div>
@@ -48,6 +49,7 @@ function formatPayload(entry: EventEntry): string {
             <pre class="payload-pre">{{ formatPayload(entry) }}</pre>
           </div>
         </div>
+        </template>
       </div>
     </div>
   </main>

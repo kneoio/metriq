@@ -5,7 +5,6 @@ import { useContextStore } from '@/stores/context'
 export const useJesoosStore = defineStore('jesoos', () => {
 
   const context    = useContextStore()
-  const status     = ref('idle')
   const cmdStatus  = ref('')
   const cmdResult  = ref<unknown>(null)
   const djEnabled  = ref<boolean | null>(null)
@@ -38,12 +37,9 @@ export const useJesoosStore = defineStore('jesoos', () => {
       const data = await res.json()
       cmdResult.value = data
       cmdStatus.value = res.ok ? 'ok' : 'err'
-      if (cmd === 'start') status.value = res.ok ? 'running' : 'error'
-      if (cmd === 'stop')  status.value = res.ok ? 'idle'    : 'error'
     } catch (e: any) {
       cmdResult.value = e.message
       cmdStatus.value = 'err'
-      status.value    = 'error'
     }
   }
 
@@ -55,11 +51,9 @@ export const useJesoosStore = defineStore('jesoos', () => {
       const data = await res.json()
       cmdResult.value = data
       cmdStatus.value = res.ok ? 'ok' : 'err'
-      if (res.ok) status.value = 'idle'
     } catch (e: any) {
       cmdResult.value = e.message
       cmdStatus.value = 'err'
-      status.value    = 'error'
     }
   }
 
@@ -68,5 +62,5 @@ export const useJesoosStore = defineStore('jesoos', () => {
   const enableDj  = () => command('enable-dj')
   const disableDj = () => command('disable-dj')
 
-  return { status, cmdStatus, cmdResult, djEnabled, start, stop, stopAll, enableDj, disableDj }
+  return { cmdStatus, cmdResult, djEnabled, start, stop, stopAll, enableDj, disableDj }
 })

@@ -41,14 +41,12 @@ const stations = useStationsStore()
       </div>
       <div class="dash-feedback">
         <div class="dash-svc-status">
-          <span class="sdot" :class="jesoos.status"></span>
-          <span class="slabel">{{ jesoos.status }}</span>
+          <span v-if="jesoos.cmdStatus" class="slabel">{{ jesoos.cmdStatus }}</span>
           <div class="dj-led"
             :class="jesoos.djEnabled === null ? 'unknown' : jesoos.djEnabled ? 'connected' : 'disconnected'"
             title="DJ status"></div>
           <span class="slabel">{{ jesoos.djEnabled === null ? 'dj ?' : jesoos.djEnabled ? 'dj on' : 'dj off' }}</span>
         </div>
-        <span v-if="jesoos.cmdStatus" class="dash-cmd-status">{{ jesoos.cmdStatus }}</span>
       </div>
     </div>
 
