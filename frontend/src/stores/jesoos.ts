@@ -1,22 +1,28 @@
-import { ref, watch, onUnmounted } from 'vue'
+import { ref, computed, reactive, watch, onUnmounted } from 'vue'
 import { defineStore } from 'pinia'
 import { useContextStore } from '@/stores/context'
 
 export const useJesoosStore = defineStore('jesoos', () => {
 
   const context    = useContextStore()
-  const cmdStatus  = ref('')
-  const cmdResult  = ref<unknown>(null)
-  const djEnabled  = ref<boolean | null>(null)
+  const cmdStatus   = ref('')
+  const cmdResult   = ref<unknown>(null)
+  const djByBrand   = reactive<Record<string, boolean | null>>({})
+
+  const djEnabled = computed(() => {
+    const b = context.activeBrand
+    return b in djByBrand ? djByBrand[b] : null
+  })
 
   async function pollDjStatus() {
+    const brand = context.activeBrand
     try {
-      const res = await fetch(`/jesoos/info/${context.activeBrand}/dj-status`)
-      if (!res.ok) { djEnabled.value = null; return }
+      const res = await fetch(`/jesoos/info/${brand}/dj-status`)
+      if (!res.ok) { djByBrand[brand] = null; return }
       const text = (await res.text()).trim().toLowerCase()
-      djEnabled.value = text === 'true'
+      djByBrand[brand] = text === 'true'
     } catch {
-      djEnabled.value = null
+      djByBrand[brand] = null
     }
   }
 
@@ -24,10 +30,7 @@ export const useJesoosStore = defineStore('jesoos', () => {
   const _djPoll = setInterval(pollDjStatus, 60_000)
   onUnmounted(() => clearInterval(_djPoll))
 
-  watch(() => context.activeBrand, () => {
-    djEnabled.value = null
-    pollDjStatus()
-  })
+  watch(() => context.activeBrand, pollDjStatus)
 
   async function command(cmd: string) {
     cmdStatus.value = 'pending'
@@ -62,5 +65,5 @@ export const useJesoosStore = defineStore('jesoos', () => {
   const enableDj  = () => command('enable-dj')
   const disableDj = () => command('disable-dj')
 
-  return { cmdStatus, cmdResult, djEnabled, start, stop, stopAll, enableDj, disableDj }
+  return { cmdStatus, cmdResult, djByBrand, djEnabled, start, stop, stopAll, enableDj, disableDj }
 })
