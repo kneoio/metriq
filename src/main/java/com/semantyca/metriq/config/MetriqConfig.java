@@ -4,20 +4,20 @@ import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
 import io.smallrye.config.WithName;
 
-import java.util.List;
-import java.util.Optional;
-
-@ConfigMapping(prefix = "aivox")
+@ConfigMapping(prefix = "metriq")
 public interface MetriqConfig {
 
-    @WithDefault("http://localhost:8080")
-    String host();
+    @WithName("jesoos.url")
+    @WithDefault("http://localhost:38797")
+    String getJesoosUrl();
 
-    @WithName("agent.url")
-    @WithDefault("http://localhost:38799")
-    String getAgentUrl();
+    @WithName("aivox.url")
+    @WithDefault("http://localhost:38798")
+    String getAivoxUrl();
 
     Path path();
+
+    String getPathUploads();
 
     interface Path {
         @WithDefault("uploads")
