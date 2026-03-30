@@ -139,7 +139,7 @@ export const useMetriqStore = defineStore('metriq', () => {
 
   async function deleteTrace(traceId: string) {
     try {
-      await fetch(`/metriq/api/traces/${encodeURIComponent(traceId)}`, { method: 'DELETE' })
+      await fetch(`/metriq/traces/${encodeURIComponent(traceId)}`, { method: 'DELETE' })
     } catch { /* best-effort */ }
     delete byTrace[traceId]
   }

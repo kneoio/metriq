@@ -18,7 +18,7 @@ public class MetricEventRouteResource {
     EventStore eventStore;
 
     public void setupRoutes(Router router) {
-        String path = "/metriq/api";
+        String path = "/metriq";
         router.route(HttpMethod.GET, path + "/snapshot").handler(this::getSnapshot);
         router.route(HttpMethod.GET, path + "/events").handler(this::getEvents);
         router.route(HttpMethod.GET, path + "/events/:brand").handler(this::getEventsByBrand);

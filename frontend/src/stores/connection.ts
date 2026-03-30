@@ -23,7 +23,7 @@ export const useConnectionStore = defineStore('connection', () => {
       // Seed Pinia from BE snapshot so any client connecting at any time
       // immediately gets full historical data — not just events since page load.
       try {
-        const res = await fetch('/metriq/api/snapshot')
+        const res = await fetch('/metriq/snapshot')
         if (res.ok) {
           metriq.seedFromSnapshot(await res.json())
         } else {
