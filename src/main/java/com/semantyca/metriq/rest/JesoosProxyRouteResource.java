@@ -31,7 +31,6 @@ public class JesoosProxyRouteResource {
 
     public void setupRoutes(Router router) {
         String path = "/jesoos";
-        router.route(HttpMethod.GET, path + "/info/brand-timers").handler(this::getBrandTimers);
         router.route(HttpMethod.GET, path + "/info/:brand/dj-status").handler(this::getDjStatus);
         router.route(HttpMethod.GET, path + "/info/:brand/agendas").handler(this::getAgendas);
         
@@ -43,7 +42,7 @@ public class JesoosProxyRouteResource {
 
     private void handleStart(RoutingContext rc) {
         String brand = rc.pathParam("brand");
-        String url = config.getAgentUrl() + "/jesoos/" + brand + "/start";
+        String url = config.getAgentUrl() + "/jesoos/command/" + brand + "/start";
         LOGGER.infof("Proxying POST → %s", url);
         
         client.postAbs(url)
@@ -63,7 +62,7 @@ public class JesoosProxyRouteResource {
 
     private void handleStop(RoutingContext rc) {
         String brand = rc.pathParam("brand");
-        String url = config.getAgentUrl() + "/jesoos/" + brand + "/stop";
+        String url = config.getAgentUrl() + "/jesoos/command/" + brand + "/stop";
         LOGGER.infof("Proxying POST → %s", url);
         
         client.postAbs(url)
@@ -83,7 +82,7 @@ public class JesoosProxyRouteResource {
 
     private void handleEnableDj(RoutingContext rc) {
         String brand = rc.pathParam("brand");
-        String url = config.getAgentUrl() + "/jesoos/" + brand + "/enable-dj";
+        String url = config.getAgentUrl() + "/jesoos/command/" + brand + "/enable-dj";
         LOGGER.infof("Proxying POST → %s", url);
         
         client.postAbs(url)
@@ -103,7 +102,7 @@ public class JesoosProxyRouteResource {
 
     private void handleDisableDj(RoutingContext rc) {
         String brand = rc.pathParam("brand");
-        String url = config.getAgentUrl() + "/jesoos/" + brand + "/disable-dj";
+        String url = config.getAgentUrl() + "/jesoos/command/" + brand + "/disable-dj";
         LOGGER.infof("Proxying POST → %s", url);
         
         client.postAbs(url)
@@ -123,25 +122,7 @@ public class JesoosProxyRouteResource {
 
     private void getDjStatus(RoutingContext rc) {
         String brand = rc.pathParam("brand");
-        String url = config.getAgentUrl() + "/jesoos/" + brand + "/dj-status";
-        LOGGER.infof("Proxying GET → %s", url);
-        
-        client.getAbs(url)
-                .send()
-                .subscribe().with(
-                    r -> rc.response()
-                            .setStatusCode(r.statusCode())
-                            .putHeader("Content-Type", "application/json")
-                            .end(r.bodyAsString()),
-                    e -> rc.response()
-                            .setStatusCode(500)
-                            .putHeader("Content-Type", "application/json")
-                            .end(new JsonObject().put("error", e.getMessage()).encode())
-                );
-    }
-
-    private void getBrandTimers(RoutingContext rc) {
-        String url = config.getAgentUrl() + "/jesoos/info/brand-timers";
+        String url = config.getAgentUrl() + "/jesoos/info/" + brand + "/dj-status";
         LOGGER.infof("Proxying GET → %s", url);
         
         client.getAbs(url)
@@ -160,7 +141,7 @@ public class JesoosProxyRouteResource {
 
     private void getAgendas(RoutingContext rc) {
         String brand = rc.pathParam("brand");
-        String url = config.getAgentUrl() + "/jesoos/agendas/" + brand;
+        String url = config.getAgentUrl() + "/jesoos/info/" + brand + "/agendas";
         LOGGER.infof("Proxying GET → %s", url);
         
         client.getAbs(url)
