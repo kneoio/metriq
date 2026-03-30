@@ -8,7 +8,7 @@ export const useJesoosStore = defineStore('jesoos', () => {
   const cmdStatus        = ref('')
   const cmdResult        = ref<unknown>(null)
   const djByBrand        = reactive<Record<string, boolean | null>>({})
-  const liveByBrand      = reactive<Record<string, Record<string, unknown> | null>>({})
+  const liveByBrand      = reactive<Record<string, boolean | null>>({})
 
   const djEnabled = computed(() => {
     const b = context.activeBrand
@@ -37,9 +37,8 @@ export const useJesoosStore = defineStore('jesoos', () => {
     try {
       const res = await fetch(`/jesoos/info/${brand}/live`)
       if (!res.ok) { liveByBrand[brand] = null; return }
-      const data = await res.json()
-      const station = 'timezone' in data ? data : (data[brand] ?? null)
-      liveByBrand[brand] = station as Record<string, unknown> | null
+      const text = (await res.text()).trim().toLowerCase()
+      liveByBrand[brand] = text === 'true'
     } catch {
       liveByBrand[brand] = null
     }

@@ -36,7 +36,10 @@ const tracesForSelectedBrand = computed(() => {
     .sort((a, b) => (b.lastTime?.getTime() ?? 0) - (a.lastTime?.getTime() ?? 0))
 })
 
-watch(() => stations.activeStation, () => { traces.selectedTraceId = null })
+watch(() => stations.activeStation, (station) => {
+  traces.selectedTraceId = null
+  document.title = station ? `${station} - Metriq` : 'Metriq'
+}, { immediate: true })
 
 const streamViewRef = ref<InstanceType<typeof StreamView> | null>(null)
 function clearAll() { (streamViewRef.value as any)?.clearAll?.() }
