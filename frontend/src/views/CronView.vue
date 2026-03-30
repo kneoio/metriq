@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useMetriqStore } from '@/stores/metriq'
 import { useContextStore } from '@/stores/context'
-import { servicePillHtml } from '@/utils/service'
+import { servicePillHtml, isError, isWarning, isDebug, isImportantInfo } from '@/utils/service'
 import { relTime } from '@/utils/time'
 import type { EventEntry } from '@/types'
 
@@ -36,6 +36,10 @@ function formatPayload(entry: EventEntry): string {
         <div class="flow-node">
           <div class="flow-node-header">
             <div class="node-row1">
+              <span class="node-type"
+                :style="isError(entry.data.type as string) ? 'color:var(--accent3)' : isWarning(entry.data.type as string) ? 'color:var(--amber)' : isDebug(entry.data.type as string) ? 'color:var(--text-dim)' : isImportantInfo(entry.data.type as string) ? 'color:var(--cyan)' : ''">
+                {{ (entry.data.type || 'UNKNOWN').toUpperCase() }}
+              </span>
               <span v-html="servicePillHtml(entry.data.serviceId as string)"></span>
               <div class="flow-node-brand" v-if="entry.data.brandName">{{ entry.data.brandName }}</div>
             </div>
@@ -56,6 +60,7 @@ function formatPayload(entry: EventEntry): string {
 
 <style scoped>
 .node-row1, .node-row2 { display: flex; align-items: center; gap: 8px; }
+.node-type { font-family: var(--mono); font-size: 0.52rem; letter-spacing: 1px; color: var(--text-muted); }
 
 :deep(.flow-node) {
   width: auto;

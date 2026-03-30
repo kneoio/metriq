@@ -5,13 +5,19 @@ import { useContextStore } from '@/stores/context'
 export const useJesoosStore = defineStore('jesoos', () => {
 
   const context    = useContextStore()
-  const cmdStatus   = ref('')
-  const cmdResult   = ref<unknown>(null)
-  const djByBrand   = reactive<Record<string, boolean | null>>({})
+  const cmdStatus        = ref('')
+  const cmdResult        = ref<unknown>(null)
+  const djByBrand        = reactive<Record<string, boolean | null>>({})
+  const liveByBrand      = reactive<Record<string, Record<string, unknown> | null>>({})
 
   const djEnabled = computed(() => {
     const b = context.activeBrand
     return b in djByBrand ? djByBrand[b] : null
+  })
+
+  const liveStatus = computed(() => {
+    const b = context.activeBrand
+    return b in liveByBrand ? liveByBrand[b] : null
   })
 
   async function pollDjStatus() {
@@ -26,10 +32,25 @@ export const useJesoosStore = defineStore('jesoos', () => {
     }
   }
 
+  async function pollLiveStatus() {
+    const brand = context.activeBrand
+    try {
+      const res = await fetch(`/jesoos/info/${brand}/live`)
+      if (!res.ok) { liveByBrand[brand] = null; return }
+      const data = await res.json()
+      liveByBrand[brand] = (data[brand] ?? Object.values(data)[0] ?? null) as Record<string, unknown> | null
+    } catch {
+      liveByBrand[brand] = null
+    }
+  }
+
   pollDjStatus()
   setInterval(pollDjStatus, 60_000)
 
-  watch(() => context.activeBrand, pollDjStatus)
+  pollLiveStatus()
+  setInterval(pollLiveStatus, 30_000)
+
+  watch(() => context.activeBrand, () => { pollDjStatus(); pollLiveStatus() })
 
   async function command(cmd: string) {
     cmdStatus.value = 'pending'
@@ -64,5 +85,5 @@ export const useJesoosStore = defineStore('jesoos', () => {
   const enableDj  = () => command('enable-dj')
   const disableDj = () => command('disable-dj')
 
-  return { cmdStatus, cmdResult, djByBrand, djEnabled, start, stop, stopAll, enableDj, disableDj }
+  return { cmdStatus, cmdResult, djByBrand, djEnabled, liveStatus, start, stop, stopAll, enableDj, disableDj }
 })

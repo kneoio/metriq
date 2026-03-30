@@ -31,6 +31,7 @@ public class JesoosProxyRouteResource {
 
     public void setupRoutes(Router router) {
         String path = "/jesoos";
+        router.route(HttpMethod.GET, path + "/info/:brand/live").handler(this::getLiveStatus);
         router.route(HttpMethod.GET, path + "/info/:brand/dj-status").handler(this::getDjStatus);
         router.route(HttpMethod.GET, path + "/info/:brand/agendas").handler(this::getAgendas);
         
@@ -107,6 +108,25 @@ public class JesoosProxyRouteResource {
         
         client.postAbs(url)
                 .putHeader("Content-Type", "application/json")
+                .send()
+                .subscribe().with(
+                    r -> rc.response()
+                            .setStatusCode(r.statusCode())
+                            .putHeader("Content-Type", "application/json")
+                            .end(r.bodyAsString()),
+                    e -> rc.response()
+                            .setStatusCode(500)
+                            .putHeader("Content-Type", "application/json")
+                            .end(new JsonObject().put("error", e.getMessage()).encode())
+                );
+    }
+
+    private void getLiveStatus(RoutingContext rc) {
+        String brand = rc.pathParam("brand");
+        String url = config.getAgentUrl() + "/jesoos/info/" + brand + "/live";
+        LOGGER.infof("Proxying GET → %s", url);
+
+        client.getAbs(url)
                 .send()
                 .subscribe().with(
                     r -> rc.response()

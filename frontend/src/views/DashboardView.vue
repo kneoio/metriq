@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, computed, onUnmounted } from 'vue'
 import { useAivoxStore }    from '@/stores/aivox'
 import { useJesoosStore }   from '@/stores/jesoos'
 import { useStationsStore } from '@/stores/stations'
@@ -6,6 +7,22 @@ import { useStationsStore } from '@/stores/stations'
 const aivox    = useAivoxStore()
 const jesoos   = useJesoosStore()
 const stations = useStationsStore()
+
+const now = ref(new Date())
+const clockTimer = setInterval(() => { now.value = new Date() }, 1000)
+onUnmounted(() => clearInterval(clockTimer))
+
+const stationTimezone = computed(() => jesoos.liveStatus?.timezone as string | undefined)
+const stationCountry  = computed(() => jesoos.liveStatus?.country  as string | undefined)
+const stationScenes   = computed(() => jesoos.liveStatus?.totalScenes as number | undefined)
+
+const stationTime = computed(() => {
+  if (!stationTimezone.value) return null
+  return now.value.toLocaleTimeString('en-GB', {
+    timeZone: stationTimezone.value,
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  })
+})
 </script>
 
 <template>
@@ -47,6 +64,25 @@ const stations = useStationsStore()
             title="DJ status"></div>
           <span class="slabel">{{ jesoos.djEnabled === null ? 'dj ?' : jesoos.djEnabled ? 'dj on' : 'dj off' }}</span>
         </div>
+        <div v-if="jesoos.liveStatus" class="agenda-status">
+          <span class="agenda-label">AGENDA</span>
+          <span class="agenda-field">
+            <span class="agenda-key">tz</span>
+            <span class="agenda-val">{{ stationTimezone }}</span>
+          </span>
+          <span class="agenda-field">
+            <span class="agenda-key">country</span>
+            <span class="agenda-val">{{ stationCountry }}</span>
+          </span>
+          <span class="agenda-field">
+            <span class="agenda-key">scenes</span>
+            <span class="agenda-val">{{ stationScenes }}</span>
+          </span>
+          <span class="agenda-field agenda-time">
+            <span class="agenda-val">{{ stationTime }}</span>
+          </span>
+        </div>
+        <span v-else class="slabel">agenda —</span>
       </div>
     </div>
 
@@ -156,4 +192,37 @@ const stations = useStationsStore()
 .dj-led.connected    { background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse-dot 2s ease-in-out infinite; }
 .dj-led.disconnected { background: var(--accent3); }
 .dj-led.unknown      { background: var(--text-dim); }
+
+.agenda-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.agenda-label {
+  font-family: var(--mono);
+  font-size: 0.52rem;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+}
+.agenda-field {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.agenda-key {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--text-dim);
+}
+.agenda-val {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--text);
+}
+.agenda-time .agenda-val {
+  color: var(--cyan);
+  font-size: 0.65rem;
+}
 </style>
