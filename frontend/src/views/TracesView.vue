@@ -4,7 +4,7 @@ import gsap from 'gsap'
 import { useMetriqStore } from '@/stores/metriq'
 import { useTracesStore } from '@/stores/traces'
 import { useContextStore } from '@/stores/context'
-import { servicePillHtml, isError, isWarning, isDebug, isImportantInfo } from '@/utils/service'
+import { servicePillHtml } from '@/utils/service'
 import { relTime, flowTimeDelta } from '@/utils/time'
 import type { EventEntry } from '@/types'
 
@@ -67,8 +67,9 @@ function deltaMs(prev: EventEntry, curr: EventEntry): string {
 }
 
 function formatPayload(entry: EventEntry): string {
-  const { _receivedAt, ...rest } = entry.data as any
-  return JSON.stringify(rest, null, 2)
+  const p = (entry.data as any).payload
+  if (p == null) return ''
+  return typeof p === 'string' ? p : JSON.stringify(p, null, 2)
 }
 
 </script>
@@ -98,18 +99,16 @@ function formatPayload(entry: EventEntry): string {
               <span>→</span>
               <span v-if="traces.showFlowTiming" class="flow-arrow-time">{{ deltaMs(eventsForSelectedTrace[idx - 1], entry) }}</span>
             </div>
-            <div class="flow-node"
-              :class="{ 'is-error': isError(entry.data.type as string), 'is-debug': isDebug(entry.data.type as string) }">
+            <div class="flow-node">
               <div class="flow-node-header">
-                <div class="flow-node-seq">#{{ idx + 1 }}</div>
-                <div class="flow-node-type"
-                  :style="isError(entry.data.type as string) ? 'color:var(--accent3)' : isWarning(entry.data.type as string) ? 'color:var(--amber)' : isDebug(entry.data.type as string) ? 'color:var(--text-dim)' : isImportantInfo(entry.data.type as string) ? 'color:var(--cyan)' : ''">
-                  {{ (entry.data.type || 'UNKNOWN').toUpperCase() }}
+                <div class="node-row1">
+                  <span v-html="servicePillHtml(entry.data.serviceId as string)"></span>
+                  <div class="flow-node-brand" v-if="entry.data.brandName">{{ entry.data.brandName }}</div>
                 </div>
-                <span v-html="servicePillHtml(entry.data.serviceId as string)"></span>
-                <div class="flow-node-brand" v-if="entry.data.brandName">{{ entry.data.brandName }}</div>
-                <div class="flow-node-code"  v-if="entry.data.code">{{ entry.data.code }}</div>
-                <div class="flow-node-time">{{ relTime(entry.receivedAt) }}</div>
+                <div class="node-row2">
+                  <div class="flow-node-code" v-if="entry.data.code">{{ entry.data.code }}</div>
+                  <div class="flow-node-time">{{ relTime(entry.receivedAt) }}</div>
+                </div>
               </div>
               <div class="flow-node-payload">
                 <pre class="payload-pre">{{ formatPayload(entry) }}</pre>
@@ -124,6 +123,7 @@ function formatPayload(entry: EventEntry): string {
 
 <style scoped>
 .trace-header-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.node-row1, .node-row2 { display: flex; align-items: center; gap: 8px; }
 
 /* override global 190px fixed width — let payload determine card width */
 :deep(.flow-node) {
