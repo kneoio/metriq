@@ -158,6 +158,14 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
                 <span class="stat-label">Brand</span>
                 <span class="stat-value">{{ agendaBrand }}</span>
               </div>
+              <div v-if="agenda.country" class="stat-box">
+                <span class="stat-label">Country</span>
+                <span class="stat-value">{{ agenda.country }}</span>
+              </div>
+              <div v-if="agenda.timezone" class="stat-box">
+                <span class="stat-label">Timezone</span>
+                <span class="stat-value">{{ agenda.timezone }}</span>
+              </div>
               <div class="stat-box">
                 <span class="stat-label">Scenes</span>
                 <span class="stat-value">{{ agenda.totalScenes }}</span>
