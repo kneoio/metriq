@@ -4,6 +4,9 @@ import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
 import io.smallrye.config.WithName;
 
+import java.util.List;
+import java.util.Optional;
+
 @ConfigMapping(prefix = "metriq")
 public interface MetriqConfig {
 
@@ -15,16 +18,13 @@ public interface MetriqConfig {
     @WithDefault("http://localhost:38798")
     String getAivoxUrl();
 
-    Path path();
+    Cleanup cleanup();
 
-    String getPathUploads();
+    interface Cleanup {
+        Optional<List<String>> folders();
 
-    interface Path {
-        @WithDefault("uploads")
-        String uploads();
-
-        @WithDefault("temp")
-        String temp();
+        @WithDefault("24")
+        long maxAgeHours();
     }
 
 }
