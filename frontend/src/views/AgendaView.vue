@@ -376,9 +376,9 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 .st-pending   { color: var(--text-dim);  border-color: rgba(255,255,255,0.12); }
 .st-scheduled { color: var(--accent);    border-color: rgba(33,150,243,0.35);  background: rgba(33,150,243,0.06); }
 .st-emitting  { color: var(--green);     border-color: rgba(76,175,80,0.4);    background: rgba(76,175,80,0.08); }
-.st-completed { color: var(--text-dim);  border-color: rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); }
+.st-completed { color: var(--green);      border-color: rgba(76,175,80,0.3);    background: rgba(76,175,80,0.05); opacity: 0.7; }
 .st-failed    { color: var(--red,#f44);  border-color: rgba(244,67,54,0.4);    background: rgba(244,67,54,0.07); }
-.st-skipped   { color: var(--text-dim);  border-color: rgba(255,255,255,0.08); opacity: 0.6; }
+.st-skipped   { color: var(--amber);     border-color: rgba(245,166,35,0.25);  background: rgba(245,166,35,0.04); opacity: 0.7; }
 
 .timeline-empty {
   padding: 14px 16px;
