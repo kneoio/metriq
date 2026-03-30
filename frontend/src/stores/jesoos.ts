@@ -38,7 +38,8 @@ export const useJesoosStore = defineStore('jesoos', () => {
       const res = await fetch(`/jesoos/info/${brand}/live`)
       if (!res.ok) { liveByBrand[brand] = null; return }
       const data = await res.json()
-      liveByBrand[brand] = (data[brand] ?? Object.values(data)[0] ?? null) as Record<string, unknown> | null
+      const station = 'timezone' in data ? data : (data[brand] ?? null)
+      liveByBrand[brand] = station as Record<string, unknown> | null
     } catch {
       liveByBrand[brand] = null
     }
