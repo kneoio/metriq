@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useMetriqStore } from '@/stores/metriq'
 import { useContextStore } from '@/stores/context'
-import { servicePillHtml, isError, isWarning, isDebug, isImportantInfo } from '@/utils/service'
+import { servicePillHtml } from '@/utils/service'
 import { relTime } from '@/utils/time'
 import type { EventEntry } from '@/types'
 
@@ -17,8 +17,9 @@ const events = computed((): EventEntry[] =>
 )
 
 function formatPayload(entry: EventEntry): string {
-  const { _receivedAt, ...rest } = entry.data as any
-  return JSON.stringify(rest, null, 2)
+  const p = (entry.data as any).payload
+  if (p == null) return ''
+  return typeof p === 'string' ? p : JSON.stringify(p, null, 2)
 }
 </script>
 
@@ -32,18 +33,16 @@ function formatPayload(entry: EventEntry): string {
       <div class="flow-container">
         <template v-for="(entry, idx) in events" :key="entry.id">
         <div v-if="idx > 0" class="flow-arrow"><span>→</span></div>
-        <div class="flow-node"
-          :class="{ 'is-error': isError(entry.data.type as string), 'is-debug': isDebug(entry.data.type as string) }">
+        <div class="flow-node">
           <div class="flow-node-header">
-            <div class="flow-node-seq">#{{ idx + 1 }}</div>
-            <div class="flow-node-type"
-              :style="isError(entry.data.type as string) ? 'color:var(--accent3)' : isWarning(entry.data.type as string) ? 'color:var(--amber)' : isDebug(entry.data.type as string) ? 'color:var(--text-dim)' : isImportantInfo(entry.data.type as string) ? 'color:var(--cyan)' : ''">
-              {{ (entry.data.type || 'UNKNOWN').toUpperCase() }}
+            <div class="node-row1">
+              <span v-html="servicePillHtml(entry.data.serviceId as string)"></span>
+              <div class="flow-node-brand" v-if="entry.data.brandName">{{ entry.data.brandName }}</div>
             </div>
-            <span v-html="servicePillHtml(entry.data.serviceId as string)"></span>
-            <div class="flow-node-brand" v-if="entry.data.brandName">{{ entry.data.brandName }}</div>
-            <div class="flow-node-code"  v-if="entry.data.code">{{ entry.data.code }}</div>
-            <div class="flow-node-time">{{ relTime(entry.receivedAt) }}</div>
+            <div class="node-row2">
+              <div class="flow-node-code" v-if="entry.data.code">{{ entry.data.code }}</div>
+              <div class="flow-node-time">{{ relTime(entry.receivedAt) }}</div>
+            </div>
           </div>
           <div class="flow-node-payload">
             <pre class="payload-pre">{{ formatPayload(entry) }}</pre>
@@ -56,6 +55,8 @@ function formatPayload(entry: EventEntry): string {
 </template>
 
 <style scoped>
+.node-row1, .node-row2 { display: flex; align-items: center; gap: 8px; }
+
 :deep(.flow-node) {
   width: auto;
   min-width: 260px;

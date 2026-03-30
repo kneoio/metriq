@@ -1,4 +1,4 @@
-import { ref, computed, reactive, watch, onUnmounted } from 'vue'
+import { ref, computed, reactive, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { useContextStore } from '@/stores/context'
 
@@ -27,8 +27,7 @@ export const useJesoosStore = defineStore('jesoos', () => {
   }
 
   pollDjStatus()
-  const _djPoll = setInterval(pollDjStatus, 60_000)
-  onUnmounted(() => clearInterval(_djPoll))
+  setInterval(pollDjStatus, 60_000)
 
   watch(() => context.activeBrand, pollDjStatus)
 

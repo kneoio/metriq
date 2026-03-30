@@ -194,7 +194,6 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
               <span></span>
             </div>
             <template v-for="(scene, idx) in agenda.scenes" :key="scene.id">
-            <div v-if="idx > 0" class="scene-arrow">↓</div>
             <div class="scene-card" :class="{ expanded: expandedScenes.has(idx) }">
 
               <div class="scene-row" @click="toggleScene(idx)">
@@ -270,11 +269,6 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 </template>
 
 <style scoped>
-.scene-arrow {
-  display: flex; justify-content: center; align-items: center;
-  color: var(--border-bright); font-size: 1rem; padding: 2px 0;
-  user-select: none;
-}
 .scene-time { font-family: var(--mono); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.5px; color: var(--accent2); white-space: nowrap; }
 .scene-time-sep { color: var(--text-dim); margin: 0 4px; font-weight: 400; }
 .scene-row { grid-template-columns: max-content max-content 1fr max-content max-content auto; }
