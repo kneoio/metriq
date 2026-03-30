@@ -105,6 +105,8 @@ function toggleScene(idx: number) {
   }
 }
 
+function copyJson() { navigator.clipboard.writeText(JSON.stringify(data.value, null, 2)) }
+
 // ── Fetch ─────────────────────────────────────────────────────────────────────
 
 async function fetchAgenda(brand: string) {
@@ -143,7 +145,7 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
           {{ badge === 'ok' ? 'ok' : badge === 'err' ? 'error' : 'pending' }}
         </span>
         <button class="action-btn secondary" style="margin-left:auto" @click="fetchAgenda(context.activeBrand)">↺ refresh</button>
-        <button v-if="data" class="action-btn secondary" @click="navigator.clipboard.writeText(JSON.stringify(data, null, 2))">⎘ copy json</button>
+        <button v-if="data" class="action-btn secondary" @click="copyJson()">⎘ copy json</button>
       </div>
       <div class="panel-body">
         <div v-if="loading" class="loading-text"><span class="spinner"></span>fetching</div>
