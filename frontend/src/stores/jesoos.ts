@@ -1,4 +1,4 @@
-import { ref, onUnmounted } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 import { defineStore } from 'pinia'
 import { useContextStore } from '@/stores/context'
 
@@ -12,8 +12,9 @@ export const useJesoosStore = defineStore('jesoos', () => {
 
   async function pollDjStatus() {
     try {
-      const res = await fetch(`/jesoos/${context.activeBrand}/dj-status`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
-      const text = (await res.text()).trim()
+      const res = await fetch(`/jesoos/info/${context.activeBrand}/dj-status`)
+      if (!res.ok) { djEnabled.value = null; return }
+      const text = (await res.text()).trim().toLowerCase()
       djEnabled.value = text === 'true'
     } catch {
       djEnabled.value = null
@@ -24,11 +25,16 @@ export const useJesoosStore = defineStore('jesoos', () => {
   const _djPoll = setInterval(pollDjStatus, 60_000)
   onUnmounted(() => clearInterval(_djPoll))
 
+  watch(() => context.activeBrand, () => {
+    djEnabled.value = null
+    pollDjStatus()
+  })
+
   async function command(cmd: string) {
     cmdStatus.value = 'pending'
     cmdResult.value = null
     try {
-      const res  = await fetch(`/jesoos/${context.activeBrand}/${cmd}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+      const res  = await fetch(`/jesoos/command/${context.activeBrand}/${cmd}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
       const data = await res.json()
       cmdResult.value = data
       cmdStatus.value = res.ok ? 'ok' : 'err'

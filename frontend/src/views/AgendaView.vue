@@ -40,17 +40,6 @@ function sceneEffectiveStatus(scene: any): string {
   return STATUS_PRIORITY.find(s => statuses.has(s)) ?? ''
 }
 
-function strategyAbbr(s: string): string {
-  const map: Record<string, string> = {
-    SONG_ONLY:             'only',
-    SONG_INTRO_SONG:       'intro',
-    INTRO_SONG:            'intro',
-    INTRO_SONG_INTRO_SONG: 'i·s·i',
-    SONG_CROSSFADE_SONG:   'xfade',
-    FILLER_JINGLE:         'jingle',
-  }
-  return map[s] ?? s
-}
 
 function strategyClass(s: string): string {
   if (s === 'SONG_CROSSFADE_SONG')   return 'strat-xfade'
@@ -122,7 +111,7 @@ async function fetchAgenda(brand: string) {
   loading.value = true; badge.value = 'pending'
   expandedScenes.clear(); statusFilter.clear()
   try {
-    const res  = await fetch(`/jesoos/agendas/${encodeURIComponent(brand)}`)
+    const res  = await fetch(`/jesoos/info/${encodeURIComponent(brand)}/agendas`)
     const json = await res.json()
     // Response may be { brand: agendaObj } or the agendaObj directly
     if (json && typeof json === 'object' && !Array.isArray(json) && json.scenes == null && Object.keys(json).length > 0) {
@@ -193,8 +182,17 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 
           <!-- ── Scenes ── -->
           <div class="scenes-list">
-            <div v-for="(scene, idx) in agenda.scenes" :key="scene.id"
-              class="scene-card" :class="{ expanded: expandedScenes.has(idx) }">
+            <div class="scene-captions">
+              <span>Time window</span>
+              <span>Status</span>
+              <span>Scene title</span>
+              <span>Duration</span>
+              <span>Songs</span>
+              <span></span>
+            </div>
+            <template v-for="(scene, idx) in agenda.scenes" :key="scene.id">
+            <div v-if="idx > 0" class="scene-arrow">↓</div>
+            <div class="scene-card" :class="{ expanded: expandedScenes.has(idx) }">
 
               <div class="scene-row" @click="toggleScene(idx)">
                 <span class="scene-time">
@@ -224,11 +222,19 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
                   </div>
                   <div class="timeline-entries">
                     <template v-if="filteredTimeline(scene.timeline).length">
+                      <div class="block-captions">
+                        <span>#</span>
+                        <span>Start time</span>
+                        <span>Mixing strategy</span>
+                        <span>Extras</span>
+                        <span>Duration</span>
+                        <span>Status</span>
+                      </div>
                       <div v-for="block in filteredTimeline(scene.timeline)" :key="block.id" class="block-item">
                         <div class="block-header">
                           <span class="song-seq">#{{ block.sequenceNumber }}</span>
                           <span class="song-emit-time">{{ fmtTimeArr(block.scheduledEmissionTime) }}</span>
-                          <span class="song-strategy" :class="strategyClass(block.mixingStrategy)">{{ strategyAbbr(block.mixingStrategy) }}</span>
+                          <span class="song-strategy" :class="strategyClass(block.mixingStrategy)">{{ block.mixingStrategy }}</span>
                           <span class="song-flags">
                             <span v-if="block.hasIntro"  class="flag flag-intro">I</span>
                             <span v-if="block.hasJingle" class="flag flag-jingle">J</span>
@@ -250,6 +256,7 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
                 </template>
               </div>
             </div>
+            </template>
           </div>
 
         </template>
@@ -260,6 +267,11 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 </template>
 
 <style scoped>
+.scene-arrow {
+  display: flex; justify-content: center; align-items: center;
+  color: var(--border-bright); font-size: 1rem; padding: 2px 0;
+  user-select: none;
+}
 .scene-time { font-family: var(--mono); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.5px; color: var(--accent2); white-space: nowrap; }
 .scene-time-sep { color: var(--text-dim); margin: 0 4px; font-weight: 400; }
 .scene-row { grid-template-columns: max-content max-content 1fr max-content max-content auto; }
@@ -298,13 +310,33 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 
 .timeline-entries { padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; }
 
+.block-captions {
+  display: grid;
+  grid-template-columns: 28px 44px 1fr 32px 48px max-content;
+  align-items: center; gap: 8px;
+  padding: 2px 6px 6px;
+  font-family: var(--mono); font-size: 0.52rem; letter-spacing: 1px;
+  color: var(--text-dim); text-transform: uppercase;
+  border-bottom: 1px solid var(--border); margin-bottom: 4px;
+}
+
+.scene-captions {
+  display: grid;
+  grid-template-columns: max-content max-content 1fr max-content max-content auto;
+  align-items: center; gap: 8px;
+  padding: 4px 16px 6px;
+  font-family: var(--mono); font-size: 0.52rem; letter-spacing: 1px;
+  color: var(--text-dim); text-transform: uppercase;
+  border-bottom: 1px solid var(--border); margin-bottom: 4px;
+}
+
 .block-item {
   display: flex; flex-direction: column; gap: 1px;
   border-left: 2px solid var(--border-bright); padding-left: 8px;
 }
 .block-header {
   display: grid;
-  grid-template-columns: 28px 44px 52px 32px 1fr max-content;
+  grid-template-columns: 28px 44px 1fr 32px 48px max-content;
   align-items: center; gap: 8px;
   padding: 4px 6px; border-radius: 3px;
   background: rgba(255,255,255,0.03);
