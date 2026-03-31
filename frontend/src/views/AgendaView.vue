@@ -9,10 +9,10 @@ const loading   = ref(false)
 const data      = ref<Record<string, any> | null>(null)
 const badge     = ref('')
 const fetchError = ref<string | null>(null)
-const expandedScenes = reactive(new Set<string>())
+const expandedScenes = reactive(new Set<number>())
 const statusFilter   = reactive(new Set<string>())
 
-const scenePayloadRefs: Record<string, HTMLElement> = {}
+const scenePayloadRefs: Record<number, HTMLElement> = {}
 
 const agendaBrand = computed(() => data.value ? Object.keys(data.value)[0] : '')
 const agenda      = computed(() => data.value ? data.value[agendaBrand.value] : null)
@@ -100,17 +100,17 @@ function statusClass(s: string): string {
 
 // ── Scene expand/collapse ─────────────────────────────────────────────────────
 
-function setSceneRef(id: string, el: any) {
-  if (el) scenePayloadRefs[id] = el as HTMLElement
-  else    delete scenePayloadRefs[id]
+function setSceneRef(idx: number, el: any) {
+  if (el) scenePayloadRefs[idx] = el as HTMLElement
+  else    delete scenePayloadRefs[idx]
 }
 
-function toggleScene(id: string) {
-  const el = scenePayloadRefs[id]; if (!el) return
-  if (expandedScenes.has(id)) {
-    gsap.to(el, { height: 0, duration: 0.3, ease: 'power2.inOut', onComplete() { expandedScenes.delete(id) } })
+function toggleScene(idx: number) {
+  const el = scenePayloadRefs[idx]; if (!el) return
+  if (expandedScenes.has(idx)) {
+    gsap.to(el, { height: 0, duration: 0.3, ease: 'power2.inOut', onComplete() { expandedScenes.delete(idx) } })
   } else {
-    expandedScenes.add(id)
+    expandedScenes.add(idx)
     nextTick(() => {
       const h = el.scrollHeight
       gsap.fromTo(el, { height: 0 }, { height: h, duration: 0.35, ease: 'power2.out', onComplete() { gsap.set(el, { height: 'auto' }) } })
@@ -232,10 +232,10 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
               <span>Songs</span>
               <span></span>
             </div>
-            <template v-for="scene in agenda.scenes.filter((s: any) => !statusFilter.size || statusFilter.has(sceneEffectiveStatus(s)))" :key="scene.id">
-            <div class="scene-card" :class="{ expanded: expandedScenes.has(scene.id) }">
+            <template v-for="{scene, idx} in agenda.scenes.map((s: any, i: number) => ({ scene: s, idx: i })).filter(({scene: s}: any) => !statusFilter.size || statusFilter.has(sceneEffectiveStatus(s)))" :key="idx">
+            <div class="scene-card" :class="{ expanded: expandedScenes.has(idx) }">
 
-              <div class="scene-row" @click="toggleScene(scene.id)">
+              <div class="scene-row" @click="toggleScene(idx)">
                 <span class="scene-time">
                   {{ fmtTimeArr(scene.firstEmissionTime) }}<span class="scene-time-sep">→</span>{{ fmtTimeArr(scene.lastEmissionTime) }}
                 </span>
@@ -245,11 +245,11 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
                 <span class="scene-songs" :class="{ 'scene-songs-empty': sceneEffectiveSongCount(scene) === 0 }">
                   {{ sceneEffectiveSongCount(scene) }} songs
                 </span>
-                <span class="chevron-cell" :class="{ 'chevron-open': expandedScenes.has(scene.id) }">›</span>
+                <span class="chevron-cell" :class="{ 'chevron-open': expandedScenes.has(idx) }">›</span>
               </div>
 
-              <div class="scene-payload" :class="{ open: expandedScenes.has(scene.id) }"
-                :ref="(el: any) => setSceneRef(scene.id, el)">
+              <div class="scene-payload" :class="{ open: expandedScenes.has(idx) }"
+                :ref="(el: any) => setSceneRef(idx, el)">
                 <div v-if="!scene.timeline?.length" class="timeline-empty">no songs in this scene</div>
                 <template v-else>
                   <div class="timeline-bar">
