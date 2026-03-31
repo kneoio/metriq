@@ -119,7 +119,14 @@ function toggleScene(idx: number) {
   }
 }
 
-function copyJson() { navigator.clipboard.writeText(JSON.stringify(data.value, null, 2)) }
+function copyJson() {
+  const payload = JSON.parse(JSON.stringify(data.value))
+  const brand = agendaBrand.value
+  if (payload?.[brand] && stationClock.value) {
+    payload[brand].localTime = stationClock.value
+  }
+  navigator.clipboard.writeText(JSON.stringify(payload, null, 2))
+}
 
 // ── Fetch ─────────────────────────────────────────────────────────────────────
 
