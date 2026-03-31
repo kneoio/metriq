@@ -340,8 +340,8 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 
 .block-captions {
   display: grid;
-  grid-template-columns: 28px 52px max-content max-content max-content max-content;
-  align-items: center; gap: 12px;
+  grid-template-columns: 28px 60px minmax(160px, max-content) minmax(40px, max-content) minmax(52px, max-content) max-content;
+  align-items: center; gap: 16px;
   padding: 2px 6px 6px;
   font-family: var(--mono); font-size: 0.52rem; letter-spacing: 1px;
   color: var(--text-dim); text-transform: uppercase;
@@ -364,8 +364,8 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 }
 .block-header {
   display: grid;
-  grid-template-columns: 28px 52px max-content max-content max-content max-content;
-  align-items: center; gap: 12px;
+  grid-template-columns: 28px 60px minmax(160px, max-content) minmax(40px, max-content) minmax(52px, max-content) max-content;
+  align-items: center; gap: 16px;
   padding: 4px 6px; border-radius: 3px;
   background: rgba(255,255,255,0.03);
 }
