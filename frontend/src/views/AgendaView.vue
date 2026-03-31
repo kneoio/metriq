@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, computed, nextTick, onMounted, watch } from 'vue'
+import { ref, reactive, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import gsap from 'gsap'
 import { useContextStore } from '@/stores/context'
 
@@ -16,6 +16,19 @@ const scenePayloadRefs: Record<number, HTMLElement> = {}
 
 const agendaBrand = computed(() => data.value ? Object.keys(data.value)[0] : '')
 const agenda      = computed(() => data.value ? data.value[agendaBrand.value] : null)
+
+const clockNow = ref(Date.now())
+let clockInterval: ReturnType<typeof setInterval> | null = null
+
+const stationClock = computed(() => {
+  const tz = agenda.value?.timezone
+  if (!tz) return null
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+    }).format(new Date(clockNow.value))
+  } catch { return null }
+})
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -137,7 +150,11 @@ async function fetchAgenda(brand: string) {
   } finally { loading.value = false }
 }
 
-onMounted(() => { if (context.activeBrand) fetchAgenda(context.activeBrand) })
+onMounted(() => {
+  if (context.activeBrand) fetchAgenda(context.activeBrand)
+  clockInterval = setInterval(() => { clockNow.value = Date.now() }, 1000)
+})
+onUnmounted(() => { if (clockInterval) clearInterval(clockInterval) })
 watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 </script>
 
@@ -175,6 +192,10 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
               <div v-if="agenda.timezone" class="stat-box">
                 <span class="stat-label">Timezone</span>
                 <span class="stat-value">{{ agenda.timezone }}</span>
+              </div>
+              <div v-if="stationClock" class="stat-box stat-box-clock">
+                <span class="stat-label">Local time</span>
+                <span class="stat-value clock-value">{{ stationClock }}</span>
               </div>
               <div class="stat-box">
                 <span class="stat-label">Scenes</span>
@@ -287,6 +308,8 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 </template>
 
 <style scoped>
+.clock-value { font-family: var(--mono); letter-spacing: 1px; color: var(--accent2); }
+
 .scene-time { font-family: var(--mono); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.5px; color: var(--accent2); white-space: nowrap; }
 .scene-time-sep { color: var(--text-dim); margin: 0 4px; font-weight: 400; }
 .scene-row { grid-template-columns: max-content max-content 1fr max-content max-content auto; }
