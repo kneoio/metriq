@@ -26,12 +26,19 @@ const clockNow = ref(Date.now())
 setInterval(() => { clockNow.value = Date.now() }, 1000)
 
 const stationClock = computed(() => {
-  const tz = stations.timezoneByStation[stations.activeStation]
+  const tz      = stations.timezoneByStation[stations.activeStation]
+  const country = stations.countryByStation[stations.activeStation]
   if (!tz) return null
   try {
-    return new Intl.DateTimeFormat('en-GB', {
+    const now  = new Date(clockNow.value)
+    const time = new Intl.DateTimeFormat('en-GB', {
       timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-    }).format(new Date(clockNow.value))
+    }).format(now)
+    const offsetRaw = new Intl.DateTimeFormat('en', {
+      timeZone: tz, timeZoneName: 'shortOffset'
+    }).formatToParts(now).find(p => p.type === 'timeZoneName')?.value ?? ''
+    const offset = offsetRaw.replace('GMT', '') || '+0'
+    return { time, offset, country: country ?? '' }
   } catch { return null }
 })
 
@@ -197,6 +204,12 @@ onUnmounted(() => conn.disconnect())
       <div class="topbar-left">
         <span class="topbar-title">{{ topbarTitle }}</span>
       </div>
+      <div class="topbar-center">
+        <template v-if="stationClock">
+          <span class="topbar-clock">{{ stationClock.time }}</span>
+          <span class="topbar-clock-meta">{{ stationClock.country }} {{ stationClock.offset }}</span>
+        </template>
+      </div>
       <div class="topbar-right">
         <div class="topbar-stats">
           <span class="topbar-stat"><span class="tstat-label">rcvd</span><span class="tstat-value">{{ metriq.totalCount }}</span></span>
@@ -204,7 +217,6 @@ onUnmounted(() => conn.disconnect())
           <span class="topbar-stat"><span class="tstat-label">err</span><span class="tstat-value red">{{ metriq.errorCount }}</span></span>
         </div>
         <div class="topbar-sep"></div>
-        <span v-if="stationClock" class="topbar-clock">{{ stationClock }}</span>
         <button v-if="stations.topView === 'metrics'" class="clear-btn" @click="clearAll">CLEAR</button>
         <div class="live-badge">
           <div class="live-dot" v-show="conn.status === 'connected'"></div>
@@ -226,8 +238,9 @@ onUnmounted(() => conn.disconnect())
 </template>
 
 <style scoped>
-/* ── Topbar left / right split ── */
-.topbar-left  { display: flex; align-items: center; gap: 14px; }
+/* ── Topbar left / center / right ── */
+.topbar-left  { display: flex; align-items: center; gap: 14px; flex: 1; }
+.topbar-right { display: flex; align-items: center; gap: 8px; flex: 1; justify-content: flex-end; }
 
 /* ── Topbar stats ── */
 .topbar-stats { display: flex; align-items: center; gap: 10px; }
@@ -238,7 +251,9 @@ onUnmounted(() => conn.disconnect())
 .tstat-value.red   { color: var(--accent3, #fa6d6d); }
 
 .topbar-sep { width: 1px; height: 14px; background: var(--border, #333); margin: 0 2px; }
-.topbar-clock { font-family: var(--mono); font-size: 0.78rem; font-weight: 600; letter-spacing: 1.5px; color: var(--accent2); }
+.topbar-center { position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: baseline; gap: 8px; }
+.topbar-clock { font-family: var(--mono); font-size: 0.85rem; font-weight: 600; letter-spacing: 2px; color: var(--accent2); }
+.topbar-clock-meta { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 1px; color: var(--text-dim); }
 
 /* ── Station nav ── */
 .station-section { display: flex; flex-direction: column; }

@@ -143,8 +143,9 @@ async function fetchAgenda(brand: string) {
       data.value = { [brand]: json }
     }
     badge.value = 'ok'
-    const tz = data.value?.[brand]?.timezone
-    if (tz) stations.setTimezone(brand, tz)
+    const tz      = data.value?.[brand]?.timezone
+    const country = data.value?.[brand]?.country
+    if (tz) stations.setTimezone(brand, tz, country)
     nextTick(() => {
       gsap.from('.agenda-header', { opacity: 0, y: -10, duration: 0.3 })
       gsap.from('.scene-card',    { opacity: 0, y: 20,  duration: 0.3, stagger: 0.03, ease: 'power2.out' })
@@ -340,7 +341,7 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 
 .block-captions {
   display: grid;
-  grid-template-columns: 28px 60px minmax(160px, max-content) minmax(40px, max-content) minmax(52px, max-content) max-content;
+  grid-template-columns: 28px 60px minmax(320px, max-content) minmax(40px, max-content) minmax(52px, max-content) max-content;
   align-items: center; gap: 16px;
   padding: 2px 6px 6px;
   font-family: var(--mono); font-size: 0.52rem; letter-spacing: 1px;
@@ -364,7 +365,7 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 }
 .block-header {
   display: grid;
-  grid-template-columns: 28px 60px minmax(160px, max-content) minmax(40px, max-content) minmax(52px, max-content) max-content;
+  grid-template-columns: 28px 60px minmax(320px, max-content) minmax(40px, max-content) minmax(52px, max-content) max-content;
   align-items: center; gap: 16px;
   padding: 4px 6px; border-radius: 3px;
   background: rgba(255,255,255,0.03);

@@ -12,6 +12,7 @@ export const useStationsStore = defineStore('stations', () => {
   const activeStationView  = ref<StationView>('dashboard')
   const topView            = ref<TopView>('metrics')
   const timezoneByStation  = reactive<Record<string, string>>({})
+  const countryByStation   = reactive<Record<string, string>>({})
 
   function goToMetrics() {
     topView.value = 'metrics'
@@ -32,9 +33,10 @@ export const useStationsStore = defineStore('stations', () => {
     topView.value           = 'station'
   }
 
-  function setTimezone(station: string, tz: string) {
+  function setTimezone(station: string, tz: string, country?: string) {
     timezoneByStation[station] = tz
+    if (country) countryByStation[station] = country
   }
 
-  return { stationList, activeStation, activeStationView, topView, timezoneByStation, goToMetrics, goToSystemDashboard, goToStation, goToView, setTimezone }
+  return { stationList, activeStation, activeStationView, topView, timezoneByStation, countryByStation, goToMetrics, goToSystemDashboard, goToStation, goToView, setTimezone }
 })
