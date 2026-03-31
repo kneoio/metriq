@@ -109,7 +109,7 @@ export const useMetriqStore = defineStore('metriq', () => {
 
     // ── global list ──
     events.value.unshift(entry)
-    if (events.value.length > 120) events.value.pop()
+    if (events.value.length > 1000) events.value.pop()
     const cutoff = now - 15 * 60 * 1000
     events.value = events.value.filter(e => e.receivedAt.getTime() > cutoff)
 
@@ -118,7 +118,7 @@ export const useMetriqStore = defineStore('metriq', () => {
     if (brand) {
       if (!byBrand[brand]) byBrand[brand] = []
       byBrand[brand].push(entry)
-      if (byBrand[brand].length > 500) byBrand[brand].shift()
+      if (byBrand[brand].length > 1000) byBrand[brand].shift()
     }
 
     // ── byTrace ──
@@ -127,7 +127,7 @@ export const useMetriqStore = defineStore('metriq', () => {
       if (!byTrace[traceId]) byTrace[traceId] = []
       byTrace[traceId].push(entry)
       const keys = Object.keys(byTrace)
-      if (keys.length > 200) {
+      if (keys.length > 500) {
         const oldest = keys.reduce((a, b) =>
           (byTrace[a][0]?.receivedAt?.getTime() ?? 0) <
           (byTrace[b][0]?.receivedAt?.getTime() ?? 0) ? a : b
