@@ -246,7 +246,7 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
                 <span class="scene-time">
                   {{ fmtTimeArr(scene.firstEmissionTime) }}<span class="scene-time-sep">→</span>{{ fmtTimeArr(scene.lastEmissionTime) }}
                 </span>
-                <span v-if="sceneEffectiveStatus(scene)" class="scene-type-badge" :class="statusClass(sceneEffectiveStatus(scene))">{{ sceneEffectiveStatus(scene).toLowerCase() }}</span>
+                <span class="scene-type-badge" :class="statusClass(sceneEffectiveStatus(scene))" :style="sceneEffectiveStatus(scene) ? '' : 'visibility:hidden'">{{ sceneEffectiveStatus(scene).toLowerCase() || '—' }}</span>
                 <span class="scene-title">{{ scene.title }}</span>
                 <span class="scene-duration">{{ fmtDuration(sceneEffectiveDuration(scene)) }}</span>
                 <span class="scene-songs" :class="{ 'scene-songs-empty': sceneEffectiveSongCount(scene) === 0 }">
@@ -259,12 +259,8 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
                 :ref="(el: any) => setSceneRef(idx, el)">
                 <div v-if="!scene.timeline?.length" class="timeline-empty">no songs in this scene</div>
                 <template v-else>
-                  <div class="timeline-bar">
-                    <span class="tl-stat">{{ sceneEffectiveSongCount(scene) }} songs</span>
-                    <span class="tl-dot">·</span>
-                    <span class="tl-stat">{{ fmtDuration(sceneEffectiveDuration(scene)) }}</span>
-                    <span v-if="statusFilter.size" class="tl-dot">·</span>
-                    <span v-if="statusFilter.size" class="tl-stat tl-filtered">
+                  <div v-if="statusFilter.size" class="timeline-bar">
+                    <span class="tl-stat tl-filtered">
                       {{ filteredTimeline(scene.timeline).length }} / {{ scene.timeline.length }} shown
                     </span>
                   </div>
@@ -357,8 +353,8 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 
 .block-captions {
   display: grid;
-  grid-template-columns: 28px 44px 1fr 32px 48px max-content;
-  align-items: center; gap: 8px;
+  grid-template-columns: 28px 52px max-content max-content max-content max-content;
+  align-items: center; gap: 12px;
   padding: 2px 6px 6px;
   font-family: var(--mono); font-size: 0.52rem; letter-spacing: 1px;
   color: var(--text-dim); text-transform: uppercase;
@@ -381,8 +377,8 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 }
 .block-header {
   display: grid;
-  grid-template-columns: 28px 44px 1fr 32px 48px max-content;
-  align-items: center; gap: 8px;
+  grid-template-columns: 28px 52px max-content max-content max-content max-content;
+  align-items: center; gap: 12px;
   padding: 4px 6px; border-radius: 3px;
   background: rgba(255,255,255,0.03);
 }
