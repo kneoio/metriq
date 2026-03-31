@@ -72,6 +72,25 @@ function formatPayload(entry: EventEntry): string {
   return typeof p === 'string' ? p : JSON.stringify(p, null, 2)
 }
 
+const copiedId = ref<number | null>(null)
+
+function copyEvent(entry: EventEntry) {
+  const d = entry.data as any
+  const obj = {
+    receivedAt:  entry.receivedAt.toISOString(),
+    type:        d.type        ?? null,
+    processType: d.processType ?? null,
+    brandName:   d.brandName   ?? null,
+    serviceId:   d.serviceId   ?? null,
+    code:        d.code        ?? null,
+    payload:     d.payload     ?? null,
+  }
+  navigator.clipboard.writeText(JSON.stringify(obj, null, 2)).then(() => {
+    copiedId.value = entry.id
+    setTimeout(() => { copiedId.value = null }, 1500)
+  })
+}
+
 </script>
 
 <template>
@@ -108,6 +127,9 @@ function formatPayload(entry: EventEntry): string {
                   </span>
                   <span v-html="servicePillHtml(entry.data.serviceId as string)"></span>
                   <div class="flow-node-brand" v-if="entry.data.brandName">{{ entry.data.brandName }}</div>
+                  <button class="copy-event-btn" @click.stop="copyEvent(entry)" :class="{ copied: copiedId === entry.id }">
+                    {{ copiedId === entry.id ? '✓' : '⎘' }}
+                  </button>
                 </div>
                 <div class="node-row2">
                   <div class="flow-node-code" v-if="entry.data.code">{{ entry.data.code }}</div>
@@ -136,6 +158,21 @@ function formatPayload(entry: EventEntry): string {
   min-width: 260px;
   max-width: 600px;
 }
+
+.copy-event-btn {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 0.6rem;
+  padding: 1px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  line-height: 1.6;
+  transition: border-color 0.15s, color 0.15s;
+}
+.copy-event-btn:hover { border-color: var(--border-bright); color: var(--text); }
+.copy-event-btn.copied { border-color: var(--green); color: var(--green); }
 
 .flow-node-payload {
   border-top: 1px solid var(--border);
