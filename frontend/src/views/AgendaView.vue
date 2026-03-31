@@ -8,6 +8,7 @@ const context = useContextStore()
 const loading   = ref(false)
 const data      = ref<Record<string, any> | null>(null)
 const badge     = ref('')
+const fetchError = ref<string | null>(null)
 const expandedScenes = reactive(new Set<number>())
 const statusFilter   = reactive(new Set<string>())
 
@@ -110,10 +111,15 @@ function copyJson() { navigator.clipboard.writeText(JSON.stringify(data.value, n
 // ── Fetch ─────────────────────────────────────────────────────────────────────
 
 async function fetchAgenda(brand: string) {
-  loading.value = true; badge.value = 'pending'
+  loading.value = true; badge.value = 'pending'; fetchError.value = null
   expandedScenes.clear(); statusFilter.clear()
   try {
     const res  = await fetch(`/jesoos/info/${encodeURIComponent(brand)}/agendas`)
+    if (!res.ok) {
+      fetchError.value = `${res.status} ${res.statusText}`
+      data.value = null; badge.value = 'err'
+      return
+    }
     const json = await res.json()
     // Response may be { brand: agendaObj } or the agendaObj directly
     if (json && typeof json === 'object' && !Array.isArray(json) && json.scenes == null && Object.keys(json).length > 0) {
@@ -121,13 +127,13 @@ async function fetchAgenda(brand: string) {
     } else {
       data.value = { [brand]: json }
     }
-    badge.value = res.ok ? 'ok' : 'err'
+    badge.value = 'ok'
     nextTick(() => {
       gsap.from('.agenda-header', { opacity: 0, y: -10, duration: 0.3 })
       gsap.from('.scene-card',    { opacity: 0, y: 20,  duration: 0.3, stagger: 0.03, ease: 'power2.out' })
     })
-  } catch {
-    data.value = null; badge.value = 'err'
+  } catch (e: any) {
+    data.value = null; badge.value = 'err'; fetchError.value = e?.message ?? 'fetch failed'
   } finally { loading.value = false }
 }
 
@@ -149,6 +155,10 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
       </div>
       <div class="panel-body">
         <div v-if="loading" class="loading-text"><span class="spinner"></span>fetching</div>
+        <div v-else-if="fetchError" class="fetch-error">
+          <span class="fetch-error-brand">{{ context.activeBrand }}</span>
+          <span class="fetch-error-msg">{{ fetchError }}</span>
+        </div>
         <template v-else-if="data && agenda">
 
           <!-- ── Agenda header ── -->
@@ -270,7 +280,7 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
           </div>
 
         </template>
-        <div v-else-if="!loading" class="panel-empty">no result yet</div>
+        <div v-else class="panel-empty">no agenda for {{ context.activeBrand || '—' }}</div>
       </div>
     </div>
   </main>
@@ -387,6 +397,18 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 .st-completed { color: var(--green);      border-color: rgba(76,175,80,0.3);    background: rgba(76,175,80,0.05); opacity: 0.7; }
 .st-failed    { color: var(--red,#f44);  border-color: rgba(244,67,54,0.4);    background: rgba(244,67,54,0.07); }
 .st-skipped   { color: var(--amber);     border-color: rgba(245,166,35,0.25);  background: rgba(245,166,35,0.04); opacity: 0.7; }
+
+.fetch-error {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 24px 20px;
+}
+.fetch-error-brand {
+  font-size: 1rem; font-weight: 600; color: var(--text); letter-spacing: 0.5px;
+}
+.fetch-error-msg {
+  font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.5px;
+  color: var(--red, #f44336);
+}
 
 .timeline-empty {
   padding: 14px 16px;
