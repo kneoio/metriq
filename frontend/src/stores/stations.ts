@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { defineStore } from 'pinia'
 import { STATION_LIST } from '@/utils/service'
 
@@ -11,6 +11,7 @@ export const useStationsStore = defineStore('stations', () => {
   const activeStation      = ref<string>(stationList.value[0])
   const activeStationView  = ref<StationView>('dashboard')
   const topView            = ref<TopView>('metrics')
+  const timezoneByStation  = reactive<Record<string, string>>({})
 
   function goToMetrics() {
     topView.value = 'metrics'
@@ -31,5 +32,9 @@ export const useStationsStore = defineStore('stations', () => {
     topView.value           = 'station'
   }
 
-  return { stationList, activeStation, activeStationView, topView, goToMetrics, goToSystemDashboard, goToStation, goToView }
+  function setTimezone(station: string, tz: string) {
+    timezoneByStation[station] = tz
+  }
+
+  return { stationList, activeStation, activeStationView, topView, timezoneByStation, goToMetrics, goToSystemDashboard, goToStation, goToView, setTimezone }
 })

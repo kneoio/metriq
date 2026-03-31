@@ -22,6 +22,19 @@ const conn     = useConnectionStore()
 const traces   = useTracesStore()
 const stations = useStationsStore()
 
+const clockNow = ref(Date.now())
+setInterval(() => { clockNow.value = Date.now() }, 1000)
+
+const stationClock = computed(() => {
+  const tz = stations.timezoneByStation[stations.activeStation]
+  if (!tz) return null
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+    }).format(new Date(clockNow.value))
+  } catch { return null }
+})
+
 // Traces sidebar: filtered to active station
 const tracesForSelectedBrand = computed(() => {
   const allEntries = Object.entries(metriq.byTrace)
@@ -191,6 +204,7 @@ onUnmounted(() => conn.disconnect())
           <span class="topbar-stat"><span class="tstat-label">err</span><span class="tstat-value red">{{ metriq.errorCount }}</span></span>
         </div>
         <div class="topbar-sep"></div>
+        <span v-if="stationClock" class="topbar-clock">{{ stationClock }}</span>
         <button v-if="stations.topView === 'metrics'" class="clear-btn" @click="clearAll">CLEAR</button>
         <div class="live-badge">
           <div class="live-dot" v-show="conn.status === 'connected'"></div>
@@ -224,6 +238,7 @@ onUnmounted(() => conn.disconnect())
 .tstat-value.red   { color: var(--accent3, #fa6d6d); }
 
 .topbar-sep { width: 1px; height: 14px; background: var(--border, #333); margin: 0 2px; }
+.topbar-clock { font-family: var(--mono); font-size: 0.78rem; font-weight: 600; letter-spacing: 1.5px; color: var(--accent2); }
 
 /* ── Station nav ── */
 .station-section { display: flex; flex-direction: column; }
