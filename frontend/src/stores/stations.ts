@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 import { STATION_LIST } from '@/utils/service'
 
 export type StationView = 'dashboard' | 'agenda' | 'traces' | 'cron' | 'independent'
-export type TopView     = 'metrics'   | 'station'
+export type TopView     = 'metrics' | 'system-dashboard' | 'station'
 
 export const useStationsStore = defineStore('stations', () => {
   // Ready for dynamic loading later — just swap stationList.value
@@ -14,6 +14,10 @@ export const useStationsStore = defineStore('stations', () => {
 
   function goToMetrics() {
     topView.value = 'metrics'
+  }
+
+  function goToSystemDashboard() {
+    topView.value = 'system-dashboard'
   }
 
   function goToStation(station: string, view: StationView = 'dashboard') {
@@ -27,5 +31,5 @@ export const useStationsStore = defineStore('stations', () => {
     topView.value           = 'station'
   }
 
-  return { stationList, activeStation, activeStationView, topView, goToMetrics, goToStation, goToView }
+  return { stationList, activeStation, activeStationView, topView, goToMetrics, goToSystemDashboard, goToStation, goToView }
 })

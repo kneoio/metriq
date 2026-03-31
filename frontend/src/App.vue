@@ -6,6 +6,7 @@ import { useTracesStore }    from '@/stores/traces'
 import { useStationsStore }  from '@/stores/stations'
 import { SERVICE_OPTIONS }   from '@/utils/service'
 import { relTime }           from '@/utils/time'
+import SystemDashboardView from '@/views/SystemDashboardView.vue'
 import StreamView      from '@/views/StreamView.vue'
 import TracesView      from '@/views/TracesView.vue'
 import CronView        from '@/views/CronView.vue'
@@ -46,6 +47,7 @@ function clearAll() { (streamViewRef.value as any)?.clearAll?.() }
 
 const topbarTitle = computed(() => {
   if (stations.topView === 'metrics') return 'ALL METRICS'
+  if (stations.topView === 'system-dashboard') return 'DASHBOARD'
   const labels: Record<string, string> = {
     dashboard:   stations.activeStation.toUpperCase(),
     agenda:      'AGENDA',
@@ -71,9 +73,12 @@ onUnmounted(() => conn.disconnect())
       </div>
 
       <nav class="nav-menu">
-        <!-- Global metrics view -->
+        <!-- Global views -->
         <div class="nav-item" :class="{ active: stations.topView === 'metrics' }" @click="stations.goToMetrics()">
           <span class="nav-dot"></span>All Metrics
+        </div>
+        <div class="nav-item" :class="{ active: stations.topView === 'system-dashboard' }" @click="stations.goToSystemDashboard()">
+          <span class="nav-dot"></span>Dashboard
         </div>
 
         <div class="sidebar-divider"></div>
@@ -195,7 +200,8 @@ onUnmounted(() => conn.disconnect())
     </header>
 
     <!-- ── Active view ── -->
-    <StreamView      v-if="stations.topView === 'metrics'"                                          ref="streamViewRef" />
+    <StreamView           v-if="stations.topView === 'metrics'"          ref="streamViewRef" />
+    <SystemDashboardView  v-else-if="stations.topView === 'system-dashboard'" />
     <DashboardView   v-else-if="stations.activeStationView === 'dashboard'" />
     <AgendaView      v-else-if="stations.activeStationView === 'agenda'" />
     <TracesView      v-else-if="stations.activeStationView === 'traces'" />
