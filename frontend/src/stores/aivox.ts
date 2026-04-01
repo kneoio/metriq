@@ -1,4 +1,4 @@
-import { ref, shallowRef } from 'vue'
+import { ref, shallowRef, reactive, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { useContextStore } from '@/stores/context'
 import type { PlayerLogLine } from '@/types'
@@ -8,11 +8,31 @@ export const useAivoxStore = defineStore('aivox', () => {
   const context = useContextStore()
 
   // ── Stream state ─────────────────────────────────────────────────────────────
-  const fragCount    = ref(0)
-  const lastFragSize = ref('—')
-  const errorCount   = ref(0)
-  const status       = ref('idle')
-  const cmdStatus    = ref('')
+  const fragCount       = ref(0)
+  const lastFragSize    = ref('—')
+  const errorCount      = ref(0)
+  const status          = ref('idle')
+  const cmdStatus       = ref('')
+  const heartbeatByBrand = reactive<Record<string, boolean | null>>({})
+
+  const heartbeat = computed(() => {
+    const b = context.activeBrand
+    return b in heartbeatByBrand ? heartbeatByBrand[b] : null
+  })
+
+  async function pollHeartbeat() {
+    const brand = context.activeBrand
+    try {
+      const res = await fetch(`/aivox/${brand}/heartbeat`)
+      if (!res.ok) { heartbeatByBrand[brand] = false; return }
+      heartbeatByBrand[brand] = (await res.text()).trim().toLowerCase() === 'true'
+    } catch {
+      heartbeatByBrand[brand] = false
+    }
+  }
+
+  pollHeartbeat()
+  setInterval(pollHeartbeat, 30_000)
 
   async function serverAction(method: 'POST' | 'DELETE') {
     const cmd = method === 'POST' ? 'start' : 'stop'
@@ -65,7 +85,7 @@ export const useAivoxStore = defineStore('aivox', () => {
 
   return {
     // stream
-    fragCount, lastFragSize, errorCount, status, cmdStatus, serverAction,
+    fragCount, lastFragSize, errorCount, status, cmdStatus, heartbeat, serverAction,
     // player
     isPlaying, npTitle, npArtist, playerStreamLabel, playerLogs,
     isWaveformActive, playerVolume, analyser,

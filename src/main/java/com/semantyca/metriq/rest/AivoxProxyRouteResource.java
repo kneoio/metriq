@@ -30,8 +30,27 @@ public class AivoxProxyRouteResource {
     }
 
     public void setupRoutes(Router router) {
-        router.route(HttpMethod.POST, "/aivox/:brand/start").handler(this::startStream);
+        router.route(HttpMethod.GET,    "/aivox/:brand/heartbeat").handler(this::heartbeat);
+        router.route(HttpMethod.POST,   "/aivox/:brand/start").handler(this::startStream);
         router.route(HttpMethod.DELETE, "/aivox/:brand/stop").handler(this::stopStream);
+    }
+
+    private void heartbeat(RoutingContext rc) {
+        String brand = rc.pathParam("brand");
+        String url = config.getAivoxUrl() + "/aivox/info/heartbeat/" + brand;
+        client.getAbs(url)
+                .putHeader("X-Client-ID", "metriq-web")
+                .send()
+                .subscribe().with(
+                    r -> rc.response()
+                            .setStatusCode(r.statusCode())
+                            .putHeader("Content-Type", "text/plain")
+                            .end(r.bodyAsString()),
+                    e -> rc.response()
+                            .setStatusCode(500)
+                            .putHeader("Content-Type", "text/plain")
+                            .end("false")
+                );
     }
 
     private void startStream(RoutingContext rc) {
