@@ -64,6 +64,25 @@ function sceneEffectiveDuration(scene: any): number {
   return (scene.timeline ?? []).reduce((a: number, b: any) => a + (b.durationSeconds ?? 0), 0)
 }
 
+function toSec(arr: number[]): number {
+  return arr[3] * 3600 + arr[4] * 60 + (arr[5] ?? 0)
+}
+
+function sceneFit(scene: any): { label: string; cls: string } | null {
+  const first = scene.firstEmissionTime
+  const last  = scene.lastEmissionTime
+  const dur   = scene.durationSeconds
+  if (!first || !last || !dur) return null
+  const diff = toSec(last) - (toSec(first) + dur)
+  if (diff === 0) return null
+  const abs  = Math.abs(diff)
+  const m    = Math.floor(abs / 60)
+  const s    = abs % 60
+  const label = (diff > 0 ? '+' : '-') + (m > 0 ? `${m}m ` : '') + (s > 0 || m === 0 ? `${s}s` : '')
+  const cls   = diff > 0 ? 'fit-over' : 'fit-under'
+  return { label: label.trim(), cls }
+}
+
 const STATUSES = ['PENDING', 'SCHEDULED', 'EMITTING', 'COMPLETED', 'FAILED', 'SKIPPED'] as const
 
 function toggleStatusFilter(s: string) {
@@ -225,7 +244,7 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
               <span>Time window</span>
               <span>Status</span>
               <span>Scene title</span>
-              <span>Duration</span>
+              <span>Fit</span>
               <span>Songs</span>
               <span></span>
             </div>
@@ -241,7 +260,8 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
                   {{ scene.title }}
                   <span v-if="scene.durationSeconds > 0" class="scene-title-dur">{{ fmtDuration(scene.durationSeconds) }}</span>
                 </span>
-                <span class="scene-duration">{{ fmtDuration(sceneEffectiveDuration(scene)) }}</span>
+                <span v-if="sceneFit(scene)" class="scene-fit" :class="sceneFit(scene)!.cls">{{ sceneFit(scene)!.label }}</span>
+                <span v-else class="scene-fit fit-none">—</span>
                 <span class="scene-songs" :class="{ 'scene-songs-empty': sceneEffectiveSongCount(scene) === 0 }">
                   {{ sceneEffectiveSongCount(scene) }} songs
                 </span>
@@ -309,6 +329,10 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 .scene-row { grid-template-columns: max-content max-content 1fr max-content max-content auto; }
 .scene-songs-empty { color: var(--text-dim); border-color: rgba(255,255,255,0.06); }
 .scene-title-dur { font-family: var(--mono); font-size: 0.58rem; color: var(--text-dim); margin-left: 8px; font-weight: 400; }
+.scene-fit { font-family: var(--mono); font-size: 0.62rem; font-weight: 600; white-space: nowrap; }
+.fit-under { color: var(--amber); }
+.fit-over  { color: var(--green); }
+.fit-none  { color: var(--text-dim); }
 .chevron-cell { transition: transform 0.25s; display: inline-block; }
 .chevron-open { transform: rotate(90deg); }
 
