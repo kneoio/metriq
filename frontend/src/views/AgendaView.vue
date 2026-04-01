@@ -65,7 +65,7 @@ function sceneEffectiveDuration(scene: any): number {
 }
 
 function toSec(arr: number[]): number {
-  return arr[3] * 3600 + arr[4] * 60 + (arr[5] ?? 0)
+  return arr[2] * 86400 + arr[3] * 3600 + arr[4] * 60 + (arr[5] ?? 0)
 }
 
 function sceneFit(scene: any): { label: string; cls: string } | null {
