@@ -237,7 +237,10 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
                   {{ fmtTimeArr(scene.firstEmissionTime) }}<span class="scene-time-sep">→</span>{{ fmtTimeArr(scene.lastEmissionTime) }}
                 </span>
                 <span class="scene-type-badge" :class="statusClass(sceneEffectiveStatus(scene))" :style="sceneEffectiveStatus(scene) ? '' : 'visibility:hidden'">{{ sceneEffectiveStatus(scene).toLowerCase() || '—' }}</span>
-                <span class="scene-title">{{ scene.title }}</span>
+                <span class="scene-title">
+                  {{ scene.title }}
+                  <span v-if="scene.durationSeconds > 0" class="scene-title-dur">{{ fmtDuration(scene.durationSeconds) }}</span>
+                </span>
                 <span class="scene-duration">{{ fmtDuration(sceneEffectiveDuration(scene)) }}</span>
                 <span class="scene-songs" :class="{ 'scene-songs-empty': sceneEffectiveSongCount(scene) === 0 }">
                   {{ sceneEffectiveSongCount(scene) }} songs
@@ -305,6 +308,7 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 .scene-time-sep { color: var(--text-dim); margin: 0 4px; font-weight: 400; }
 .scene-row { grid-template-columns: max-content max-content 1fr max-content max-content auto; }
 .scene-songs-empty { color: var(--text-dim); border-color: rgba(255,255,255,0.06); }
+.scene-title-dur { font-family: var(--mono); font-size: 0.58rem; color: var(--text-dim); margin-left: 8px; font-weight: 400; }
 .chevron-cell { transition: transform 0.25s; display: inline-block; }
 .chevron-open { transform: rotate(90deg); }
 
