@@ -37,7 +37,6 @@ const stations = useStationsStore()
         <button class="dash-btn danger" @click="jesoos.stop()">■ Stop script</button>
         <button class="dash-btn"        @click="jesoos.enableDj()">🎙 DJ on</button>
         <button class="dash-btn danger" @click="jesoos.disableDj()">🎙 DJ off</button>
-        <button class="dash-btn danger" @click="jesoos.stopAll()">■ Stop all</button>
       </div>
       <div class="dash-feedback">
         <div class="dash-svc-status">

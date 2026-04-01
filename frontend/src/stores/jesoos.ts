@@ -66,24 +66,10 @@ export const useJesoosStore = defineStore('jesoos', () => {
     }
   }
 
-  async function stopAll() {
-    cmdStatus.value = 'pending'
-    cmdResult.value = null
-    try {
-      const res  = await fetch('/jesoos/stop-all', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
-      const data = await res.json()
-      cmdResult.value = data
-      cmdStatus.value = res.ok ? 'ok' : 'err'
-    } catch (e: any) {
-      cmdResult.value = e.message
-      cmdStatus.value = 'err'
-    }
-  }
-
   const start     = () => command('start')
   const stop      = () => command('stop')
   const enableDj  = () => command('enable-dj')
   const disableDj = () => command('disable-dj')
 
-  return { cmdStatus, cmdResult, djByBrand, djEnabled, liveStatus, start, stop, stopAll, enableDj, disableDj }
+  return { cmdStatus, cmdResult, djByBrand, djEnabled, liveStatus, start, stop, enableDj, disableDj }
 })
