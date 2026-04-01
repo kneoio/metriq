@@ -134,9 +134,16 @@ function copyJson() {
   const tz = stations.timezoneByStation[brand]
   if (payload?.[brand] && tz) {
     try {
-      payload[brand].localTime = new Intl.DateTimeFormat('en-GB', {
+      const now = new Date()
+      const time = new Intl.DateTimeFormat('en-GB', {
         timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-      }).format(new Date())
+      }).format(now)
+      const offsetStr = new Intl.DateTimeFormat('en-GB', {
+        timeZone: tz, timeZoneName: 'shortOffset'
+      }).formatToParts(now).find(p => p.type === 'timeZoneName')?.value ?? ''
+      // offsetStr is like "GMT+5" or "GMT+5:30" — convert to "+5" / "+5:30"
+      const offset = offsetStr.replace('GMT', '') || '+0'
+      payload[brand].localTime = `${time} (UTC${offset})`
     } catch { /* ignore */ }
   }
   navigator.clipboard.writeText(JSON.stringify(payload, null, 2))
