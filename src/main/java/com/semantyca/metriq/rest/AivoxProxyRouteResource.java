@@ -39,7 +39,7 @@ public class AivoxProxyRouteResource {
         String brand = rc.pathParam("brand");
         String url = config.getAivoxUrl() + "/aivox/info/heartbeat/" + brand;
         client.getAbs(url)
-                .putHeader("X-Client-ID", "metriq-web")
+                .putHeader("X-Client-ID", "mixpla-web")
                 .send()
                 .subscribe().with(
                     r -> rc.response()
