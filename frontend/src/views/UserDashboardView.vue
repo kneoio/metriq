@@ -106,6 +106,8 @@ onUnmounted(() => {
           <span class="ud-title">{{ entry.title }}</span>
           <span class="ud-artist">{{ entry.artist }}</span>
         </div>
+        <span v-if="entry.queue === 'priority'" class="ud-queue-mark priority" title="priority queue">★</span>
+        <span v-else-if="entry.queue === 'regular'" class="ud-queue-mark regular" title="regular queue">○</span>
         <div class="ud-badge" :class="entry.status">{{ entry.status }}</div>
       </div>
     </div>
@@ -190,4 +192,8 @@ onUnmounted(() => {
 .ud-badge.playing { background: rgba(33,150,243,0.15);   color: var(--accent, #2196F3); }
 .ud-badge.played  { background: rgba(255,255,255,0.05);  color: var(--text-muted, #555); }
 .ud-badge.queued  { background: rgba(255,255,255,0.04);  color: var(--text-dim, #888); }
+
+.ud-queue-mark          { font-size: 0.65rem; flex-shrink: 0; }
+.ud-queue-mark.priority { color: var(--amber, #f5a623); }
+.ud-queue-mark.regular  { color: var(--text-dim, #888); }
 </style>
