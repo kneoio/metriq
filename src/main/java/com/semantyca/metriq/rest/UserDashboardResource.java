@@ -30,7 +30,9 @@ public class UserDashboardResource {
             String brand = rc.pathParam("brand");
             List<JsonObject> events = eventStore.getByBrand(brand);
 
-            List<JsonObject> playlist = new ArrayList<>();
+            List<JsonObject> history = new ArrayList<>();
+            JsonArray upcomingPrioritized = new JsonArray();
+            JsonArray upcomingRegular     = new JsonArray();
 
             for (JsonObject event : events) {
                 String code = event.getString("code", "");
@@ -38,13 +40,10 @@ public class UserDashboardResource {
                 if ("now_playing".equals(code)) {
                     JsonObject payload = event.getJsonObject("payload");
                     if (payload == null) continue;
-
-                    // Mark any current playing entry as played
-                    playlist.stream()
+                    history.stream()
                             .filter(s -> "playing".equals(s.getString("status")))
                             .forEach(s -> s.put("status", "played"));
-
-                    playlist.add(new JsonObject()
+                    history.add(new JsonObject()
                             .put("songId",     payload.getString("songId", ""))
                             .put("title",      payload.getString("title", ""))
                             .put("artist",     payload.getString("artist", ""))
@@ -53,14 +52,45 @@ public class UserDashboardResource {
                             .put("receivedAt", event.getLong("_receivedAt", 0L)));
 
                 } else if ("song_ended".equals(code)) {
-                    playlist.stream()
+                    history.stream()
                             .filter(s -> "playing".equals(s.getString("status")))
                             .forEach(s -> s.put("status", "played"));
+
+                } else if ("queue_updated".equals(code)) {
+                    JsonObject payload = event.getJsonObject("payload");
+                    if (payload == null) continue;
+                    JsonArray p = payload.getJsonArray("prioritizedQueueSongs");
+                    JsonArray r = payload.getJsonArray("regularQueueSongs");
+                    upcomingPrioritized = p != null ? p : new JsonArray();
+                    upcomingRegular     = r != null ? r : new JsonArray();
                 }
             }
 
+            // Build result: history (played/playing) + upcoming queue
             JsonArray result = new JsonArray();
-            playlist.forEach(result::add);
+            history.forEach(result::add);
+
+            for (int i = 0; i < upcomingPrioritized.size(); i++) {
+                JsonObject s = upcomingPrioritized.getJsonObject(i);
+                result.add(new JsonObject()
+                        .put("songId",   s.getString("songId", ""))
+                        .put("title",    s.getString("title", ""))
+                        .put("artist",   s.getString("artist", ""))
+                        .put("duration", s.getInteger("duration", 0))
+                        .put("status",   "queued")
+                        .put("queue",    "priority"));
+            }
+            for (int i = 0; i < upcomingRegular.size(); i++) {
+                JsonObject s = upcomingRegular.getJsonObject(i);
+                result.add(new JsonObject()
+                        .put("songId",   s.getString("songId", ""))
+                        .put("title",    s.getString("title", ""))
+                        .put("artist",   s.getString("artist", ""))
+                        .put("duration", s.getInteger("duration", 0))
+                        .put("status",   "queued")
+                        .put("queue",    "regular"));
+            }
+
             rc.response()
                     .setStatusCode(200)
                     .putHeader("Content-Type", "application/json")

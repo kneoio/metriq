@@ -3,12 +3,13 @@ import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useStationsStore } from '@/stores/stations'
 
 interface PlaylistEntry {
-  songId:     string
-  title:      string
-  artist:     string
-  duration:   number
-  status:     'playing' | 'played'
-  receivedAt: number
+  songId:      string
+  title:       string
+  artist:      string
+  duration:    number
+  status:      'playing' | 'played' | 'queued'
+  queue?:      'priority' | 'regular'
+  receivedAt?: number
 }
 
 const stations = useStationsStore()
@@ -28,6 +29,15 @@ async function fetchPlaylist(brand: string) {
   }
 }
 
+function applyQueueUpdate(payload: any) {
+  // Remove existing queued entries, replace with fresh queue
+  playlist.value = playlist.value.filter(e => e.status !== 'queued')
+  const prio: any[] = payload.prioritizedQueueSongs ?? []
+  const reg:  any[] = payload.regularQueueSongs     ?? []
+  prio.forEach(s => playlist.value.push({ songId: s.songId ?? '', title: s.title ?? '', artist: s.artist ?? '', duration: s.duration ?? 0, status: 'queued', queue: 'priority' }))
+  reg.forEach(s  => playlist.value.push({ songId: s.songId ?? '', title: s.title ?? '', artist: s.artist ?? '', duration: s.duration ?? 0, status: 'queued', queue: 'regular'  }))
+}
+
 function connectWs(brand: string) {
   if (ws) { ws.onclose = null; ws.close(); ws = null }
   const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws'
@@ -39,8 +49,8 @@ function connectWs(brand: string) {
       const code  = event.code as string | undefined
 
       if (code === 'now_playing' && event.payload) {
-        // Mark current playing as played
         playlist.value.forEach(e => { if (e.status === 'playing') e.status = 'played' })
+        playlist.value = playlist.value.filter(e => e.status !== 'queued')
         playlist.value.push({
           songId:     event.payload.songId   ?? '',
           title:      event.payload.title    ?? '',
@@ -51,6 +61,8 @@ function connectWs(brand: string) {
         })
       } else if (code === 'song_ended') {
         playlist.value.forEach(e => { if (e.status === 'playing') e.status = 'played' })
+      } else if (code === 'queue_updated' && event.payload) {
+        applyQueueUpdate(event.payload)
       }
     } catch (e) {
       console.error('[user-dashboard ws] parse error', e)
@@ -84,7 +96,7 @@ onUnmounted(() => {
     <div class="ud-empty" v-if="playlist.length === 0">no playlist data yet</div>
     <div class="ud-list" v-else>
       <div
-        v-for="(entry, idx) in [...playlist].reverse()"
+        v-for="(entry, idx) in playlist"
         :key="entry.songId + idx"
         class="ud-item"
         :class="entry.status"
@@ -131,14 +143,9 @@ onUnmounted(() => {
   transition: opacity 0.2s;
 }
 
-.ud-item.played {
-  opacity: 0.45;
-}
-
-.ud-item.playing {
-  border-color: var(--accent, #4fc3f7);
-  background: rgba(79,195,247,0.05);
-}
+.ud-item.played  { opacity: 0.45; }
+.ud-item.playing { border-color: var(--accent, #2196F3); background: rgba(33,150,243,0.07); }
+.ud-item.queued  { border-color: var(--border, #333); opacity: 0.7; }
 
 .ud-status-indicator {
   width: 8px;
@@ -148,14 +155,12 @@ onUnmounted(() => {
 }
 
 .ud-status-indicator.playing {
-  background: var(--accent, #4fc3f7);
-  box-shadow: 0 0 6px var(--accent, #4fc3f7);
+  background: var(--accent, #2196F3);
+  box-shadow: 0 0 6px var(--accent, #2196F3);
   animation: pulse 1.4s ease-in-out infinite;
 }
-
-.ud-status-indicator.played {
-  background: var(--text-muted, #555);
-}
+.ud-status-indicator.played { background: var(--text-muted, #555); }
+.ud-status-indicator.queued { background: var(--text-dim, #888); border: 1px solid var(--text-dim, #888); border-radius: 2px; }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
@@ -170,21 +175,8 @@ onUnmounted(() => {
   min-width: 0;
 }
 
-.ud-title {
-  font-size: 0.8rem;
-  color: var(--text, #eee);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ud-artist {
-  font-size: 0.65rem;
-  color: var(--text-muted, #777);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+.ud-title  { font-size: 0.8rem;  color: var(--text, #eee);       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ud-artist { font-size: 0.65rem; color: var(--text-muted, #777); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .ud-badge {
   font-size: 0.55rem;
@@ -195,13 +187,7 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-.ud-badge.playing {
-  background: rgba(79,195,247,0.15);
-  color: var(--accent, #4fc3f7);
-}
-
-.ud-badge.played {
-  background: rgba(255,255,255,0.05);
-  color: var(--text-muted, #555);
-}
+.ud-badge.playing { background: rgba(33,150,243,0.15);   color: var(--accent, #2196F3); }
+.ud-badge.played  { background: rgba(255,255,255,0.05);  color: var(--text-muted, #555); }
+.ud-badge.queued  { background: rgba(255,255,255,0.04);  color: var(--text-dim, #888); }
 </style>
