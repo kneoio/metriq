@@ -20,7 +20,8 @@ async function fetchPlaylist(brand: string) {
   try {
     const res = await fetch(`/metriq/playlist/${encodeURIComponent(brand)}`)
     if (res.ok) {
-      playlist.value = await res.json()
+      const data = await res.json()
+      playlist.value = Array.isArray(data) ? data : [data]
     }
   } catch (e) {
     console.error('[user-dashboard] fetch failed', e)
@@ -101,7 +102,7 @@ onUnmounted(() => {
 
 <style scoped>
 .ud-main {
-  grid-area: main;
+  flex: 1;
   padding: 20px;
   overflow-y: auto;
   font-family: var(--mono);

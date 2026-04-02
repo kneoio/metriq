@@ -59,7 +59,8 @@ public class UserDashboardResource {
                 }
             }
 
-            JsonArray result = new JsonArray(playlist);
+            JsonArray result = new JsonArray();
+            playlist.forEach(result::add);
             rc.response()
                     .setStatusCode(200)
                     .putHeader("Content-Type", "application/json")
