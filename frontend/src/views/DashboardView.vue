@@ -55,6 +55,20 @@ const stations = useStationsStore()
           title="Live status"></div>
         <span class="slabel">{{ jesoos.liveStatus === null ? 'live ?' : jesoos.liveStatus ? 'live' : 'off air' }}</span>
       </div>
+      <div v-if="jesoos.liveScene" class="live-scene-info">
+        <div class="scene-info-row">
+          <span class="scene-label">Scene:</span>
+          <span class="scene-value">{{ jesoos.liveScene.sceneTitle }}</span>
+        </div>
+        <div class="scene-info-row">
+          <span class="scene-label">Scheduled:</span>
+          <span class="scene-value">{{ jesoos.liveScene.originalStartTime }}</span>
+        </div>
+        <div v-if="jesoos.liveScene.actualStartTime" class="scene-info-row">
+          <span class="scene-label">Started:</span>
+          <span class="scene-value">{{ jesoos.liveScene.actualStartTime }}</span>
+        </div>
+      </div>
     </div>
 
   </main>
@@ -163,5 +177,38 @@ const stations = useStationsStore()
 .dj-led.connected    { background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse-dot 2s ease-in-out infinite; }
 .dj-led.disconnected { background: var(--accent3); }
 .dj-led.unknown      { background: var(--text-dim); }
+
+.live-scene-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.scene-info-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.scene-label {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  min-width: 80px;
+}
+
+.scene-value {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--accent2);
+  font-weight: 500;
+}
 
 </style>

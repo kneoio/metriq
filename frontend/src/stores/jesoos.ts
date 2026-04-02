@@ -2,6 +2,13 @@ import { ref, computed, reactive, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { useContextStore } from '@/stores/context'
 
+interface LiveScene {
+  sceneTitle: string
+  originalStartTime: string
+  actualStartTime: string | null
+  live: boolean
+}
+
 export const useJesoosStore = defineStore('jesoos', () => {
 
   const context    = useContextStore()
@@ -9,6 +16,7 @@ export const useJesoosStore = defineStore('jesoos', () => {
   const cmdResult        = ref<unknown>(null)
   const djByBrand        = reactive<Record<string, boolean | null>>({})
   const liveByBrand      = reactive<Record<string, boolean | null>>({})
+  const liveSceneByBrand = reactive<Record<string, LiveScene | null>>({})
 
   const djEnabled = computed(() => {
     const b = context.activeBrand
@@ -18,6 +26,11 @@ export const useJesoosStore = defineStore('jesoos', () => {
   const liveStatus = computed(() => {
     const b = context.activeBrand
     return b in liveByBrand ? liveByBrand[b] : null
+  })
+
+  const liveScene = computed(() => {
+    const b = context.activeBrand
+    return b in liveSceneByBrand ? liveSceneByBrand[b] : null
   })
 
   async function pollDjStatus() {
@@ -36,11 +49,27 @@ export const useJesoosStore = defineStore('jesoos', () => {
     const brand = context.activeBrand
     try {
       const res = await fetch(`/jesoos/info/${brand}/live`)
-      if (!res.ok) { liveByBrand[brand] = null; return }
-      const text = (await res.text()).trim().toLowerCase()
-      liveByBrand[brand] = text === 'true'
+      if (!res.ok) { 
+        liveByBrand[brand] = null
+        liveSceneByBrand[brand] = null
+        return 
+      }
+      const data = await res.json()
+      if (data.live === false) {
+        liveByBrand[brand] = false
+        liveSceneByBrand[brand] = null
+      } else {
+        liveByBrand[brand] = true
+        liveSceneByBrand[brand] = {
+          sceneTitle: data.sceneTitle || '',
+          originalStartTime: data.originalStartTime || '',
+          actualStartTime: data.actualStartTime || null,
+          live: true
+        }
+      }
     } catch {
       liveByBrand[brand] = null
+      liveSceneByBrand[brand] = null
     }
   }
 
@@ -71,5 +100,5 @@ export const useJesoosStore = defineStore('jesoos', () => {
   const enableDj  = () => command('enable-dj')
   const disableDj = () => command('disable-dj')
 
-  return { cmdStatus, cmdResult, djByBrand, djEnabled, liveStatus, start, stop, enableDj, disableDj }
+  return { cmdStatus, cmdResult, djByBrand, djEnabled, liveStatus, liveScene, start, stop, enableDj, disableDj }
 })
