@@ -11,8 +11,9 @@ import StreamView      from '@/views/StreamView.vue'
 import TracesView      from '@/views/TracesView.vue'
 import CronView        from '@/views/CronView.vue'
 import IndependentView from '@/views/IndependentView.vue'
-import DashboardView   from '@/views/DashboardView.vue'
-import AgendaView      from '@/views/AgendaView.vue'
+import DashboardView      from '@/views/DashboardView.vue'
+import AgendaView         from '@/views/AgendaView.vue'
+import UserDashboardView  from '@/views/UserDashboardView.vue'
 
 const appVersion = __APP_VERSION__
 const buildTime  = __BUILD_TIME__
@@ -74,6 +75,7 @@ const topbarTitle = computed(() => {
     traces:      'TRACES',
     cron:        'CRON',
     independent: 'INDEPENDENT',
+    playlist:    'PLAYLIST',
   }
   return labels[stations.activeStationView] ?? ''
 })
@@ -127,6 +129,9 @@ onUnmounted(() => conn.disconnect())
             </div>
             <div class="nav-sub-item" :class="{ active: stations.activeStationView === 'independent' }" @click="stations.goToView('independent')">
               <span class="nav-dot"></span>Independent
+            </div>
+            <div class="nav-sub-item" :class="{ active: stations.activeStationView === 'playlist' }" @click="stations.goToView('playlist')">
+              <span class="nav-dot"></span>Playlist
             </div>
           </template>
         </div>
@@ -228,8 +233,9 @@ onUnmounted(() => conn.disconnect())
     <!-- ── Active view ── -->
     <StreamView           v-if="stations.topView === 'metrics'"          ref="streamViewRef" />
     <SystemDashboardView  v-else-if="stations.topView === 'system-dashboard'" />
-    <DashboardView   v-else-if="stations.activeStationView === 'dashboard'" />
-    <AgendaView      v-else-if="stations.activeStationView === 'agenda'" />
+    <DashboardView      v-else-if="stations.activeStationView === 'dashboard'" />
+    <UserDashboardView  v-else-if="stations.activeStationView === 'playlist'" />
+    <AgendaView         v-else-if="stations.activeStationView === 'agenda'" />
     <TracesView      v-else-if="stations.activeStationView === 'traces'" />
     <CronView        v-else-if="stations.activeStationView === 'cron'" />
     <IndependentView v-else-if="stations.activeStationView === 'independent'" />
