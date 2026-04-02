@@ -21,10 +21,6 @@ const stations = useStationsStore()
         <button class="dash-btn danger" @click="aivox.serverAction('DELETE')">■ Stop stream</button>
       </div>
       <div class="dash-feedback">
-        <div class="dash-svc-status">
-          <span class="sdot" :class="aivox.status"></span>
-          <span class="slabel">{{ aivox.status }}</span>
-        </div>
         <div class="dj-led"
           :class="aivox.heartbeat === null ? 'unknown' : aivox.heartbeat ? 'connected' : 'disconnected'"
           title="Aivox heartbeat"></div>
