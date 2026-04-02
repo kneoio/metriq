@@ -11,7 +11,6 @@ export const useAivoxStore = defineStore('aivox', () => {
   const fragCount       = ref(0)
   const lastFragSize    = ref('—')
   const errorCount      = ref(0)
-  const status          = ref('idle')
   const cmdStatus       = ref('')
   const heartbeatByBrand = reactive<Record<string, boolean | null>>({})
 
@@ -40,7 +39,7 @@ export const useAivoxStore = defineStore('aivox', () => {
     try {
       const r    = await fetch('/aivox/' + context.activeBrand + '/' + cmd, { method })
       const text = await r.text()
-      cmdStatus.value = r.ok ? (method === 'POST' ? 'started' : 'stopped') : 'error: ' + text
+      cmdStatus.value = r.ok ? `${r.status} command accepted` : `${r.status} error: ` + text
       if (r.ok && method === 'DELETE') { stopStream(); resetPlayer() }  // stop + reset local player when server stops
     } catch (e: any) {
       cmdStatus.value = 'error: ' + e.message
@@ -85,7 +84,7 @@ export const useAivoxStore = defineStore('aivox', () => {
 
   return {
     // stream
-    fragCount, lastFragSize, errorCount, status, cmdStatus, heartbeat, serverAction,
+    fragCount, lastFragSize, errorCount, cmdStatus, heartbeat, serverAction,
     // player
     isPlaying, npTitle, npArtist, playerStreamLabel, playerLogs,
     isWaveformActive, playerVolume, analyser,
