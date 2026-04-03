@@ -112,12 +112,12 @@ onUnmounted(() => { if (ws) { ws.onclose = null; ws.close(); ws = null } })
           <div class="dj-led"
             :class="jesoos.djEnabled === null ? 'unknown' : jesoos.djEnabled ? 'connected' : 'disconnected'"
             title="DJ status"></div>
-          <span class="slabel">{{ jesoos.djEnabled === null ? 'dj ?' : jesoos.djEnabled ? 'dj on' : 'dj off' }}</span>
+          <span class="slabel">{{ jesoos.djEnabled === null ? 'dj ?' : jesoos.djEnabled ? 'dj is on' : 'dj off' }}</span>
         </div>
         <div class="dj-led"
           :class="jesoos.liveStatus === null ? 'unknown' : jesoos.liveStatus ? 'connected' : 'disconnected'"
           title="Live status"></div>
-        <span class="slabel">{{ jesoos.liveStatus === null ? 'live ?' : jesoos.liveStatus ? 'live' : 'off air' }}</span>
+        <span class="slabel">{{ jesoos.liveStatus === null ? 'live ?' : jesoos.liveStatus && jesoos.liveScene ? 'current scene: ' + jesoos.liveScene.sceneTitle : jesoos.liveStatus ? 'live' : 'off air' }}</span>
       </div>
       <div v-if="jesoos.liveScene" class="live-scene-info">
         <div class="scene-info-row">
