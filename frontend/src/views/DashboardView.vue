@@ -11,13 +11,27 @@ const stations = useStationsStore()
 // ── Playlist ──────────────────────────────────────────────────────────────────
 
 interface PlaylistEntry {
-  songId:      string
-  title:       string
-  artist:      string
-  duration:    number
-  status:      'playing' | 'played' | 'queued'
-  queue?:      'priority' | 'regular'
-  receivedAt?: number
+  songId:         string
+  title:          string
+  artist:         string
+  duration:       number
+  status:         'playing' | 'played' | 'queued'
+  queue?:         'priority' | 'regular'
+  mergingMethod?: string | null
+  receivedAt?:    number
+}
+
+function schematic(method: string | null | undefined): string {
+  if (!method) return ''
+  switch (method) {
+    case 'SONG_CROSSFADE_SONG':       return '≋ crossfade'
+    case 'SONG_INTRO_SONG':           return '▸ intro → song'
+    case 'INTRO_SONG_INTRO_SONG':     return '▸ intro → song → intro → song'
+    case 'SONG_ONLY':                 return '▸ song only'
+    case 'FILLER_JINGLE':             return '♪ jingle'
+    case 'SONG_CROSSFADE_INTRO_SONG': return '≋ crossfade → intro → song'
+    default: return method.toLowerCase().replace(/_/g, ' ')
+  }
 }
 
 const playlist = ref<PlaylistEntry[]>([])
@@ -39,8 +53,8 @@ function applyQueueUpdate(payload: any) {
   playlist.value = playlist.value.filter(e => e.status !== 'queued')
   const prio: any[] = payload.prioritizedQueueSongs ?? []
   const reg:  any[] = payload.regularQueueSongs     ?? []
-  prio.forEach(s => playlist.value.push({ songId: s.songId ?? '', title: s.title ?? '', artist: s.artist ?? '', duration: s.duration ?? 0, status: 'queued', queue: 'priority' }))
-  reg.forEach(s  => playlist.value.push({ songId: s.songId ?? '', title: s.title ?? '', artist: s.artist ?? '', duration: s.duration ?? 0, status: 'queued', queue: 'regular'  }))
+  prio.forEach(s => playlist.value.push({ songId: s.songId ?? '', title: s.title ?? '', artist: s.artist ?? '', duration: s.duration ?? 0, status: 'queued', queue: 'priority', mergingMethod: s.mergingMethod ?? null }))
+  reg.forEach(s  => playlist.value.push({ songId: s.songId ?? '', title: s.title ?? '', artist: s.artist ?? '', duration: s.duration ?? 0, status: 'queued', queue: 'regular',  mergingMethod: s.mergingMethod ?? null }))
 }
 
 function connectWs(brand: string) {
@@ -145,6 +159,7 @@ onUnmounted(() => { if (ws) { ws.onclose = null; ws.close(); ws = null } })
           <div class="pl-info">
             <span class="pl-title">{{ entry.title }}</span>
             <span class="pl-artist">{{ entry.artist }}</span>
+            <span v-if="entry.mergingMethod" class="pl-method">{{ schematic(entry.mergingMethod) }}</span>
           </div>
           <span v-if="entry.queue === 'priority'" class="pl-qmark priority" title="priority queue">★</span>
           <span v-else-if="entry.queue === 'regular'" class="pl-qmark regular" title="regular queue">○</span>
@@ -338,6 +353,7 @@ onUnmounted(() => { if (ws) { ws.onclose = null; ws.close(); ws = null } })
 
 .pl-title  { font-family: var(--mono); font-size: 0.75rem; color: var(--text);       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pl-artist { font-family: var(--mono); font-size: 0.6rem;  color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-method { font-family: var(--mono); font-size: 0.55rem; color: var(--cyan, #26c6da); letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .pl-qmark          { font-size: 0.6rem; flex-shrink: 0; }
 .pl-qmark.priority { color: var(--amber); }

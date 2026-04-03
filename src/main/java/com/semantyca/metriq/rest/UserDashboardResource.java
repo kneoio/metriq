@@ -73,22 +73,24 @@ public class UserDashboardResource {
             for (int i = 0; i < upcomingPrioritized.size(); i++) {
                 JsonObject s = upcomingPrioritized.getJsonObject(i);
                 result.add(new JsonObject()
-                        .put("songId",   s.getString("songId", ""))
-                        .put("title",    s.getString("title", ""))
-                        .put("artist",   s.getString("artist", ""))
-                        .put("duration", s.getInteger("duration", 0))
-                        .put("status",   "queued")
-                        .put("queue",    "priority"));
+                        .put("songId",        s.getString("songId", ""))
+                        .put("title",         s.getString("title", ""))
+                        .put("artist",        s.getString("artist", ""))
+                        .put("duration",      s.getInteger("duration", 0))
+                        .put("status",        "queued")
+                        .put("queue",         "priority")
+                        .put("mergingMethod", s.getString("mergingMethod", null)));
             }
             for (int i = 0; i < upcomingRegular.size(); i++) {
                 JsonObject s = upcomingRegular.getJsonObject(i);
                 result.add(new JsonObject()
-                        .put("songId",   s.getString("songId", ""))
-                        .put("title",    s.getString("title", ""))
-                        .put("artist",   s.getString("artist", ""))
-                        .put("duration", s.getInteger("duration", 0))
-                        .put("status",   "queued")
-                        .put("queue",    "regular"));
+                        .put("songId",        s.getString("songId", ""))
+                        .put("title",         s.getString("title", ""))
+                        .put("artist",        s.getString("artist", ""))
+                        .put("duration",      s.getInteger("duration", 0))
+                        .put("status",        "queued")
+                        .put("queue",         "regular")
+                        .put("mergingMethod", s.getString("mergingMethod", null)));
             }
 
             rc.response()
