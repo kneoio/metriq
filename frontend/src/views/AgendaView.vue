@@ -64,9 +64,6 @@ function sceneEffectiveDuration(scene: any): number {
   return (scene.timeline ?? []).reduce((a: number, b: any) => a + (b.durationSeconds ?? 0), 0)
 }
 
-function toSec(arr: number[]): number {
-  return arr[2] * 86400 + arr[3] * 3600 + arr[4] * 60 + (arr[5] ?? 0)
-}
 
 const INTRO_TRIM_THRESHOLD = 30
 
