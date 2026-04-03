@@ -75,12 +75,14 @@ function sceneFit(scene: any): { label: string; cls: string } | null {
   if (!first || !last || !dur) return null
   const diff = toSec(last) - (toSec(first) + dur)
   if (diff === 0) return null
-  const abs  = Math.abs(diff)
-  const m    = Math.floor(abs / 60)
-  const s    = abs % 60
-  const label = (diff > 0 ? '+' : '-') + (m > 0 ? `${m}m ` : '') + (s > 0 || m === 0 ? `${s}s` : '')
-  const cls   = diff > 0 ? 'fit-over' : 'fit-under'
-  return { label: label.trim(), cls }
+  const abs = Math.abs(diff)
+  const m   = Math.floor(abs / 60)
+  const s   = abs % 60
+  const time = (m > 0 ? `${m}m ` : '') + (s > 0 || m === 0 ? `${s}s` : '')
+  // diff < 0: content overshoots window (good — aivox cuts it off) → show as +
+  // diff > 0: content is short, silence gap (bad) → show as gap
+  if (diff < 0) return { label: `+${time.trim()}`, cls: 'fit-over' }
+  return { label: `gap ${time.trim()}`, cls: 'fit-under' }
 }
 
 const STATUSES = ['PENDING', 'SCHEDULED', 'EMITTING', 'COMPLETED', 'FAILED', 'SKIPPED'] as const
@@ -251,7 +253,7 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
               <span>Time window</span>
               <span>Status</span>
               <span>Scene title</span>
-              <span>Fit</span>
+              <span>Gap</span>
               <span>Songs</span>
               <span></span>
             </div>
@@ -337,8 +339,8 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 .scene-songs-empty { color: var(--text-dim); border-color: rgba(255,255,255,0.06); }
 .scene-title-dur { font-family: var(--mono); font-size: 0.58rem; color: var(--text-dim); margin-left: 8px; font-weight: 400; }
 .scene-fit { font-family: var(--mono); font-size: 0.62rem; font-weight: 600; white-space: nowrap; }
-.fit-under { color: var(--amber); }
-.fit-over  { color: var(--green); }
+.fit-under { color: var(--amber); }  /* gap — silence at end, warn */
+.fit-over  { color: var(--green); }  /* overshoot — content longer than window, ok */
 .fit-none  { color: var(--text-dim); }
 .chevron-cell { transition: transform 0.25s; display: inline-block; }
 .chevron-open { transform: rotate(90deg); }
