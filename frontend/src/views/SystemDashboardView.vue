@@ -58,7 +58,7 @@ onMounted(fetchCleanupStats)
             </div>
             <div class="stat-row">
               <span class="stat-label">Last run</span>
-              <span class="stat-value mono">{{ cleanupStats.lastCleanupTime ?? '—' }}</span>
+              <span class="stat-value mono">{{ cleanupStats.lastCleanupTime ? cleanupStats.lastCleanupTime.split('.')[0] : '—' }}</span>
             </div>
             <div class="stat-row stat-row-col" v-if="cleanupStats.folders.length">
               <span class="stat-label">Watched folders</span>

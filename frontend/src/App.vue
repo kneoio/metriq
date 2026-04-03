@@ -67,7 +67,7 @@ function clearAll() { (streamViewRef.value as any)?.clearAll?.() }
 
 const topbarTitle = computed(() => {
   if (stations.topView === 'metrics') return 'ALL METRICS'
-  if (stations.topView === 'system-dashboard') return 'DASHBOARD'
+  if (stations.topView === 'system-dashboard') return 'SYSTEM STATE'
   const labels: Record<string, string> = {
     dashboard:   stations.activeStation.toUpperCase(),
     agenda:      'AGENDA',
@@ -99,7 +99,7 @@ onUnmounted(() => conn.disconnect())
           <span class="nav-dot"></span>All Metrics
         </div>
         <div class="nav-item" :class="{ active: stations.topView === 'system-dashboard' }" @click="stations.goToSystemDashboard()">
-          <span class="nav-dot"></span>Dashboard
+          <span class="nav-dot"></span>System State
         </div>
 
         <div class="sidebar-divider"></div>
