@@ -134,18 +134,6 @@ onUnmounted(() => { if (ws) { ws.onclose = null; ws.close(); ws = null } })
         <span class="slabel">{{ jesoos.liveStatus === null ? 'live ?' : jesoos.liveStatus && jesoos.liveScene ? 'current scene: ' + jesoos.liveScene.sceneTitle : jesoos.liveStatus ? 'live' : 'off air' }}</span>
       </div>
       <div v-if="jesoos.liveScene" class="live-scene-info">
-        <div class="scene-info-row">
-          <span class="scene-label">Scene:</span>
-          <span class="scene-value">{{ jesoos.liveScene.sceneTitle }}</span>
-        </div>
-        <div class="scene-info-row">
-          <span class="scene-label">Scheduled:</span>
-          <span class="scene-value">{{ jesoos.liveScene.originalStartTime }}</span>
-        </div>
-        <div v-if="jesoos.liveScene.actualStartTime" class="scene-info-row">
-          <span class="scene-label">Started:</span>
-          <span class="scene-value">{{ jesoos.liveScene.actualStartTime }}</span>
-        </div>
         <pre class="scene-raw">{{ JSON.stringify(jesoos.liveScene.raw, null, 2) }}</pre>
       </div>
     </div>
