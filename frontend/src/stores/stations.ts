@@ -2,7 +2,7 @@ import { ref, reactive } from 'vue'
 import { defineStore } from 'pinia'
 import { STATION_LIST } from '@/utils/service'
 
-export type StationView = 'dashboard' | 'agenda' | 'traces' | 'cron' | 'independent' | 'playlist'
+export type StationView = 'dashboard' | 'agenda' | 'traces' | 'cron' | 'independent'
 export type TopView     = 'metrics' | 'system-dashboard' | 'station'
 
 export const useStationsStore = defineStore('stations', () => {

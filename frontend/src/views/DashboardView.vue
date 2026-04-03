@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useAivoxStore }    from '@/stores/aivox'
 import { useJesoosStore }   from '@/stores/jesoos'
 import { useStationsStore } from '@/stores/stations'
@@ -6,6 +7,73 @@ import { useStationsStore } from '@/stores/stations'
 const aivox    = useAivoxStore()
 const jesoos   = useJesoosStore()
 const stations = useStationsStore()
+
+// ── Playlist ──────────────────────────────────────────────────────────────────
+
+interface PlaylistEntry {
+  songId:      string
+  title:       string
+  artist:      string
+  duration:    number
+  status:      'playing' | 'played' | 'queued'
+  queue?:      'priority' | 'regular'
+  receivedAt?: number
+}
+
+const playlist = ref<PlaylistEntry[]>([])
+let ws: WebSocket | null = null
+
+async function fetchPlaylist(brand: string) {
+  try {
+    const res = await fetch(`/metriq/playlist/${encodeURIComponent(brand)}`)
+    if (res.ok) {
+      const data = await res.json()
+      playlist.value = Array.isArray(data) ? data : [data]
+    }
+  } catch (e) {
+    console.error('[dashboard] playlist fetch failed', e)
+  }
+}
+
+function applyQueueUpdate(payload: any) {
+  playlist.value = playlist.value.filter(e => e.status !== 'queued')
+  const prio: any[] = payload.prioritizedQueueSongs ?? []
+  const reg:  any[] = payload.regularQueueSongs     ?? []
+  prio.forEach(s => playlist.value.push({ songId: s.songId ?? '', title: s.title ?? '', artist: s.artist ?? '', duration: s.duration ?? 0, status: 'queued', queue: 'priority' }))
+  reg.forEach(s  => playlist.value.push({ songId: s.songId ?? '', title: s.title ?? '', artist: s.artist ?? '', duration: s.duration ?? 0, status: 'queued', queue: 'regular'  }))
+}
+
+function connectWs(brand: string) {
+  if (ws) { ws.onclose = null; ws.close(); ws = null }
+  const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws'
+  ws = new WebSocket(`${scheme}://${window.location.host}/metriq/ws/metrics/${encodeURIComponent(brand)}`)
+  ws.onmessage = (msg: MessageEvent) => {
+    try {
+      const event = JSON.parse(msg.data as string)
+      const code  = event.code as string | undefined
+      if (code === 'now_playing' && event.payload) {
+        playlist.value.forEach(e => { if (e.status === 'playing') e.status = 'played' })
+        playlist.value = playlist.value.filter(e => e.status !== 'queued')
+        playlist.value.push({ songId: event.payload.songId ?? '', title: event.payload.title ?? '', artist: event.payload.artist ?? '', duration: event.payload.duration ?? 0, status: 'playing', receivedAt: event._receivedAt ?? Date.now() })
+      } else if (code === 'song_ended') {
+        playlist.value.forEach(e => { if (e.status === 'playing') e.status = 'played' })
+      } else if (code === 'queue_updated' && event.payload) {
+        applyQueueUpdate(event.payload)
+      }
+    } catch (e) { console.error('[dashboard ws] parse error', e) }
+  }
+  ws.onclose = () => { setTimeout(() => connectWs(brand), 3000) }
+}
+
+function initPlaylist(brand: string) {
+  playlist.value = []
+  fetchPlaylist(brand)
+  connectWs(brand)
+}
+
+onMounted(() => initPlaylist(stations.activeStation))
+watch(() => stations.activeStation, initPlaylist)
+onUnmounted(() => { if (ws) { ws.onclose = null; ws.close(); ws = null } })
 </script>
 
 <template>
@@ -63,6 +131,24 @@ const stations = useStationsStore()
         <div v-if="jesoos.liveScene.actualStartTime" class="scene-info-row">
           <span class="scene-label">Started:</span>
           <span class="scene-value">{{ jesoos.liveScene.actualStartTime }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Playlist ── -->
+    <div class="dash-section">
+      <div class="dash-section-title">PLAYLIST</div>
+      <div v-if="playlist.length === 0" class="pl-empty">no playlist data yet</div>
+      <div v-else class="pl-list">
+        <div v-for="(entry, idx) in playlist" :key="entry.songId + idx" class="pl-item" :class="entry.status">
+          <div class="pl-dot" :class="entry.status"></div>
+          <div class="pl-info">
+            <span class="pl-title">{{ entry.title }}</span>
+            <span class="pl-artist">{{ entry.artist }}</span>
+          </div>
+          <span v-if="entry.queue === 'priority'" class="pl-qmark priority" title="priority queue">★</span>
+          <span v-else-if="entry.queue === 'regular'" class="pl-qmark regular" title="regular queue">○</span>
+          <div class="pl-badge" :class="entry.status">{{ entry.status }}</div>
         </div>
       </div>
     </div>
@@ -207,4 +293,66 @@ const stations = useStationsStore()
   font-weight: 500;
 }
 
+/* ── Playlist card ── */
+.pl-empty {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--text-dim);
+}
+
+.pl-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pl-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  transition: opacity 0.2s;
+}
+
+.pl-item.played  { opacity: 0.4; }
+.pl-item.playing { border-color: var(--accent); background: rgba(33,150,243,0.06); }
+.pl-item.queued  { opacity: 0.65; }
+
+.pl-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+.pl-dot.playing { background: var(--accent); box-shadow: 0 0 5px var(--accent); animation: pulse-dot 1.4s ease-in-out infinite; }
+.pl-dot.played  { background: var(--text-dim); }
+.pl-dot.queued  { background: transparent; border: 1px solid var(--text-dim); }
+
+.pl-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.pl-title  { font-family: var(--mono); font-size: 0.75rem; color: var(--text);       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-artist { font-family: var(--mono); font-size: 0.6rem;  color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.pl-qmark          { font-size: 0.6rem; flex-shrink: 0; }
+.pl-qmark.priority { color: var(--amber); }
+.pl-qmark.regular  { color: var(--text-dim); }
+
+.pl-badge {
+  font-family: var(--mono);
+  font-size: 0.5rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 2px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.pl-badge.playing { background: rgba(33,150,243,0.15); color: var(--accent); }
+.pl-badge.played  { background: rgba(255,255,255,0.04); color: var(--text-dim); }
+.pl-badge.queued  { background: rgba(255,255,255,0.03); color: var(--text-dim); }
 </style>
