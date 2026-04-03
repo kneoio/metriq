@@ -95,6 +95,25 @@ onUnmounted(() => { if (ws) { ws.onclose = null; ws.close(); ws = null } })
 
     <div class="dash-station-name">{{ stations.activeStation }}</div>
 
+    <!-- ── Playlist ── -->
+    <div class="dash-section">
+      <div class="dash-section-title">PLAYLIST</div>
+      <div v-if="playlist.length === 0" class="pl-empty">no playlist data yet</div>
+      <div v-else class="pl-list">
+        <div v-for="(entry, idx) in playlist" :key="entry.songId + idx" class="pl-item" :class="entry.status">
+          <div class="pl-dot" :class="entry.status"></div>
+          <div class="pl-info">
+            <span class="pl-title">{{ entry.title }}</span>
+            <span class="pl-artist">{{ entry.artist }}</span>
+            <span v-if="entry.mergingMethod" class="pl-method">{{ schematic(entry.mergingMethod) }}</span>
+          </div>
+          <span v-if="entry.queue === 'priority'" class="pl-qmark priority" title="priority queue">★</span>
+          <span v-else-if="entry.queue === 'regular'" class="pl-qmark regular" title="regular queue">○</span>
+          <div class="pl-badge" :class="entry.status">{{ entry.status }}</div>
+        </div>
+      </div>
+    </div>
+
     <!-- ── Aivox ── -->
     <div class="dash-section">
       <div class="dash-section-title">AIVOX</div>
@@ -135,25 +154,6 @@ onUnmounted(() => { if (ws) { ws.onclose = null; ws.close(); ws = null } })
       </div>
       <div v-if="jesoos.liveScene" class="live-scene-info">
         <pre class="scene-raw">{{ JSON.stringify(jesoos.liveScene.raw, null, 2) }}</pre>
-      </div>
-    </div>
-
-    <!-- ── Playlist ── -->
-    <div class="dash-section">
-      <div class="dash-section-title">PLAYLIST</div>
-      <div v-if="playlist.length === 0" class="pl-empty">no playlist data yet</div>
-      <div v-else class="pl-list">
-        <div v-for="(entry, idx) in playlist" :key="entry.songId + idx" class="pl-item" :class="entry.status">
-          <div class="pl-dot" :class="entry.status"></div>
-          <div class="pl-info">
-            <span class="pl-title">{{ entry.title }}</span>
-            <span class="pl-artist">{{ entry.artist }}</span>
-            <span v-if="entry.mergingMethod" class="pl-method">{{ schematic(entry.mergingMethod) }}</span>
-          </div>
-          <span v-if="entry.queue === 'priority'" class="pl-qmark priority" title="priority queue">★</span>
-          <span v-else-if="entry.queue === 'regular'" class="pl-qmark regular" title="regular queue">○</span>
-          <div class="pl-badge" :class="entry.status">{{ entry.status }}</div>
-        </div>
       </div>
     </div>
 
