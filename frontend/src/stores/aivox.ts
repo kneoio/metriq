@@ -11,6 +11,7 @@ export const useAivoxStore = defineStore('aivox', () => {
   const fragCount       = ref(0)
   const lastFragSize    = ref('—')
   const errorCount      = ref(0)
+  const status          = ref('idle')
   const cmdStatus       = ref('')
   const heartbeatByBrand = reactive<Record<string, boolean | null>>({})
 
@@ -84,7 +85,7 @@ export const useAivoxStore = defineStore('aivox', () => {
 
   return {
     // stream
-    fragCount, lastFragSize, errorCount, cmdStatus, heartbeat, serverAction,
+    fragCount, lastFragSize, errorCount, status, cmdStatus, heartbeat, serverAction,
     // player
     isPlaying, npTitle, npArtist, playerStreamLabel, playerLogs,
     isWaveformActive, playerVolume, analyser,
