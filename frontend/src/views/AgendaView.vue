@@ -68,20 +68,22 @@ function toSec(arr: number[]): number {
   return arr[2] * 86400 + arr[3] * 3600 + arr[4] * 60 + (arr[5] ?? 0)
 }
 
-function sceneFit(scene: any): { label: string; cls: string } | null {
-  const first = scene.firstEmissionTime
-  const last  = scene.lastEmissionTime
-  const dur   = scene.durationSeconds
-  if (!first || !last || !dur) return null
-  const diff = toSec(last) - (toSec(first) + dur)
-  if (diff === 0) return null
-  const abs = Math.abs(diff)
+const INTRO_TRIM_THRESHOLD = 30
+
+function sceneFit(scene: any): { label: string; cls: string; tooltip?: string } | null {
+  const fit = scene.fitSeconds
+  if (fit == null || fit === 0) return null
+  const abs = Math.abs(fit)
   const m   = Math.floor(abs / 60)
   const s   = abs % 60
-  const time = (m > 0 ? `${m}m ` : '') + (s > 0 || m === 0 ? `${s}s` : '')
-  // diff < 0: content overshoots window (good — aivox cuts it off) → show as +
-  // diff > 0: content is short, silence gap (bad) → show as gap
-  if (diff < 0) return { label: `+${time.trim()}`, cls: 'fit-over' }
+  const time = (m > 0 ? `${m}m ` : '') + `${s}s`
+  if (fit < 0) {
+    const lastBlock = (scene.timeline ?? []).at(-1)
+    const tooltip = (fit >= -INTRO_TRIM_THRESHOLD && lastBlock && !lastBlock.hasIntro)
+      ? 'intro stripped to reduce TTS load'
+      : undefined
+    return { label: `overshoot ${time.trim()}`, cls: 'fit-over', tooltip }
+  }
   return { label: `gap ${time.trim()}`, cls: 'fit-under' }
 }
 
@@ -269,7 +271,7 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
                   {{ scene.title }}
                   <span v-if="scene.durationSeconds > 0" class="scene-title-dur">{{ fmtDuration(scene.durationSeconds) }}</span>
                 </span>
-                <span v-if="sceneFit(scene)" class="scene-fit" :class="sceneFit(scene)!.cls">{{ sceneFit(scene)!.label }}</span>
+                <span v-if="sceneFit(scene)" class="scene-fit" :class="sceneFit(scene)!.cls" :title="sceneFit(scene)!.tooltip">{{ sceneFit(scene)!.label }}</span>
                 <span v-else class="scene-fit fit-none">—</span>
                 <span class="scene-songs" :class="{ 'scene-songs-empty': sceneEffectiveSongCount(scene) === 0 }">
                   {{ sceneEffectiveSongCount(scene) }} songs
