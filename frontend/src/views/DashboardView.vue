@@ -146,6 +146,7 @@ onUnmounted(() => { if (ws) { ws.onclose = null; ws.close(); ws = null } })
           <span class="scene-label">Started:</span>
           <span class="scene-value">{{ jesoos.liveScene.actualStartTime }}</span>
         </div>
+        <pre class="scene-raw">{{ JSON.stringify(jesoos.liveScene.raw, null, 2) }}</pre>
       </div>
     </div>
 
@@ -306,6 +307,22 @@ onUnmounted(() => { if (ws) { ws.onclose = null; ws.close(); ws = null } })
   font-size: 0.72rem;
   color: var(--accent2);
   font-weight: 500;
+}
+
+.scene-raw {
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 /* ── Playlist card ── */

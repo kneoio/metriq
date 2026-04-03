@@ -7,6 +7,7 @@ interface LiveScene {
   originalStartTime: string
   actualStartTime: string | null
   live: boolean
+  raw: unknown
 }
 
 export const useJesoosStore = defineStore('jesoos', () => {
@@ -64,7 +65,8 @@ export const useJesoosStore = defineStore('jesoos', () => {
           sceneTitle: data.sceneTitle || '',
           originalStartTime: data.originalStartTime || '',
           actualStartTime: data.actualStartTime || null,
-          live: true
+          live: true,
+          raw: data
         }
       }
     } catch {
