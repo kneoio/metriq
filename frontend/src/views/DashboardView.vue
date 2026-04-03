@@ -125,7 +125,7 @@ onUnmounted(() => { if (ws) { ws.onclose = null; ws.close(); ws = null } })
         <div class="dj-led"
           :class="aivox.heartbeat === null ? 'unknown' : aivox.heartbeat ? 'connected' : 'disconnected'"
           title="Aivox heartbeat"></div>
-        <span class="slabel">{{ aivox.heartbeat === null ? '?' : aivox.heartbeat ? 'hls serving' : 'dead' }}</span>
+        <span class="slabel">{{ aivox.heartbeat === null ? '?' : aivox.heartbeat ? 'hls serving' : 'hls not serving' }}</span>
         <span v-if="aivox.cmdStatus" class="dash-cmd-status">{{ aivox.cmdStatus }}</span>
       </div>
     </div>
