@@ -23,7 +23,17 @@ function formatPayload(entry: EventEntry): string {
 }
 
 const copiedId      = ref<number | null>(null)
+const copiedCodeId  = ref<number | null>(null)
 const snapshotLabel = ref('SNAPSHOT')
+
+function copyCode(entry: EventEntry) {
+  const code = (entry.data as any).code
+  if (!code) return
+  navigator.clipboard.writeText(code).then(() => {
+    copiedCodeId.value = entry.id
+    setTimeout(() => { copiedCodeId.value = null }, 1200)
+  })
+}
 
 function copySnapshot() {
   const evts = events.value
@@ -101,7 +111,7 @@ function copyEvent(entry: EventEntry) {
               </button>
             </div>
             <div class="node-row2">
-              <div class="flow-node-code" v-if="entry.data.code">{{ entry.data.code }}</div>
+              <div class="flow-node-code" v-if="entry.data.code" :class="{ 'code-copied': copiedCodeId === entry.id }" @click.stop="copyCode(entry)">{{ entry.data.code }}</div>
               <div class="flow-node-time">{{ relTime(entry.receivedAt) }}</div>
             </div>
           </div>
