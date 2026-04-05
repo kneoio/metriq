@@ -102,6 +102,7 @@ function copyEvent(entry: EventEntry) {
     <template v-else>
       <div class="trace-header-bar">
         <span class="trace-header-label">trace</span>
+        <span class="trace-header-id station-name">{{ context.activeBrand }}</span>
         <span class="trace-header-id">{{ traces.selectedTraceId }}</span>
         <span class="trace-event-count">{{ eventsForSelectedTrace.length }} events</span>
         <div class="trace-header-actions">

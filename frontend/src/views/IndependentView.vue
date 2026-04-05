@@ -22,7 +22,33 @@ function formatPayload(entry: EventEntry): string {
   return typeof p === 'string' ? p : JSON.stringify(p, null, 2)
 }
 
-const copiedId = ref<number | null>(null)
+const copiedId      = ref<number | null>(null)
+const snapshotLabel = ref('SNAPSHOT')
+
+function copySnapshot() {
+  const evts = events.value
+  const snapshot = {
+    snapshotAt:  new Date().toISOString(),
+    processType: 'INDEPENDENT',
+    brand:       evts[0]?.data.brandName ?? null,
+    eventCount:  evts.length,
+    events: evts.map((e, idx) => {
+      const d = e.data as any
+      return {
+        seq:        idx + 1,
+        receivedAt: e.receivedAt.toISOString(),
+        type:       d.type        ?? null,
+        serviceId:  d.serviceId   ?? null,
+        code:       d.code        ?? null,
+        payload:    d.payload     ?? d,
+      }
+    }),
+  }
+  navigator.clipboard.writeText(JSON.stringify(snapshot, null, 2)).then(() => {
+    snapshotLabel.value = 'COPIED!'
+    setTimeout(() => { snapshotLabel.value = 'SNAPSHOT' }, 1800)
+  })
+}
 
 function copyEvent(entry: EventEntry) {
   const d = entry.data as any
@@ -48,7 +74,16 @@ function copyEvent(entry: EventEntry) {
       <div class="empty-icon">⬡</div>
       <div class="empty-text">no independent events</div>
     </div>
-    <div v-else class="flow-scroll">
+    <template v-else>
+    <div class="trace-header-bar">
+      <span class="trace-header-label">independent</span>
+      <span class="trace-header-id">{{ context.activeBrand }}</span>
+      <span class="trace-event-count">{{ events.length }} events</span>
+      <div class="trace-header-actions">
+        <button class="action-btn" @click="copySnapshot">{{ snapshotLabel }}</button>
+      </div>
+    </div>
+    <div class="flow-scroll">
       <div class="flow-container">
         <template v-for="(entry, idx) in events" :key="entry.id">
         <div v-if="idx > 0" class="flow-arrow"><span>→</span></div>
@@ -77,6 +112,7 @@ function copyEvent(entry: EventEntry) {
         </template>
       </div>
     </div>
+    </template>
   </main>
 </template>
 
