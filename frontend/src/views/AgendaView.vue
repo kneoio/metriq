@@ -150,6 +150,20 @@ function copyJson() {
   navigator.clipboard.writeText(JSON.stringify(payload, null, 2))
 }
 
+// ── Emit timeline entry ───────────────────────────────────────────────────────
+
+const emittingKey = ref<string | null>(null)
+
+async function emitTimelineEntry(sceneId: string, seqNumber: number) {
+  const key = `${sceneId}:${seqNumber}`
+  emittingKey.value = key
+  try {
+    await fetch(`/jesoos/command/${context.activeBrand}/emit-timeline-entry/${sceneId}/${seqNumber}`, { method: 'POST' })
+  } finally {
+    setTimeout(() => { if (emittingKey.value === key) emittingKey.value = null }, 1500)
+  }
+}
+
 // ── Fetch ─────────────────────────────────────────────────────────────────────
 
 async function fetchAgenda(brand: string) {
@@ -294,6 +308,7 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
                         <span>Extras</span>
                         <span>Duration</span>
                         <span>Status</span>
+                        <span></span>
                       </div>
                       <div v-for="block in filteredTimeline(scene.timeline)" :key="block.id" class="block-item">
                         <div class="block-header">
@@ -306,6 +321,10 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
                           </span>
                           <span class="song-dur">{{ fmtDurSec(block.durationSeconds) }}</span>
                           <span class="entry-status" :class="statusClass(block.status)">{{ (block.status ?? '').toLowerCase() }}</span>
+                          <button class="emit-btn"
+                            :class="{ emitting: emittingKey === `${scene.id}:${block.sequenceNumber}` }"
+                            @click.stop="emitTimelineEntry(scene.id, block.sequenceNumber)"
+                            title="emit this entry">▶</button>
                         </div>
                         <div v-for="song in block.songs" :key="song.songId" class="song-row">
                           <div class="song-info">
@@ -377,7 +396,7 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 
 .block-captions {
   display: grid;
-  grid-template-columns: 28px 60px minmax(320px, max-content) minmax(40px, max-content) minmax(52px, max-content) max-content;
+  grid-template-columns: 28px 60px minmax(320px, max-content) minmax(40px, max-content) minmax(52px, max-content) max-content 28px;
   align-items: center; gap: 16px;
   padding: 2px 6px 6px;
   font-family: var(--mono); font-size: 0.52rem; letter-spacing: 1px;
@@ -401,7 +420,7 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 }
 .block-header {
   display: grid;
-  grid-template-columns: 28px 60px minmax(320px, max-content) minmax(40px, max-content) minmax(52px, max-content) max-content;
+  grid-template-columns: 28px 60px minmax(320px, max-content) minmax(40px, max-content) minmax(52px, max-content) max-content 28px;
   align-items: center; gap: 16px;
   padding: 4px 6px; border-radius: 3px;
   background: rgba(255,255,255,0.03);
@@ -465,4 +484,18 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
   font-family: var(--mono); font-size: 0.65rem; letter-spacing: 1px;
   color: var(--text-dim); text-transform: uppercase;
 }
+
+.emit-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 0.55rem;
+  width: 22px; height: 22px;
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.15s, color 0.15s;
+}
+.emit-btn:hover    { border-color: var(--green); color: var(--green); }
+.emit-btn.emitting { border-color: var(--green); color: var(--green); opacity: 0.5; }
 </style>

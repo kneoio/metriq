@@ -39,6 +39,7 @@ public class JesoosProxyRouteResource {
         router.route(HttpMethod.POST, path + "/command/:brand/stop").handler(this::handleStop);
         router.route(HttpMethod.POST, path + "/command/:brand/enable-dj").handler(this::handleEnableDj);
         router.route(HttpMethod.POST, path + "/command/:brand/disable-dj").handler(this::handleDisableDj);
+        router.route(HttpMethod.POST, path + "/command/:brand/emit-timeline-entry/:sceneId/:seqNumber").handler(this::handleEmitTimelineEntry);
     }
 
     private void handleStart(RoutingContext rc) {
@@ -106,6 +107,28 @@ public class JesoosProxyRouteResource {
         String url = config.getJesoosUrl() + "/jesoos/command/" + brand + "/disable-dj";
         LOGGER.infof("Proxying POST → %s", url);
         
+        client.postAbs(url)
+                .putHeader("Content-Type", "application/json")
+                .send()
+                .subscribe().with(
+                    r -> rc.response()
+                            .setStatusCode(r.statusCode())
+                            .putHeader("Content-Type", "application/json")
+                            .end(r.bodyAsString()),
+                    e -> rc.response()
+                            .setStatusCode(500)
+                            .putHeader("Content-Type", "application/json")
+                            .end(new JsonObject().put("error", e.getMessage()).encode())
+                );
+    }
+
+    private void handleEmitTimelineEntry(RoutingContext rc) {
+        String brand     = rc.pathParam("brand");
+        String sceneId   = rc.pathParam("sceneId");
+        String seqNumber = rc.pathParam("seqNumber");
+        String url = config.getJesoosUrl() + "/jesoos/command/" + brand + "/emit-timeline-entry/" + sceneId + "/" + seqNumber;
+        LOGGER.infof("Proxying POST → %s", url);
+
         client.postAbs(url)
                 .putHeader("Content-Type", "application/json")
                 .send()
