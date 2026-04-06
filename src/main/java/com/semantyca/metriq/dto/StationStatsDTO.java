@@ -1,6 +1,6 @@
 package com.semantyca.metriq.dto;
 
-import com.semantyca.mixpla.model.cnst.GeneratedContentStatus;
+import com.semantyca.mixpla.model.cnst.ContentStatus;
 import com.semantyca.mixpla.model.cnst.ManagedBy;
 import com.semantyca.mixpla.model.cnst.SceneStatus;
 import com.semantyca.mixpla.model.cnst.StreamStatus;
@@ -63,7 +63,7 @@ public class StationStatsDTO {
         private Long timingOffsetSeconds;
         private UUID generatedFragmentId;
         private LocalDateTime generatedContentTimestamp;
-        private GeneratedContentStatus generatedContentStatus;
+        private ContentStatus generatedContentStatus;
         private boolean oneTimeRun;
         private List<SongEntryDTO> songs;
     }
