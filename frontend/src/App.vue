@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useMetriqStore }    from '@/stores/metriq'
+import { useMetriqStore, METRIC_EVENT_TYPES } from '@/stores/metriq'
 import { useConnectionStore } from '@/stores/connection'
 import { useTracesStore }    from '@/stores/traces'
 import { useStationsStore }  from '@/stores/stations'
@@ -141,9 +141,9 @@ onUnmounted(() => conn.disconnect())
         <div class="filter-section">
           <div class="filter-label">Filter by type</div>
           <div class="filter-tags">
-            <span class="filter-tag" :class="{ active: metriq.activeFilter === 'all' }" @click="metriq.setFilter('all')">all</span>
-            <span v-for="type in metriq.knownTypes" :key="type" class="filter-tag"
-              :class="{ active: metriq.activeFilter === type }" @click="metriq.setFilter(type)">{{ type.toLowerCase() }}</span>
+            <span class="filter-tag" :class="{ active: metriq.activeTypeFilters.size === 0 }" @click="metriq.clearTypeFilters()">all</span>
+            <span v-for="type in METRIC_EVENT_TYPES" :key="type" class="filter-tag"
+              :class="{ active: metriq.activeTypeFilters.has(type) }" @click="metriq.toggleTypeFilter(type)">{{ type.toLowerCase().replace(/_/g, ' ') }}</span>
           </div>
         </div>
         <div class="sidebar-divider"></div>

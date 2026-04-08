@@ -10,16 +10,25 @@ interface Snapshot {
   byTrace: Record<string, MetricEventData[]>
 }
 
+export const METRIC_EVENT_TYPES = [
+  'FATAL_ERROR',
+  'ERROR',
+  'COMMAND',
+  'INFORMATION',
+  'IMPORTANT_INFORMATION',
+  'WARNING',
+  'DEBUG',
+] as const
+
 export const useMetriqStore = defineStore('metriq', () => {
   // ── State ──────────────────────────────────────────────────────────────────
   const events              = ref<EventEntry[]>([])
   const totalCount          = ref(0)
   const errorCount          = ref(0)
   const recentTimestamps    = ref<number[]>([])
-  const activeFilter        = ref('all')
+  const activeTypeFilters   = ref<Set<string>>(new Set())   // empty = show all
   const activeBrandFilter   = ref('all')
   const activeServiceFilter = ref('all')
-  const knownTypes          = ref<string[]>([])
   const knownBrands         = ref<string[]>([])
 
   // byBrand[brandSlug] = EventEntry[] — all events for a brand across all traces
@@ -36,7 +45,7 @@ export const useMetriqStore = defineStore('metriq', () => {
       const brand   = (entry.data.brandName ?? '').trim()
       const service = (entry.data.serviceId ?? '').trim()
       return (
-        (activeFilter.value        === 'all' || activeFilter.value        === type)    &&
+        (activeTypeFilters.value.size === 0 || activeTypeFilters.value.has(type)) &&
         (activeBrandFilter.value   === 'all' || activeBrandFilter.value   === brand)   &&
         (activeServiceFilter.value === 'all' || activeServiceFilter.value === service)
       )
@@ -52,9 +61,7 @@ export const useMetriqStore = defineStore('metriq', () => {
   }
 
   function registerMeta(data: MetricEventData) {
-    const type  = (data.type      ?? 'UNKNOWN').toUpperCase()
     const brand = (data.brandName ?? '').trim()
-    if (!knownTypes.value.includes(type))   knownTypes.value.push(type)
     if (brand && !knownBrands.value.includes(brand)) knownBrands.value.push(brand)
   }
 
@@ -70,7 +77,6 @@ export const useMetriqStore = defineStore('metriq', () => {
     totalCount.value = 0
     errorCount.value = 0
     recentTimestamps.value = []
-    knownTypes.value = []
     knownBrands.value = []
     Object.keys(byBrand).forEach(k => delete byBrand[k])
     Object.keys(byTrace).forEach(k => delete byTrace[k])
@@ -150,23 +156,29 @@ export const useMetriqStore = defineStore('metriq', () => {
     errorCount.value = 0
     recentTimestamps.value = []
     knownBrands.value = []
-    activeFilter.value = 'all'
+    activeTypeFilters.value = new Set()
     activeBrandFilter.value = 'all'
     activeServiceFilter.value = 'all'
     Object.keys(byBrand).forEach(k => delete byBrand[k])
     Object.keys(byTrace).forEach(k => delete byTrace[k])
   }
 
-  function setFilter(f: string)        { activeFilter.value        = f }
+  function toggleTypeFilter(type: string) {
+    const next = new Set(activeTypeFilters.value)
+    if (next.has(type)) next.delete(type)
+    else next.add(type)
+    activeTypeFilters.value = next
+  }
+  function clearTypeFilters()          { activeTypeFilters.value   = new Set() }
   function setBrandFilter(b: string)   { activeBrandFilter.value   = b }
   function setServiceFilter(s: string) { activeServiceFilter.value = s }
 
   return {
     events, totalCount, errorCount, recentTimestamps,
-    activeFilter, activeBrandFilter, activeServiceFilter,
-    knownTypes, knownBrands, byBrand, byTrace,
+    activeTypeFilters, activeBrandFilter, activeServiceFilter,
+    knownBrands, byBrand, byTrace,
     rateCount, filteredEvents,
     seedFromSnapshot, ingestEvent, clearAllEvents, deleteTrace,
-    setFilter, setBrandFilter, setServiceFilter,
+    toggleTypeFilter, clearTypeFilters, setBrandFilter, setServiceFilter,
   }
 })
