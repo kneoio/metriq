@@ -117,4 +117,34 @@ public class EventStore {
     public Set<String> getKnownBrands() {
         return byBrand.keySet();
     }
+
+    public synchronized EvictionResult evictExpired() {
+        long now = System.currentTimeMillis();
+        int evictedBrandEvents = 0;
+        int evictedTraces = 0;
+
+        for (Deque<JsonObject> q : byBrand.values()) {
+            int before = q.size();
+            q.removeIf(e -> now - e.getLong("_receivedAt", 0L) > MAX_AGE_MS);
+            evictedBrandEvents += before - q.size();
+        }
+        byBrand.entrySet().removeIf(e -> e.getValue().isEmpty());
+
+        List<String> expiredTraces = new ArrayList<>();
+        for (Map.Entry<String, List<JsonObject>> entry : byTrace.entrySet()) {
+            entry.getValue().removeIf(e -> now - e.getLong("_receivedAt", 0L) > MAX_AGE_MS);
+            if (entry.getValue().isEmpty()) {
+                expiredTraces.add(entry.getKey());
+            }
+        }
+        for (String traceId : expiredTraces) {
+            byTrace.remove(traceId);
+            traceOrder.remove(traceId);
+            evictedTraces++;
+        }
+
+        return new EvictionResult(evictedBrandEvents, evictedTraces);
+    }
+
+    public record EvictionResult(int evictedBrandEvents, int evictedTraces) {}
 }

@@ -7,8 +7,7 @@ import io.smallrye.mutiny.subscription.Cancellable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,7 +21,7 @@ import java.util.stream.Stream;
 
 @ApplicationScoped
 public class LocalFileCleanupService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LocalFileCleanupService.class);
+    private static final Logger LOGGER = Logger.getLogger(LocalFileCleanupService.class);
     private static final Duration CLEANUP_INTERVAL = Duration.ofHours(1);
     private static final Duration INITIAL_DELAY = Duration.ofMinutes(10);
 
@@ -45,7 +44,7 @@ public class LocalFileCleanupService {
             LOGGER.info("LocalFileCleanupService: no folders configured, cleanup disabled");
             return;
         }
-        LOGGER.info("LocalFileCleanupService starting, watching: {}", folders);
+        LOGGER.infof("LocalFileCleanupService starting, watching: %s", folders);
         cleanupSubscription = Multi.createFrom().ticks()
                 .startingAfter(INITIAL_DELAY)
                 .every(CLEANUP_INTERVAL)
@@ -69,7 +68,7 @@ public class LocalFileCleanupService {
         for (String folder : folders) {
             Path dir = Paths.get(folder);
             if (!Files.exists(dir)) {
-                LOGGER.debug("Cleanup folder does not exist, skipping: {}", dir);
+                LOGGER.debugf("Cleanup folder does not exist, skipping: %s", dir);
                 continue;
             }
             Instant cutoff = Instant.now().minus(maxAge);
@@ -81,14 +80,14 @@ public class LocalFileCleanupService {
                             Files.delete(file);
                             deleted++;
                             freed += size;
-                            LOGGER.debug("Deleted: {}", file);
+                            LOGGER.debugf("Deleted: %s", file);
                         }
                     } catch (Exception e) {
-                        LOGGER.warn("Failed to delete file: {}", file, e);
+                        LOGGER.warnf(e, "Failed to delete file: %s", file);
                     }
                 }
             } catch (Exception e) {
-                LOGGER.error("Failed to walk directory: {}", dir, e);
+                LOGGER.errorf(e, "Failed to walk directory: %s", dir);
             }
         }
 
@@ -98,7 +97,7 @@ public class LocalFileCleanupService {
 
         long duration = System.currentTimeMillis() - startTime;
         double mbFreed = freed / (1024.0 * 1024);
-        LOGGER.info("Cleanup done in {}ms — {} files deleted, {:.2f} MB freed", duration, deleted, mbFreed);
+        LOGGER.infof("Cleanup done in %dms — %d files deleted, %s MB freed", duration, deleted, String.format("%.2f", mbFreed));
     }
 
     public CleanupStats getStats() {
