@@ -11,6 +11,7 @@ import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @ApplicationScoped
@@ -36,7 +37,7 @@ public class SoundFragmentCleanupService {
                 .startingAfter(INITIAL_DELAY)
                 .every(CLEANUP_INTERVAL)
                 .onOverflow().drop()
-                .onItem().invoke(this::cleanupExpiredSoundFragments)
+                .onItem().invoke(this::performCleanup)
                 .onFailure().invoke(error -> LOGGER.error("SoundFragment cleanup error", error))
                 .subscribe().with(
                         item -> {},
@@ -50,8 +51,21 @@ public class SoundFragmentCleanupService {
         }
     }
 
-    private void cleanupExpiredSoundFragments(Long tick) {
-         soundFragmentRepository.findExpiredFragments()
+    private void performCleanup(Long tick) {
+        cleanupExpiredSoundFragments(tick)
+                .subscribe().with(
+                        count -> { if (count > 0) LOGGER.infof("SoundFragment cleanup (tick: %d) deleted %d expired SoundFragments", tick, count); },
+                        failure -> LOGGER.errorf(failure, "Expired SoundFragment cleanup failed (tick: %d)", tick)
+                );
+        cleanupArchivedSoundFragments(tick)
+                .subscribe().with(
+                        count -> { if (count > 0) LOGGER.infof("SoundFragment cleanup (tick: %d) deleted %d archived SoundFragments", tick, count); },
+                        failure -> LOGGER.errorf(failure, "Archived SoundFragment cleanup failed (tick: %d)", tick)
+                );
+    }
+
+    private Uni<Integer> cleanupExpiredSoundFragments(Long tick) {
+        return soundFragmentRepository.findExpiredFragments()
                 .onItem().transformToUni(fragmentIds -> {
                     if (fragmentIds.isEmpty()) {
                         return Uni.createFrom().item(0);
@@ -68,7 +82,7 @@ public class SoundFragmentCleanupService {
                 });
     }
 
-/*    private Uni<Integer> cleanupArchivedSoundFragments(Long tick) {
+    private Uni<Integer> cleanupArchivedSoundFragments(Long tick) {
         LocalDateTime cutoffDate = LocalDateTime.now().minusMonths(1);
         return soundFragmentRepository.findArchivedFragments(cutoffDate)
                 .onItem().transformToUni(fragmentIds -> {
@@ -78,12 +92,12 @@ public class SoundFragmentCleanupService {
                     List<Uni<Integer>> deleteOps = fragmentIds.stream()
                             .map(fragmentId -> soundFragmentService.hardDelete(fragmentId)
                                     .onFailure().recoverWithItem(error -> {
-                                        LOGGER.error("Failed to delete archived SoundFragment {}: {}", fragmentId, error.getMessage(), error);
+                                        LOGGER.errorf("Failed to delete archived SoundFragment %s: %s", fragmentId, error.getMessage(), error);
                                         return 0;
                                     }))
                             .toList();
                     return Uni.join().all(deleteOps).andFailFast()
                             .onItem().transform(results -> results.stream().mapToInt(Integer::intValue).sum());
                 });
-    }*/
+    }
 }

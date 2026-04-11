@@ -24,10 +24,7 @@ import io.vertx.mutiny.sqlclient.Tuple;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import java.time.Duration;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -80,6 +77,18 @@ public class SoundFragmentRepository extends SoundFragmentRepositoryAbstract {
                 .onItem().transform(row -> row.getUUID("id"))
                 .collect().asList();
     }
+
+    public Uni<List<UUID>> findArchivedFragments(LocalDateTime cutoffDate) {
+        String sql = "SELECT id FROM " + entityData.getTableName() + " " +
+                "WHERE archived = 1 AND last_mod_date < $1";
+
+        return client.preparedQuery(sql)
+                .execute(Tuple.of(cutoffDate))
+                .onItem().transformToMulti(rows -> Multi.createFrom().iterable(rows))
+                .onItem().transform(row -> row.getUUID("id"))
+                .collect().asList();
+    }
+
 
     public Uni<Integer> hardDelete(UUID uuid) {
         return findById(uuid)
