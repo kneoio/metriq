@@ -13,6 +13,7 @@ import org.jboss.logging.Logger;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 @ApplicationScoped
 public class SoundFragmentCleanupService {
@@ -21,6 +22,10 @@ public class SoundFragmentCleanupService {
     private static final Duration INITIAL_DELAY = Duration.ofMinutes(5);
 
     private Cancellable cleanupSubscription;
+    
+    private final AtomicLong expiredFragmentsDeleted = new AtomicLong(0);
+    private final AtomicLong archivedFragmentsDeleted = new AtomicLong(0);
+    private volatile LocalDateTime lastCleanupTime;
 
     @Inject
     SoundFragmentService soundFragmentService;
@@ -54,12 +59,23 @@ public class SoundFragmentCleanupService {
     private void performCleanup(Long tick) {
         cleanupExpiredSoundFragments(tick)
                 .subscribe().with(
-                        count -> { if (count > 0) LOGGER.infof("SoundFragment cleanup (tick: %d) deleted %d expired SoundFragments", tick, count); },
+                        count -> { 
+                            if (count > 0) {
+                                expiredFragmentsDeleted.addAndGet(count);
+                                LOGGER.infof("SoundFragment cleanup (tick: %d) deleted %d expired SoundFragments", tick, count);
+                            }
+                        },
                         failure -> LOGGER.errorf(failure, "Expired SoundFragment cleanup failed (tick: %d)", tick)
                 );
         cleanupArchivedSoundFragments(tick)
                 .subscribe().with(
-                        count -> { if (count > 0) LOGGER.infof("SoundFragment cleanup (tick: %d) deleted %d archived SoundFragments", tick, count); },
+                        count -> { 
+                            if (count > 0) {
+                                archivedFragmentsDeleted.addAndGet(count);
+                                LOGGER.infof("SoundFragment cleanup (tick: %d) deleted %d archived SoundFragments", tick, count);
+                            }
+                            lastCleanupTime = LocalDateTime.now();
+                        },
                         failure -> LOGGER.errorf(failure, "Archived SoundFragment cleanup failed (tick: %d)", tick)
                 );
     }
@@ -100,4 +116,18 @@ public class SoundFragmentCleanupService {
                             .onItem().transform(results -> results.stream().mapToInt(Integer::intValue).sum());
                 });
     }
+
+    public CleanupStats getStats() {
+        return new CleanupStats(
+                expiredFragmentsDeleted.get(),
+                archivedFragmentsDeleted.get(),
+                lastCleanupTime
+        );
+    }
+
+    public record CleanupStats(
+            long expiredFragmentsDeleted,
+            long archivedFragmentsDeleted,
+            LocalDateTime lastCleanupTime
+    ) {}
 }

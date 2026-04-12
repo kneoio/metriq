@@ -9,9 +9,20 @@ interface CleanupStats {
   folders: string[]
 }
 
+interface SoundFragmentCleanupStats {
+  expiredFragmentsDeleted: number
+  archivedFragmentsDeleted: number
+  totalFragmentsDeleted: number
+  lastCleanupTime: string | null
+}
+
 const cleanupStats  = ref<CleanupStats | null>(null)
 const cleanupError  = ref<string | null>(null)
 const cleanupLoading = ref(false)
+
+const soundFragmentStats  = ref<SoundFragmentCleanupStats | null>(null)
+const soundFragmentError  = ref<string | null>(null)
+const soundFragmentLoading = ref(false)
 
 async function fetchCleanupStats() {
   cleanupLoading.value = true
@@ -27,7 +38,24 @@ async function fetchCleanupStats() {
   }
 }
 
-onMounted(fetchCleanupStats)
+async function fetchSoundFragmentStats() {
+  soundFragmentLoading.value = true
+  soundFragmentError.value   = null
+  try {
+    const res = await fetch('/metriq/cleanup/soundfragment/stats')
+    if (!res.ok) { soundFragmentError.value = `${res.status} ${res.statusText}`; return }
+    soundFragmentStats.value = await res.json()
+  } catch (e: any) {
+    soundFragmentError.value = e?.message ?? 'fetch failed'
+  } finally {
+    soundFragmentLoading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchCleanupStats()
+  fetchSoundFragmentStats()
+})
 </script>
 
 <template>
@@ -65,6 +93,37 @@ onMounted(fetchCleanupStats)
               <div class="folder-list">
                 <span v-for="f in cleanupStats.folders" :key="f" class="folder-item">{{ f }}</span>
               </div>
+            </div>
+          </template>
+          <div v-else class="card-empty">no data</div>
+        </div>
+      </div>
+
+      <!-- ── SoundFragment Cleanup card ── -->
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <span class="dash-card-title">SoundFragment Cleanup</span>
+          <button class="action-btn secondary" @click="fetchSoundFragmentStats">↺ refresh</button>
+        </div>
+        <div class="dash-card-body">
+          <div v-if="soundFragmentLoading" class="loading-text"><span class="spinner"></span>fetching</div>
+          <div v-else-if="soundFragmentError" class="card-error">{{ soundFragmentError }}</div>
+          <template v-else-if="soundFragmentStats">
+            <div class="stat-row">
+              <span class="stat-label">Total deleted</span>
+              <span class="stat-value">{{ soundFragmentStats.totalFragmentsDeleted }}</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Expired deleted</span>
+              <span class="stat-value">{{ soundFragmentStats.expiredFragmentsDeleted }}</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Archived deleted</span>
+              <span class="stat-value">{{ soundFragmentStats.archivedFragmentsDeleted }}</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Last run</span>
+              <span class="stat-value mono">{{ soundFragmentStats.lastCleanupTime ? soundFragmentStats.lastCleanupTime.split('.')[0] : '—' }}</span>
             </div>
           </template>
           <div v-else class="card-empty">no data</div>
@@ -180,5 +239,44 @@ onMounted(fetchCleanupStats)
   font-family: var(--mono);
   font-size: 0.65rem;
   color: var(--text-dim);
+}
+
+.action-btn {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: rgba(255,255,255,0.05);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.action-btn:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--text);
+}
+
+.loading-text {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: var(--text-muted);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>

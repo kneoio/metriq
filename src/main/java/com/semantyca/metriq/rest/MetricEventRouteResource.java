@@ -1,6 +1,7 @@
 package com.semantyca.metriq.rest;
 
 import com.semantyca.metriq.service.LocalFileCleanupService;
+import com.semantyca.metriq.service.SoundFragmentCleanupService;
 import com.semantyca.metriq.store.EventStore;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
@@ -21,9 +22,13 @@ public class MetricEventRouteResource {
     @Inject
     LocalFileCleanupService cleanupService;
 
+    @Inject
+    SoundFragmentCleanupService soundFragmentCleanupService;
+
     public void setupRoutes(Router router) {
         String path = "/metriq";
         router.route(HttpMethod.GET, path + "/cleanup/stats").handler(this::getCleanupStats);
+        router.route(HttpMethod.GET, path + "/cleanup/soundfragment/stats").handler(this::getSoundFragmentCleanupStats);
         router.route(HttpMethod.GET, path + "/snapshot").handler(this::getSnapshot);
         router.route(HttpMethod.GET, path + "/events").handler(this::getEvents);
         router.route(HttpMethod.GET, path + "/events/:brand").handler(this::getEventsByBrand);
@@ -185,6 +190,27 @@ public class MetricEventRouteResource {
                     .end(result.encode());
         } catch (Exception e) {
             LOGGER.error("Failed to get cleanup stats", e);
+            rc.response()
+                    .setStatusCode(500)
+                    .putHeader("Content-Type", "application/json")
+                    .end(new JsonObject().put("error", e.getMessage()).encode());
+        }
+    }
+
+    private void getSoundFragmentCleanupStats(RoutingContext rc) {
+        try {
+            SoundFragmentCleanupService.CleanupStats stats = soundFragmentCleanupService.getStats();
+            JsonObject result = new JsonObject()
+                    .put("expiredFragmentsDeleted", stats.expiredFragmentsDeleted())
+                    .put("archivedFragmentsDeleted", stats.archivedFragmentsDeleted())
+                    .put("totalFragmentsDeleted", stats.expiredFragmentsDeleted() + stats.archivedFragmentsDeleted())
+                    .put("lastCleanupTime", stats.lastCleanupTime() != null ? stats.lastCleanupTime().toString() : null);
+            rc.response()
+                    .setStatusCode(200)
+                    .putHeader("Content-Type", "application/json")
+                    .end(result.encode());
+        } catch (Exception e) {
+            LOGGER.error("Failed to get sound fragment cleanup stats", e);
             rc.response()
                     .setStatusCode(500)
                     .putHeader("Content-Type", "application/json")
