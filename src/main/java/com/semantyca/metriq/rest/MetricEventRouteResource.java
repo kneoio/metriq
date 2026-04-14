@@ -1,7 +1,7 @@
 package com.semantyca.metriq.rest;
 
-import com.semantyca.metriq.service.LocalFileCleanupService;
-import com.semantyca.metriq.service.SoundFragmentCleanupService;
+import com.semantyca.metriq.service.maintenance.LocalFileCleanupService;
+import com.semantyca.metriq.service.maintenance.SoundFragmentCleanupService;
 import com.semantyca.metriq.store.EventStore;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;

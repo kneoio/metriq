@@ -1,4 +1,4 @@
-package com.semantyca.metriq.service;
+package com.semantyca.metriq.service.maintenance;
 
 import com.semantyca.metriq.config.MetriqConfig;
 import io.quarkus.runtime.StartupEvent;

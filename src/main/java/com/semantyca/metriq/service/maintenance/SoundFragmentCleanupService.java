@@ -1,6 +1,7 @@
-package com.semantyca.metriq.service;
+package com.semantyca.metriq.service.maintenance;
 
 import com.semantyca.metriq.repository.SoundFragmentRepository;
+import com.semantyca.metriq.service.SoundFragmentService;
 import io.quarkus.runtime.StartupEvent;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
