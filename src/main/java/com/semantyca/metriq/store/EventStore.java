@@ -7,19 +7,6 @@ import org.jboss.logging.Logger;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * In-memory store for metric events.
- *
- * Mirrors the three structures the frontend Pinia store used to maintain,
- * but now lives on the backend so any client (metriq FE, Knox dashboard, …)
- * can fetch a consistent snapshot via REST and then follow live updates over
- * the WebSocket.
- *
- * Caps (same as the old FE limits):
- *   - allEvents  : 120 items, 15-minute rolling window
- *   - perBrand   : 500 events per brand
- *   - byTrace    : 200 distinct trace IDs
- */
 @ApplicationScoped
 public class EventStore {
 
@@ -30,25 +17,16 @@ public class EventStore {
     private static final int  MAX_TRACES    = 200;
     private static final long MAX_AGE_MS    = 15 * 60 * 1_000L; // 15 min
 
-    // Global rolling window (newest first)
     private final Deque<JsonObject> allEvents = new ArrayDeque<>(MAX_GLOBAL + 1);
-
-    // Per-brand event queues (oldest first within each brand)
     private final ConcurrentHashMap<String, Deque<JsonObject>> byBrand = new ConcurrentHashMap<>();
-
-    // Per-trace event lists (oldest first within each trace)
     private final ConcurrentHashMap<String, List<JsonObject>> byTrace = new ConcurrentHashMap<>();
-
-    // Ordered traceId insertion log — used to evict oldest trace when cap is hit
     private final Deque<String> traceOrder = new ArrayDeque<>();
 
-    // ── Public API ────────────────────────────────────────────────────────────
 
     public synchronized void add(String raw) {
         try {
             JsonObject event = new JsonObject(raw);
             long now = System.currentTimeMillis();
-            // Tag with server-side receive time so clients can restore order
             event.put("_receivedAt", now);
 
             // ── global ──
