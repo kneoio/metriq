@@ -150,6 +150,21 @@ function copyJson() {
   navigator.clipboard.writeText(JSON.stringify(payload, null, 2))
 }
 
+// ── Status history trail ────────────────────────────────────────────────────
+
+function fmtStatusHistory(history: Array<{ status: string; at: string }> | undefined | null, tz: string): string {
+  if (!history || history.length <= 1) return '—'
+  return history.map(h => {
+    let time = h.at
+    try {
+      time = new Intl.DateTimeFormat('en-GB', {
+        timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      }).format(new Date(h.at))
+    } catch { /* fallback to raw */ }
+    return `${h.status} (${time})`
+  }).join(' → ')
+}
+
 // ── Emit timeline entry ───────────────────────────────────────────────────────
 
 const emittingKey = ref<string | null>(null)
@@ -308,6 +323,7 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
                         <span>Extras</span>
                         <span>Duration</span>
                         <span>Status</span>
+                        <span>Transitions</span>
                         <span></span>
                       </div>
                       <div v-for="block in filteredTimeline(scene.timeline)" :key="block.id" class="block-item">
@@ -321,6 +337,7 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
                           </span>
                           <span class="song-dur">{{ fmtDurSec(block.durationSeconds) }}</span>
                           <span class="entry-status" :class="statusClass(block.status)">{{ (block.status ?? '').toLowerCase() }}</span>
+                          <span class="status-trail" :title="fmtStatusHistory(block.statusHistory, agenda.timezone)">{{ fmtStatusHistory(block.statusHistory, agenda.timezone) }}</span>
                           <button class="emit-btn"
                             :class="{ emitting: emittingKey === `${scene.id}:${block.sequenceNumber}` }"
                             @click.stop="emitTimelineEntry(scene.id, block.sequenceNumber)"
@@ -396,7 +413,7 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 
 .block-captions {
   display: grid;
-  grid-template-columns: 28px 60px minmax(320px, max-content) minmax(40px, max-content) minmax(52px, max-content) max-content 28px;
+  grid-template-columns: 28px 60px minmax(320px, max-content) minmax(40px, max-content) minmax(52px, max-content) max-content 1fr 28px;
   align-items: center; gap: 16px;
   padding: 2px 6px 6px;
   font-family: var(--mono); font-size: 0.52rem; letter-spacing: 1px;
@@ -420,7 +437,7 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 }
 .block-header {
   display: grid;
-  grid-template-columns: 28px 60px minmax(320px, max-content) minmax(40px, max-content) minmax(52px, max-content) max-content 28px;
+  grid-template-columns: 28px 60px minmax(320px, max-content) minmax(40px, max-content) minmax(52px, max-content) max-content 1fr 28px;
   align-items: center; gap: 16px;
   padding: 4px 6px; border-radius: 3px;
   background: rgba(255,255,255,0.03);
@@ -498,4 +515,10 @@ watch(() => context.activeBrand, brand => { if (brand) fetchAgenda(brand) })
 }
 .emit-btn:hover    { border-color: var(--green); color: var(--green); }
 .emit-btn.emitting { border-color: var(--green); color: var(--green); opacity: 0.5; }
+
+.status-trail {
+  font-family: var(--mono); font-size: 0.54rem; letter-spacing: 0.3px;
+  color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding: 0 4px;
+}
 </style>
