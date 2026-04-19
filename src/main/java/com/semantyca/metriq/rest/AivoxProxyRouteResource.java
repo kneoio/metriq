@@ -56,7 +56,7 @@ public class AivoxProxyRouteResource {
     private void startStream(RoutingContext rc) {
         String brand = rc.pathParam("brand");
         String baseUrl = config.getAivoxUrl();
-        String url = baseUrl + "/aivox/command/" + brand + "/start";
+        String url = baseUrl + "/aivox/command/start?brand=" + brand;
         LOGGER.infof("Proxying POST → %s", url);
         
         client.postAbs(url)
@@ -76,7 +76,7 @@ public class AivoxProxyRouteResource {
 
     private void stopStream(RoutingContext rc) {
         String brand = rc.pathParam("brand");
-        String url = config.getAivoxUrl() + "/aivox/command/" + brand + "/stop";
+        String url = config.getAivoxUrl() + "/aivox/command/stop?brand=" + brand;
         LOGGER.infof("Proxying DELETE → %s", url);
         
         client.deleteAbs(url)
