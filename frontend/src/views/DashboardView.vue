@@ -11,50 +11,43 @@ const stations = useStationsStore()
 // ── Playlist ──────────────────────────────────────────────────────────────────
 
 interface PlaylistEntry {
+  pos?:           number
   songId:         string
   title:          string
   artist:         string
-  duration:       number
+  duration?:      number
+  priority?:      number
   status:         'playing' | 'played' | 'queued'
   queue?:         'priority' | 'regular'
   mergingMethod?: string | null
   receivedAt?:    number
 }
 
-function schematic(method: string | null | undefined): string {
-  if (!method) return ''
-  switch (method) {
-    case 'SONG_CROSSFADE_SONG':       return '≋ crossfade'
-    case 'SONG_INTRO_SONG':           return '▸ intro → song'
-    case 'INTRO_SONG_INTRO_SONG':     return '▸ intro → song → intro → song'
-    case 'SONG_ONLY':                 return '▸ song only'
-    case 'FILLER_JINGLE':             return '♪ jingle'
-    case 'SONG_CROSSFADE_INTRO_SONG': return '≋ crossfade → intro → song'
-    default: return method.toLowerCase().replace(/_/g, ' ')
-  }
-}
-
 const playlist = ref<PlaylistEntry[]>([])
 let ws: WebSocket | null = null
 
-async function fetchPlaylist(brand: string) {
+async function fetchQueue(brand: string) {
   try {
-    const res = await fetch(`/metriq/playlist/${encodeURIComponent(brand)}`)
-    if (res.ok) {
-      const data = await res.json()
-      playlist.value = Array.isArray(data) ? data : [data]
-    }
+    const res = await fetch(`/metriq/info/queue/${encodeURIComponent(brand)}`, {
+      headers: { 'X-Client-ID': 'mixpla-web' }
+    })
+    if (!res.ok) return
+    const data = await res.json()
+    if (!data || !Array.isArray(data.fullQueue)) return
+    playlist.value = data.fullQueue.map((e: any) => {
+      let status: 'playing' | 'played' | 'queued'
+      let queue:  'priority' | 'regular' | undefined
+      switch (e.queueType) {
+        case 'playing':     status = 'playing';                    break
+        case 'played':      status = 'played';                     break
+        case 'prioritized': status = 'queued'; queue = 'priority'; break
+        default:            status = 'queued'; queue = 'regular';  break
+      }
+      return { pos: e.pos, songId: e.songId ?? '', title: e.title ?? '', artist: e.artist ?? '', priority: e.priority, status, queue }
+    })
   } catch (e) {
-    console.error('[dashboard] playlist fetch failed', e)
+    console.error('[dashboard] queue fetch failed', e)
   }
-}
-
-function applyQueueUpdate(payload: any) {
-  playlist.value = playlist.value.filter(e => e.status !== 'queued')
-  const prio: any[] = payload.prioritizedQueueSongs ?? []
-  const reg:  any[] = payload.regularQueueSongs     ?? []
-  prio.forEach(s => playlist.value.push({ songId: s.songId ?? '', title: s.title ?? '', artist: s.artist ?? '', duration: s.duration ?? 0, status: 'queued', queue: 'priority', mergingMethod: s.mergingMethod ?? null }))
-  reg.forEach(s  => playlist.value.push({ songId: s.songId ?? '', title: s.title ?? '', artist: s.artist ?? '', duration: s.duration ?? 0, status: 'queued', queue: 'regular',  mergingMethod: s.mergingMethod ?? null }))
 }
 
 function connectWs(brand: string) {
@@ -71,8 +64,8 @@ function connectWs(brand: string) {
         playlist.value.push({ songId: event.payload.songId ?? '', title: event.payload.title ?? '', artist: event.payload.artist ?? '', duration: event.payload.duration ?? 0, status: 'playing', receivedAt: event._receivedAt ?? Date.now() })
       } else if (code === 'song_ended') {
         playlist.value.forEach(e => { if (e.status === 'playing') e.status = 'played' })
-      } else if (code === 'queue_updated' && event.payload) {
-        applyQueueUpdate(event.payload)
+      } else if (code === 'queue_updated') {
+        fetchQueue(brand)
       }
     } catch (e) { console.error('[dashboard ws] parse error', e) }
   }
@@ -81,7 +74,7 @@ function connectWs(brand: string) {
 
 function initPlaylist(brand: string) {
   playlist.value = []
-  fetchPlaylist(brand)
+  fetchQueue(brand)
   connectWs(brand)
 }
 
@@ -105,8 +98,9 @@ onUnmounted(() => { if (ws) { ws.onclose = null; ws.close(); ws = null } })
           <div class="pl-info">
             <span class="pl-title">{{ entry.title }}</span>
             <span class="pl-artist">{{ entry.artist }}</span>
-            <span v-if="entry.mergingMethod" class="pl-method">{{ schematic(entry.mergingMethod) }}</span>
+            <span v-if="entry.mergingMethod" class="pl-method">{{ entry.mergingMethod }}</span>
           </div>
+          <span v-if="entry.priority != null" class="pl-priority" title="priority">p{{ entry.priority }}</span>
           <span v-if="entry.queue === 'priority'" class="pl-qmark priority" title="priority queue">★</span>
           <span v-else-if="entry.queue === 'regular'" class="pl-qmark regular" title="regular queue">○</span>
           <div class="pl-badge" :class="entry.status">{{ entry.status }}</div>
@@ -360,6 +354,7 @@ onUnmounted(() => { if (ws) { ws.onclose = null; ws.close(); ws = null } })
 .pl-artist { font-family: var(--mono); font-size: 0.6rem;  color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pl-method { font-family: var(--mono); font-size: 0.55rem; color: var(--cyan, #26c6da); letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+.pl-priority { font-family: var(--mono); font-size: 0.52rem; color: var(--text-dim); flex-shrink: 0; }
 .pl-qmark          { font-size: 0.6rem; flex-shrink: 0; }
 .pl-qmark.priority { color: var(--amber); }
 .pl-qmark.regular  { color: var(--text-dim); }
