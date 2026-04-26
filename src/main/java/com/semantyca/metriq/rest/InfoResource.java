@@ -1,0 +1,82 @@
+package com.semantyca.metriq.rest;
+
+import com.semantyca.metriq.service.PlaylistQueueService;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.Json;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.core.MediaType;
+import org.jboss.logging.Logger;
+
+@ApplicationScoped
+public class InfoResource {
+
+    private static final Logger LOGGER = Logger.getLogger(InfoResource.class);
+    private static final String[] SUPPORTED_MIXPLA_VERSIONS = {"2.5.5", "2.5.6", "2.5.7", "2.5.8", "2.5.9"};
+
+    @Inject
+    private PlaylistQueueService queueStateService;
+
+    public void setupRoutes(Router router) {
+        String path = "/metriq/info";
+        router.route(HttpMethod.GET, path + "/queue/:brand").handler(this::validateMixplaAccess).handler(this::getQueueState);
+    }
+
+    private void validateMixplaAccess(RoutingContext rc) {
+        String host = rc.request().remoteAddress().host();
+        String clientId = rc.request().getHeader("X-Client-ID");
+        String mixplaApp = rc.request().getHeader("X-Mixpla-App");
+
+        if (mixplaApp != null && isValidMixplaApp(mixplaApp)) {
+            LOGGER.info("Allowing valid Mixpla app access");
+            rc.next();
+            return;
+        }
+        if ("mixpla-web".equals(clientId)) {
+            rc.next();
+            return;
+        }
+
+        LOGGER.warn("Access denied for host: " + host);
+        rc.response().setStatusCode(403).end("Access denied");
+    }
+
+    private boolean isValidMixplaApp(String mixplaApp) {
+        final String prefix = "mixpla-mobile";
+        if (!mixplaApp.startsWith(prefix)) return false;
+
+        String version = mixplaApp.substring(prefix.length()).replaceFirst("^[^0-9]*", "");
+        for (String v : SUPPORTED_MIXPLA_VERSIONS) if (v.equals(version)) return true;
+        return false;
+    }
+
+    private void getQueueState(RoutingContext rc) {
+        String brand = rc.pathParam("brand");
+
+        if (brand == null || brand.isBlank()) {
+            rc.response().setStatusCode(400).end("Brand parameter is required");
+            return;
+        }
+
+        queueStateService.getQueueState(brand)
+                .subscribe()
+                .with(
+                        state -> {
+                            if (state == null) {
+                                rc.response().setStatusCode(404).end("No queue state found for brand: " + brand);
+                                return;
+                            }
+                            rc.response()
+                                    .putHeader("Content-Type", MediaType.APPLICATION_JSON)
+                                    .putHeader("Access-Control-Allow-Origin", "*")
+                                    .end(Json.encode(state));
+                        },
+                        failure -> {
+                            LOGGER.error("Failed to get queue state for brand: " + brand, failure);
+                            rc.response().setStatusCode(500).end("Failed to get queue state");
+                        }
+                );
+    }
+}
