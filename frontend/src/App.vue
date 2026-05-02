@@ -4,7 +4,7 @@ import { useMetriqStore, METRIC_EVENT_TYPES } from '@/stores/metriq'
 import { useConnectionStore } from '@/stores/connection'
 import { useTracesStore }    from '@/stores/traces'
 import { useStationsStore }  from '@/stores/stations'
-import { SERVICE_OPTIONS }   from '@/utils/service'
+import { SERVICE_OPTIONS, metricEventFilterClass } from '@/utils/service'
 import { relTime }           from '@/utils/time'
 import SystemDashboardView from '@/views/SystemDashboardView.vue'
 import StreamView      from '@/views/StreamView.vue'
@@ -143,7 +143,8 @@ onUnmounted(() => conn.disconnect())
           <div class="filter-tags">
             <span class="filter-tag" :class="{ active: metriq.activeTypeFilters.size === 0 }" @click="metriq.clearTypeFilters()">all</span>
             <span v-for="type in METRIC_EVENT_TYPES" :key="type" class="filter-tag"
-              :class="{ active: metriq.activeTypeFilters.has(type) }" @click="metriq.toggleTypeFilter(type)">{{ type.toLowerCase().replace(/_/g, ' ') }}</span>
+              :class="[metricEventFilterClass(type), { active: metriq.activeTypeFilters.has(type) }]"
+              @click="metriq.toggleTypeFilter(type)">{{ type.toLowerCase().replace(/_/g, ' ') }}</span>
           </div>
         </div>
         <div class="sidebar-divider"></div>

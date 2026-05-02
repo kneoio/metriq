@@ -85,6 +85,108 @@ body::after {
 .filter-tag.svc-metriq:hover,   .filter-tag.svc-metriq.active   { border-color:#f472b6; color:#f472b6; background:rgba(244,114,182,0.08); }
 .filter-tag.svc-nivaro:hover,   .filter-tag.svc-nivaro.active   { border-color:#fb923c; color:#fb923c; background:rgba(251,146,60,0.08); }
 
+/* ── Metric event type (stream badges, flow nodes, type filters) ── */
+.metric-type--error {
+  color: var(--accent3);
+  background: rgba(250,109,109,0.12);
+  border-color: rgba(250,109,109,0.3);
+}
+.metric-type--warning {
+  color: var(--amber);
+  background: rgba(245,166,35,0.12);
+  border-color: rgba(245,166,35,0.3);
+}
+.metric-type--command {
+  color: var(--purple);
+  background: rgba(176,132,255,0.14);
+  border-color: rgba(176,132,255,0.45);
+  font-weight: 600;
+}
+.metric-type--debug {
+  color: var(--text-dim);
+  background: rgba(176,176,176,0.06);
+  border-color: rgba(176,176,176,0.15);
+}
+.metric-type--important {
+  color: var(--cyan);
+  background: rgba(0,229,255,0.08);
+  border-color: rgba(0,229,255,0.25);
+}
+.metric-type--info {
+  color: var(--accent);
+  background: rgba(0,229,176,0.08);
+  border-color: rgba(0,229,176,0.2);
+}
+.metric-type--unknown {
+  color: var(--text-dim);
+  background: rgba(176,176,176,0.06);
+  border-color: rgba(176,176,176,0.15);
+}
+
+.metric-type-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.5px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  border: 1px solid;
+  white-space: nowrap;
+  min-width: 110px;
+  text-align: center;
+  box-sizing: border-box;
+}
+.metric-type-badge.metric-type-badge--compact {
+  font-size: 0.52rem;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  min-width: 0;
+  text-align: left;
+}
+
+.filter-tag.metric-filter--error:hover,
+.filter-tag.metric-filter--error.active {
+  border-color: rgba(250,109,109,0.45);
+  color: var(--accent3);
+  background: rgba(250,109,109,0.1);
+}
+.filter-tag.metric-filter--warning:hover,
+.filter-tag.metric-filter--warning.active {
+  border-color: rgba(245,166,35,0.45);
+  color: var(--amber);
+  background: rgba(245,166,35,0.1);
+}
+.filter-tag.metric-filter--command:hover,
+.filter-tag.metric-filter--command.active {
+  border-color: rgba(176,132,255,0.55);
+  color: var(--purple);
+  background: rgba(176,132,255,0.12);
+}
+.filter-tag.metric-filter--debug:hover,
+.filter-tag.metric-filter--debug.active {
+  border-color: rgba(176,176,176,0.35);
+  color: var(--text-dim);
+  background: rgba(176,176,176,0.08);
+}
+.filter-tag.metric-filter--important:hover,
+.filter-tag.metric-filter--important.active {
+  border-color: rgba(38,198,218,0.45);
+  color: var(--cyan);
+  background: rgba(0,229,255,0.1);
+}
+.filter-tag.metric-filter--info:hover,
+.filter-tag.metric-filter--info.active {
+  border-color: rgba(0,229,176,0.4);
+  color: var(--accent);
+  background: rgba(0,229,176,0.08);
+}
+.filter-tag.metric-filter--unknown:hover,
+.filter-tag.metric-filter--unknown.active {
+  border-color: rgba(176,176,176,0.35);
+  color: var(--text-dim);
+  background: rgba(176,176,176,0.08);
+}
+
 /* ── Traces sidebar ── */
 .brand-tabs { padding: 16px 24px 8px; display: flex; flex-wrap: wrap; gap: 6px; }
 .brand-tab {
@@ -193,7 +295,18 @@ body::after {
 .event-card.expanded { border-color: var(--accent2); }
 .event-row { display: grid; grid-template-columns: max-content max-content max-content minmax(140px, auto) auto auto; align-items: center; gap: 20px; padding: 12px 16px; min-height: 48px; }
 .brand-cell { font-family: var(--mono); font-size: 0.7rem; font-weight: 600; letter-spacing: 1px; color: var(--accent2); text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 140px; }
-.type-cell { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.5px; color: var(--accent); background: rgba(0,229,176,0.08); padding: 3px 10px; border-radius: 3px; text-align: center; border: 1px solid rgba(0,229,176,0.2); white-space: nowrap; min-width: 110px; }
+.type-cell {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.5px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  text-align: center;
+  border: 1px solid;
+  white-space: nowrap;
+  min-width: 110px;
+  box-sizing: border-box;
+}
 .service-cell { font-family: var(--mono); font-size: 0.65rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 80px; }
 .code-cell { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.4px; color: var(--text-muted); padding: 3px 10px; border-radius: 3px; border: 1px dashed rgba(255,255,255,0.12); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 140px; max-width: 320px; }
 .time-cell { font-family: var(--mono); font-size: 0.62rem; color: var(--text-dim); white-space: nowrap; text-align: right; min-width: 90px; }

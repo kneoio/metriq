@@ -4,7 +4,7 @@ import gsap from 'gsap'
 import { useMetriqStore } from '@/stores/metriq'
 import { useTracesStore } from '@/stores/traces'
 import { useContextStore } from '@/stores/context'
-import { servicePillHtml, isError, isWarning, isDebug, isImportantInfo } from '@/utils/service'
+import { servicePillHtml, metricEventTypeClass } from '@/utils/service'
 import { relTime, flowTimeDelta } from '@/utils/time'
 import type { EventEntry } from '@/types'
 
@@ -132,8 +132,7 @@ function copyEvent(entry: EventEntry) {
             <div class="flow-node">
               <div class="flow-node-header">
                 <div class="node-row1">
-                  <span class="node-type"
-                    :style="isError(entry.data.type as string) ? 'color:var(--accent3)' : isWarning(entry.data.type as string) ? 'color:var(--amber)' : isDebug(entry.data.type as string) ? 'color:var(--text-dim)' : isImportantInfo(entry.data.type as string) ? 'color:var(--cyan)' : ''">
+                  <span class="metric-type-badge metric-type-badge--compact" :class="metricEventTypeClass(entry.data.type as string)">
                     {{ (entry.data.type || 'UNKNOWN').toUpperCase() }}
                   </span>
                   <span v-html="servicePillHtml(entry.data.serviceId as string)"></span>
@@ -161,7 +160,6 @@ function copyEvent(entry: EventEntry) {
 <style scoped>
 .trace-header-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 .node-row1, .node-row2 { display: flex; align-items: center; gap: 8px; }
-.node-type { font-family: var(--mono); font-size: 0.52rem; letter-spacing: 1px; color: var(--text-muted); }
 
 /* override global 190px fixed width — let payload determine card width */
 :deep(.flow-node) {

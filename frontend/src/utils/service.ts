@@ -44,6 +44,41 @@ export function isImportantInfo(type: string | undefined | null): boolean {
   return (type ?? '').toUpperCase().includes('IMPORTANT')
 }
 
+export function isCommand(type: string | undefined | null): boolean {
+  return (type ?? '').toUpperCase() === 'COMMAND'
+}
+
+/** Visual bucket for metric `type` — drives shared `.metric-type--*` CSS app-wide. */
+export type MetricEventVisualKind =
+  | 'error'
+  | 'warning'
+  | 'command'
+  | 'debug'
+  | 'important'
+  | 'info'
+  | 'unknown'
+
+export function metricEventVisualKind(type: string | undefined | null): MetricEventVisualKind {
+  if (isError(type)) return 'error'
+  if (isWarning(type)) return 'warning'
+  if (isCommand(type)) return 'command'
+  if (isDebug(type)) return 'debug'
+  if (isImportantInfo(type)) return 'important'
+  const t = (type ?? '').toUpperCase()
+  if (!t || t === 'UNKNOWN') return 'unknown'
+  return 'info'
+}
+
+/** Class for `global.css` rules (stream `.type-cell`, flow badges). */
+export function metricEventTypeClass(type: string | undefined | null): string {
+  return `metric-type--${metricEventVisualKind(type)}`
+}
+
+/** Sidebar type filters: use with `.metric-filter--*` (colors only on hover / .active). */
+export function metricEventFilterClass(type: string | undefined | null): string {
+  return `metric-filter--${metricEventVisualKind(type)}`
+}
+
 export interface ServiceOption {
   value: string
   label: string
