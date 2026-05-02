@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useAivoxStore }    from '@/stores/aivox'
 import { useJesoosStore }   from '@/stores/jesoos'
 import { useStationsStore } from '@/stores/stations'
+import { mixingTypeLabel }  from '@/lib/mixingTypeLabels'
 
 const aivox    = useAivoxStore()
 const jesoos   = useJesoosStore()
@@ -43,7 +44,16 @@ async function fetchQueue(brand: string) {
         case 'prioritized': status = 'queued'; queue = 'priority'; break
         default:            status = 'queued'; queue = 'regular';  break
       }
-      return { pos: e.pos, songId: e.songId ?? '', title: e.title ?? '', artist: e.artist ?? '', priority: e.priority, status, queue }
+      return {
+        pos: e.pos,
+        songId: e.songId ?? '',
+        title: e.title ?? '',
+        artist: e.artist ?? '',
+        priority: e.priority,
+        mergingMethod: e.mergingMethod ?? null,
+        status,
+        queue,
+      }
     })
   } catch (e) {
     console.error('[dashboard] queue fetch failed', e)
@@ -98,7 +108,7 @@ onUnmounted(() => { if (ws) { ws.onclose = null; ws.close(); ws = null } })
           <div class="pl-info">
             <span class="pl-title">{{ entry.title }}</span>
             <span class="pl-artist">{{ entry.artist }}</span>
-            <span v-if="entry.mergingMethod" class="pl-method">{{ entry.mergingMethod }}</span>
+            <span class="pl-method" title="Merging method">{{ mixingTypeLabel(entry.mergingMethod) }}</span>
           </div>
           <span v-if="entry.priority != null" class="pl-priority" title="priority">p{{ entry.priority }}</span>
           <span v-if="entry.queue === 'priority'" class="pl-qmark priority" title="priority queue">★</span>
