@@ -56,6 +56,7 @@ public class PlaylistQueueRepository {
                 dto.songId = songIdStr != null ? UUID.fromString(songIdStr) : null;
                 dto.title = entry.getString("title");
                 dto.artist = entry.getString("artist");
+                dto.mergingMethod = entry.getString("mergingMethod");
                 result.add(dto);
             } catch (Exception e) {
                 LOGGER.warnf("Failed to deserialize queue entry at index %d: %s", i, e.getMessage());

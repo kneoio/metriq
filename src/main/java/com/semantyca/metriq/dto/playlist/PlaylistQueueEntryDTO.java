@@ -9,4 +9,6 @@ public class PlaylistQueueEntryDTO {
     public String title;
     public String artist;
     public Integer priority;
+    /** {@code com.semantyca.mixpla.model.cnst.MixingType} name, e.g. {@code INTRO_SONG}. */
+    public String mergingMethod;
 }
