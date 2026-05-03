@@ -1,28 +1,18 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useMetriqStore } from '@/stores/metriq'
-import { useTracesStore } from '@/stores/traces'
 import { useContextStore } from '@/stores/context'
-import { eventEntryMatchesCodeGroupFilter } from '@/utils/eventCodeFilter'
-import EventCodeFilterBar from '@/components/EventCodeFilterBar.vue'
 import { servicePillHtml, metricEventTypeClass } from '@/utils/service'
 import { relTime } from '@/utils/time'
 import type { EventEntry } from '@/types'
 
 const metriq  = useMetriqStore()
-const traces  = useTracesStore()
 const context = useContextStore()
 
-const cronEvents = computed((): EventEntry[] =>
+const events = computed((): EventEntry[] =>
   metriq.events.filter(e =>
     (e.data.processType ?? '').toUpperCase() === 'CRON' &&
     (e.data.brandName   ?? '').trim() === context.activeBrand
-  )
-)
-
-const events = computed((): EventEntry[] =>
-  cronEvents.value.filter(e =>
-    eventEntryMatchesCodeGroupFilter(e, traces.eventCodeFilterGroupId)
   )
 )
 
@@ -51,7 +41,6 @@ function copySnapshot() {
     snapshotAt:  new Date().toISOString(),
     processType: 'CRON',
     brand:       evts[0]?.data.brandName ?? null,
-    codeFilterGroupId: traces.eventCodeFilterGroupId.trim() || null,
     eventCount:  evts.length,
     events: evts.map((e, idx) => {
       const d = e.data as any
@@ -91,20 +80,15 @@ function copyEvent(entry: EventEntry) {
 
 <template>
   <main class="traces-main">
-    <EventCodeFilterBar />
-    <div v-if="cronEvents.length === 0" class="empty-state">
+    <div v-if="events.length === 0" class="empty-state">
       <div class="empty-icon">⬡</div>
       <div class="empty-text">no cron events</div>
-    </div>
-    <div v-else-if="events.length === 0" class="empty-state">
-      <div class="empty-icon">⬡</div>
-      <div class="empty-text">no events in this code group</div>
     </div>
     <template v-else>
     <div class="trace-header-bar">
       <span class="trace-header-label">cron</span>
       <span class="trace-header-id">{{ context.activeBrand }}</span>
-      <span class="trace-event-count">{{ events.length }} / {{ cronEvents.length }} events</span>
+      <span class="trace-event-count">{{ events.length }} events</span>
       <div class="trace-header-actions">
         <button class="action-btn" @click="copySnapshot">{{ snapshotLabel }}</button>
       </div>
