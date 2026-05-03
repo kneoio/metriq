@@ -1,22 +1,21 @@
 import type { EventEntry } from '@/types'
+import { METRIC_EVENT_CODE_GROUPS } from '@/constants/metricEventCodes'
+
+const codesByGroupId = new Map<string, Set<string>>()
+for (const g of METRIC_EVENT_CODE_GROUPS) {
+  codesByGroupId.set(g.id, new Set(g.codes.map(c => c.toLowerCase())))
+}
 
 /**
- * When `filterText` is empty, every entry matches.
- * Otherwise split on comma or newline; entry matches if its `data.code` matches
- * any token (case-insensitive equality or substring). Entries with no code never match.
+ * Empty `groupId`: no filter. Otherwise the event matches only if `data.code`
+ * is one of the known codes for that preset group (case-insensitive exact match).
  */
-export function eventEntryMatchesCodeFilter(entry: EventEntry, filterText: string): boolean {
-  const raw = filterText.trim()
-  if (!raw) return true
+export function eventEntryMatchesCodeGroupFilter(entry: EventEntry, groupId: string): boolean {
+  const id = groupId.trim()
+  if (!id) return true
+  const allowed = codesByGroupId.get(id)
+  if (!allowed?.size) return true
   const code = (entry.data.code ?? '').trim().toLowerCase()
   if (!code) return false
-  const tokens = raw
-    .split(/[,\n]+/)
-    .map(t => t.trim())
-    .filter(Boolean)
-  if (tokens.length === 0) return true
-  return tokens.some(tok => {
-    const t = tok.toLowerCase()
-    return code === t || code.includes(t)
-  })
+  return allowed.has(code)
 }

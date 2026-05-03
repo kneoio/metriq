@@ -6,7 +6,7 @@ import { useTracesStore } from '@/stores/traces'
 import { useContextStore } from '@/stores/context'
 import { servicePillHtml, metricEventTypeClass } from '@/utils/service'
 import { relTime, flowTimeDelta } from '@/utils/time'
-import { eventEntryMatchesCodeFilter } from '@/utils/eventCodeFilter'
+import { eventEntryMatchesCodeGroupFilter } from '@/utils/eventCodeFilter'
 import EventCodeFilterBar from '@/components/EventCodeFilterBar.vue'
 import type { EventEntry } from '@/types'
 
@@ -29,21 +29,10 @@ const eventsForSelectedTrace = computed((): EventEntry[] => {
 })
 
 const filteredTraceEvents = computed((): EventEntry[] =>
-  eventsForSelectedTrace.value.filter(e => eventEntryMatchesCodeFilter(e, traces.eventCodeFilterText))
+  eventsForSelectedTrace.value.filter(e =>
+    eventEntryMatchesCodeGroupFilter(e, traces.eventCodeFilterGroupId)
+  )
 )
-
-const visibleCodesInTrace = computed((): string[] => {
-  const out: string[] = []
-  const seen = new Set<string>()
-  for (const e of filteredTraceEvents.value) {
-    const c = e.data.code
-    if (typeof c === 'string' && c && !seen.has(c)) {
-      seen.add(c)
-      out.push(c)
-    }
-  }
-  return out
-})
 
 watch(() => filteredTraceEvents.value.length, (len, prev) => {
   if (len > (prev ?? 0)) {
@@ -60,11 +49,11 @@ function copySnapshot() {
   const events = filteredTraceEvents.value
   const brand  = events.find(e => e.data.brandName)?.data.brandName ?? null
   const snapshot = {
-    traceId:    traces.selectedTraceId,
+    traceId:           traces.selectedTraceId,
     brand,
-    codeFilter: traces.eventCodeFilterText.trim() || null,
-    snapshotAt: new Date().toISOString(),
-    eventCount: events.length,
+    codeFilterGroupId: traces.eventCodeFilterGroupId.trim() || null,
+    snapshotAt:        new Date().toISOString(),
+    eventCount:        events.length,
     events: events.map((e, idx) => ({
       seq:         idx + 1,
       receivedAt:  e.receivedAt.toISOString(),
@@ -125,14 +114,14 @@ function copyEvent(entry: EventEntry) {
 
 <template>
   <main class="traces-main">
-    <EventCodeFilterBar :visible-codes="visibleCodesInTrace" />
+    <EventCodeFilterBar />
     <div v-if="!traces.selectedTraceId || eventsForSelectedTrace.length === 0" class="empty-state">
       <div class="empty-icon">⬡</div>
       <div class="empty-text">{{ traces.selectedTraceId ? 'no flow events' : 'select a trace' }}</div>
     </div>
     <div v-else-if="filteredTraceEvents.length === 0" class="empty-state">
       <div class="empty-icon">⬡</div>
-      <div class="empty-text">no events match code filter</div>
+      <div class="empty-text">no events in this code group</div>
     </div>
     <template v-else>
       <div class="trace-header-bar">

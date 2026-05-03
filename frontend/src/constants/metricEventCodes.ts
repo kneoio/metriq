@@ -1,6 +1,5 @@
 /**
- * Reference catalog of metric / event `code` strings (backend + flow).
- * Used for autocomplete, presets, and “copy catalog” in trace-like views.
+ * Preset groups of metric `code` values for filtering Traces / Cron / Independent.
  */
 export interface MetricEventCodeGroup {
   id: string
@@ -130,15 +129,3 @@ export const METRIC_EVENT_CODE_GROUPS: readonly MetricEventCodeGroup[] = [
     codes: ['brand_closed'],
   },
 ] as const
-
-const _flat = new Set<string>()
-for (const g of METRIC_EVENT_CODE_GROUPS) {
-  for (const c of g.codes) _flat.add(c)
-}
-
-/** Sorted deduplicated list for datalist / copy-catalog */
-export const METRIC_EVENT_CODE_CATALOG_SORTED: readonly string[] = [..._flat].sort((a, b) =>
-  a.localeCompare(b)
-)
-
-export const METRIC_EVENT_CODE_CATALOG_TEXT = METRIC_EVENT_CODE_CATALOG_SORTED.join('\n')

@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { useMetriqStore } from '@/stores/metriq'
 import { useTracesStore } from '@/stores/traces'
 import { useContextStore } from '@/stores/context'
-import { eventEntryMatchesCodeFilter } from '@/utils/eventCodeFilter'
+import { eventEntryMatchesCodeGroupFilter } from '@/utils/eventCodeFilter'
 import EventCodeFilterBar from '@/components/EventCodeFilterBar.vue'
 import { servicePillHtml, metricEventTypeClass } from '@/utils/service'
 import { relTime } from '@/utils/time'
@@ -21,21 +21,10 @@ const cronEvents = computed((): EventEntry[] =>
 )
 
 const events = computed((): EventEntry[] =>
-  cronEvents.value.filter(e => eventEntryMatchesCodeFilter(e, traces.eventCodeFilterText))
+  cronEvents.value.filter(e =>
+    eventEntryMatchesCodeGroupFilter(e, traces.eventCodeFilterGroupId)
+  )
 )
-
-const visibleCodesInList = computed((): string[] => {
-  const seen = new Set<string>()
-  const out: string[] = []
-  for (const e of events.value) {
-    const c = e.data.code
-    if (typeof c === 'string' && c && !seen.has(c)) {
-      seen.add(c)
-      out.push(c)
-    }
-  }
-  return out
-})
 
 function formatPayload(entry: EventEntry): string {
   const p = (entry.data as any).payload
@@ -62,7 +51,7 @@ function copySnapshot() {
     snapshotAt:  new Date().toISOString(),
     processType: 'CRON',
     brand:       evts[0]?.data.brandName ?? null,
-    codeFilter:  traces.eventCodeFilterText.trim() || null,
+    codeFilterGroupId: traces.eventCodeFilterGroupId.trim() || null,
     eventCount:  evts.length,
     events: evts.map((e, idx) => {
       const d = e.data as any
@@ -102,14 +91,14 @@ function copyEvent(entry: EventEntry) {
 
 <template>
   <main class="traces-main">
-    <EventCodeFilterBar :visible-codes="visibleCodesInList" />
+    <EventCodeFilterBar />
     <div v-if="cronEvents.length === 0" class="empty-state">
       <div class="empty-icon">⬡</div>
       <div class="empty-text">no cron events</div>
     </div>
     <div v-else-if="events.length === 0" class="empty-state">
       <div class="empty-icon">⬡</div>
-      <div class="empty-text">no events match code filter</div>
+      <div class="empty-text">no events in this code group</div>
     </div>
     <template v-else>
     <div class="trace-header-bar">
