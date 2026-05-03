@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useMetriqStore } from '@/stores/metriq'
 import { useContextStore } from '@/stores/context'
+import { METRIQ_EVENT_CODES, filterEventsByCode } from '@/constants/metriqEventCodes'
 import { servicePillHtml, metricEventTypeClass } from '@/utils/service'
 import { relTime } from '@/utils/time'
 import type { EventEntry } from '@/types'
@@ -9,12 +10,25 @@ import type { EventEntry } from '@/types'
 const metriq  = useMetriqStore()
 const context = useContextStore()
 
-const events = computed((): EventEntry[] =>
+const codeFilter = ref('')
+
+const eventsUnfiltered = computed((): EventEntry[] =>
   metriq.events.filter(e =>
     (e.data.processType ?? '').toUpperCase() === 'INDEPENDENT' &&
     (e.data.brandName   ?? '').trim() === context.activeBrand
   )
 )
+
+const visibleEvents = computed((): EventEntry[] =>
+  filterEventsByCode(eventsUnfiltered.value, codeFilter.value)
+)
+
+const eventCountLabel = computed(() => {
+  const v = visibleEvents.value.length
+  const t = eventsUnfiltered.value.length
+  if (codeFilter.value && t > 0) return `${v} / ${t} events`
+  return `${v} events`
+})
 
 function formatPayload(entry: EventEntry): string {
   const p = (entry.data as any).payload
@@ -36,7 +50,7 @@ function copyCode(entry: EventEntry) {
 }
 
 function copySnapshot() {
-  const evts = events.value
+  const evts = visibleEvents.value
   const snapshot = {
     snapshotAt:  new Date().toISOString(),
     processType: 'INDEPENDENT',
@@ -80,7 +94,7 @@ function copyEvent(entry: EventEntry) {
 
 <template>
   <main class="traces-main">
-    <div v-if="events.length === 0" class="empty-state">
+    <div v-if="eventsUnfiltered.length === 0" class="empty-state">
       <div class="empty-icon">⬡</div>
       <div class="empty-text">no independent events</div>
     </div>
@@ -88,14 +102,24 @@ function copyEvent(entry: EventEntry) {
     <div class="trace-header-bar">
       <span class="trace-header-label">independent</span>
       <span class="trace-header-id">{{ context.activeBrand }}</span>
-      <span class="trace-event-count">{{ events.length }} events</span>
+      <span class="trace-event-count">{{ eventCountLabel }}</span>
+      <div class="select-wrap trace-code-filter-wrap">
+        <select v-model="codeFilter" class="station-select trace-code-filter" aria-label="Filter by event code">
+          <option value="">all codes</option>
+          <option v-for="c in METRIQ_EVENT_CODES" :key="c" :value="c">{{ c }}</option>
+        </select>
+      </div>
       <div class="trace-header-actions">
         <button class="action-btn" @click="copySnapshot">{{ snapshotLabel }}</button>
       </div>
     </div>
-    <div class="flow-scroll">
+    <div v-if="visibleEvents.length === 0" class="empty-state empty-state--inline">
+      <div class="empty-icon">⬡</div>
+      <div class="empty-text">no events for this code</div>
+    </div>
+    <div v-else class="flow-scroll">
       <div class="flow-container">
-        <template v-for="(entry, idx) in events" :key="entry.id">
+        <template v-for="(entry, idx) in visibleEvents" :key="entry.id">
         <div v-if="idx > 0" class="flow-arrow"><span>→</span></div>
         <div class="flow-node">
           <div class="flow-node-header">
@@ -126,6 +150,9 @@ function copyEvent(entry: EventEntry) {
 </template>
 
 <style scoped>
+.trace-code-filter-wrap { flex: 1; min-width: 140px; max-width: 320px; }
+.trace-code-filter { width: 100%; font-size: 0.6rem; padding: 5px 10px; }
+.empty-state--inline { padding: 24px 0; }
 .node-row1, .node-row2 { display: flex; align-items: center; gap: 8px; }
 .copy-event-btn {
   margin-left: auto;

@@ -28,3 +28,4 @@ application-prod.properties
 /src/main/resources/META-INF/resources/assets/
 /.claude/
 /src/main/resources/META-INF/resources/index.html
+/.cursor/
