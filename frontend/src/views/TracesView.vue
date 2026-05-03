@@ -6,6 +6,8 @@ import { useTracesStore } from '@/stores/traces'
 import { useContextStore } from '@/stores/context'
 import { servicePillHtml, metricEventTypeClass } from '@/utils/service'
 import { relTime, flowTimeDelta } from '@/utils/time'
+import { eventEntryMatchesCodeFilter } from '@/utils/eventCodeFilter'
+import EventCodeFilterBar from '@/components/EventCodeFilterBar.vue'
 import type { EventEntry } from '@/types'
 
 const metriq   = useMetriqStore()
@@ -26,7 +28,24 @@ const eventsForSelectedTrace = computed((): EventEntry[] => {
     .sort((a, b) => a.receivedAt.getTime() - b.receivedAt.getTime())
 })
 
-watch(() => eventsForSelectedTrace.value.length, (len, prev) => {
+const filteredTraceEvents = computed((): EventEntry[] =>
+  eventsForSelectedTrace.value.filter(e => eventEntryMatchesCodeFilter(e, traces.eventCodeFilterText))
+)
+
+const visibleCodesInTrace = computed((): string[] => {
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const e of filteredTraceEvents.value) {
+    const c = e.data.code
+    if (typeof c === 'string' && c && !seen.has(c)) {
+      seen.add(c)
+      out.push(c)
+    }
+  }
+  return out
+})
+
+watch(() => filteredTraceEvents.value.length, (len, prev) => {
   if (len > (prev ?? 0)) {
     nextTick(() => {
       if (!flowContainerEl.value) return
@@ -38,11 +57,12 @@ watch(() => eventsForSelectedTrace.value.length, (len, prev) => {
 })
 
 function copySnapshot() {
-  const events = eventsForSelectedTrace.value
+  const events = filteredTraceEvents.value
   const brand  = events.find(e => e.data.brandName)?.data.brandName ?? null
   const snapshot = {
     traceId:    traces.selectedTraceId,
     brand,
+    codeFilter: traces.eventCodeFilterText.trim() || null,
     snapshotAt: new Date().toISOString(),
     eventCount: events.length,
     events: events.map((e, idx) => ({
@@ -105,16 +125,21 @@ function copyEvent(entry: EventEntry) {
 
 <template>
   <main class="traces-main">
+    <EventCodeFilterBar :visible-codes="visibleCodesInTrace" />
     <div v-if="!traces.selectedTraceId || eventsForSelectedTrace.length === 0" class="empty-state">
       <div class="empty-icon">⬡</div>
       <div class="empty-text">{{ traces.selectedTraceId ? 'no flow events' : 'select a trace' }}</div>
+    </div>
+    <div v-else-if="filteredTraceEvents.length === 0" class="empty-state">
+      <div class="empty-icon">⬡</div>
+      <div class="empty-text">no events match code filter</div>
     </div>
     <template v-else>
       <div class="trace-header-bar">
         <span class="trace-header-label">trace</span>
         <span class="trace-header-id station-name">{{ context.activeBrand }}</span>
         <span class="trace-header-id">{{ traces.selectedTraceId }}</span>
-        <span class="trace-event-count">{{ eventsForSelectedTrace.length }} events</span>
+        <span class="trace-event-count">{{ filteredTraceEvents.length }} / {{ eventsForSelectedTrace.length }} events</span>
         <div class="trace-header-actions">
           <button class="action-btn"
             :style="traces.showFlowTiming ? 'border-color:var(--accent);color:var(--accent)' : ''"
@@ -124,10 +149,10 @@ function copyEvent(entry: EventEntry) {
       </div>
       <div class="flow-scroll">
         <div class="flow-container" ref="flowContainerEl">
-          <template v-for="(entry, idx) in eventsForSelectedTrace" :key="entry.id">
+          <template v-for="(entry, idx) in filteredTraceEvents" :key="entry.id">
             <div class="flow-arrow" v-if="idx > 0">
               <span>→</span>
-              <span v-if="traces.showFlowTiming" class="flow-arrow-time">{{ deltaMs(eventsForSelectedTrace[idx - 1], entry) }}</span>
+              <span v-if="traces.showFlowTiming" class="flow-arrow-time">{{ deltaMs(filteredTraceEvents[idx - 1], entry) }}</span>
             </div>
             <div class="flow-node">
               <div class="flow-node-header">
