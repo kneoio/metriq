@@ -16,7 +16,7 @@ import java.util.List;
 @ApplicationScoped
 public class BrandSoundFragmentRepository extends AsyncRepository {
 
-    private static final String TABLE = "kneobroadcaster__brand_sound_fragments";
+    private static final String TABLE = "mixpla__brand_sound_fragments";
 
     public BrandSoundFragmentRepository() {
         super();

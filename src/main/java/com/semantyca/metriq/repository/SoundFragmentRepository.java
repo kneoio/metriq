@@ -179,7 +179,7 @@ public class SoundFragmentRepository extends SoundFragmentRepositoryAbstract {
 
 
     private Uni<List<UUID>> loadLabels(UUID soundFragmentId) {
-        String sql = "SELECT label_id FROM kneobroadcaster__sound_fragment_labels WHERE id = $1";
+        String sql = "SELECT label_id FROM mixpla__sound_fragment_labels WHERE id = $1";
         return client.preparedQuery(sql)
                 .execute(Tuple.of(soundFragmentId))
                 .onItem().transformToMulti(rows -> Multi.createFrom().iterable(rows))
@@ -190,7 +190,7 @@ public class SoundFragmentRepository extends SoundFragmentRepositoryAbstract {
 
     private Uni<List<UUID>> loadGenres(UUID soundFragmentId) {
         String sql = "SELECT g.id FROM __genres g " +
-                "JOIN kneobroadcaster__sound_fragment_genres sfg ON g.id = sfg.genre_id " +
+                "JOIN mixpla__sound_fragment_genres sfg ON g.id = sfg.genre_id " +
                 "WHERE sfg.sound_fragment_id = $1 ORDER BY g.identifier";
 
         return client.preparedQuery(sql)
@@ -249,10 +249,10 @@ public class SoundFragmentRepository extends SoundFragmentRepositoryAbstract {
 
     private Uni<Integer> deleteDatabaseRecords(UUID uuid) {
         return client.withTransaction(tx -> {
-            String getContributionIdsSql = "SELECT id FROM kneobroadcaster__contributions WHERE sound_fragment_id = $1";
-            String deleteAgreementsSql = "DELETE FROM kneobroadcaster__upload_agreements WHERE contribution_id = ANY($1)";
-            String deleteContributionsSql = "DELETE FROM kneobroadcaster__contributions WHERE sound_fragment_id = $1";
-            String deleteGenresSql = "DELETE FROM kneobroadcaster__sound_fragment_genres WHERE sound_fragment_id = $1";
+            String getContributionIdsSql = "SELECT id FROM mixpla__contributions WHERE sound_fragment_id = $1";
+            String deleteAgreementsSql = "DELETE FROM mixpla__upload_agreements WHERE contribution_id = ANY($1)";
+            String deleteContributionsSql = "DELETE FROM mixpla__contributions WHERE sound_fragment_id = $1";
+            String deleteGenresSql = "DELETE FROM mixpla__sound_fragment_genres WHERE sound_fragment_id = $1";
             String deleteRlsSql = String.format("DELETE FROM %s WHERE entity_id = $1", entityData.getRlsName());
             String deleteFilesSql = "DELETE FROM _files WHERE parent_id = $1";
             String deleteDocSql = String.format("DELETE FROM %s WHERE id = $1", entityData.getTableName());
