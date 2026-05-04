@@ -18,6 +18,9 @@ public interface MetriqConfig {
     @WithDefault("http://localhost:38798")
     String getAivoxUrl();
 
+    @WithName("song-played-flush-interval")
+    String songPlayedFlushInterval();
+
     Cleanup cleanup();
 
     interface Cleanup {

@@ -1,9 +1,13 @@
 package com.semantyca.metriq.messaging;
 
+import com.semantyca.metriq.config.MetriqConfig;
 import com.semantyca.metriq.dto.BrandSoundFragmentPlayDelta;
 import com.semantyca.metriq.repository.BrandSoundFragmentRepository;
+import io.quarkus.runtime.StartupEvent;
 import io.quarkus.scheduler.Scheduled;
+import io.quarkus.scheduler.Scheduler;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 
@@ -15,10 +19,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @ApplicationScoped
 public class SongPlayedCountBuffer {
-
+    private static final String JOB_ID = "song-played-flush";
     private static final Logger LOGGER = Logger.getLogger(SongPlayedCountBuffer.class);
-
     private volatile ConcurrentHashMap<Key, AtomicInteger> pending = new ConcurrentHashMap<>();
+
+    @Inject
+    MetriqConfig metriqConfig;
+
+    @Inject
+    Scheduler scheduler;
 
     @Inject
     BrandSoundFragmentRepository brandSoundFragmentRepository;
@@ -27,7 +36,14 @@ public class SongPlayedCountBuffer {
         pending.computeIfAbsent(new Key(brandId, soundFragmentId), k -> new AtomicInteger()).incrementAndGet();
     }
 
-    @Scheduled(every = "${metriq.song-played-flush-interval:60s}")
+    void registerFlushJob(@Observes StartupEvent startup) {
+        scheduler.newJob(JOB_ID)
+                .setInterval(metriqConfig.songPlayedFlushInterval())
+                .setConcurrentExecution(Scheduled.ConcurrentExecution.SKIP)
+                .setTask(execution -> flush())
+                .schedule();
+    }
+
     void flush() {
         if (pending.isEmpty()) {
             return;
