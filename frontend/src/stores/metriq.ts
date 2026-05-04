@@ -2,6 +2,7 @@ import { ref, computed, reactive } from 'vue'
 import { defineStore } from 'pinia'
 import type { MetricEventData, EventEntry } from '@/types'
 import { isError } from '@/utils/service'
+import { filterEventsByCode } from '@/constants/metriqEventCodes'
 
 // Shape returned by GET /metriq/api/snapshot
 interface Snapshot {
@@ -29,6 +30,7 @@ export const useMetriqStore = defineStore('metriq', () => {
   const activeTypeFilters   = ref<Set<string>>(new Set())   // empty = show all
   const activeBrandFilter   = ref('all')
   const activeServiceFilter = ref('all')
+  const activeCodeFilter    = ref('')
   const knownBrands         = ref<string[]>([])
 
   // byBrand[brandSlug] = EventEntry[] — all events for a brand across all traces
@@ -40,7 +42,7 @@ export const useMetriqStore = defineStore('metriq', () => {
   const rateCount = computed(() => recentTimestamps.value.length)
 
   const filteredEvents = computed(() =>
-    events.value.filter(entry => {
+    filterEventsByCode(events.value.filter(entry => {
       const type    = (entry.data.type      ?? 'UNKNOWN').toUpperCase()
       const brand   = (entry.data.brandName ?? '').trim()
       const service = (entry.data.serviceId ?? '').trim()
@@ -49,7 +51,7 @@ export const useMetriqStore = defineStore('metriq', () => {
         (activeBrandFilter.value   === 'all' || activeBrandFilter.value   === brand)   &&
         (activeServiceFilter.value === 'all' || activeServiceFilter.value === service)
       )
-    })
+    }), activeCodeFilter.value)
   )
 
   // ── Helpers ────────────────────────────────────────────────────────────────
@@ -159,6 +161,7 @@ export const useMetriqStore = defineStore('metriq', () => {
     activeTypeFilters.value = new Set()
     activeBrandFilter.value = 'all'
     activeServiceFilter.value = 'all'
+    activeCodeFilter.value = ''
     Object.keys(byBrand).forEach(k => delete byBrand[k])
     Object.keys(byTrace).forEach(k => delete byTrace[k])
   }
@@ -172,13 +175,14 @@ export const useMetriqStore = defineStore('metriq', () => {
   function clearTypeFilters()          { activeTypeFilters.value   = new Set() }
   function setBrandFilter(b: string)   { activeBrandFilter.value   = b }
   function setServiceFilter(s: string) { activeServiceFilter.value = s }
+  function setCodeFilter(c: string)    { activeCodeFilter.value    = c }
 
   return {
     events, totalCount, errorCount, recentTimestamps,
-    activeTypeFilters, activeBrandFilter, activeServiceFilter,
+    activeTypeFilters, activeBrandFilter, activeServiceFilter, activeCodeFilter,
     knownBrands, byBrand, byTrace,
     rateCount, filteredEvents,
     seedFromSnapshot, ingestEvent, clearAllEvents, deleteTrace,
-    toggleTypeFilter, clearTypeFilters, setBrandFilter, setServiceFilter,
+    toggleTypeFilter, clearTypeFilters, setBrandFilter, setServiceFilter, setCodeFilter,
   }
 })

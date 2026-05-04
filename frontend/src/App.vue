@@ -4,6 +4,7 @@ import { useMetriqStore, METRIC_EVENT_TYPES } from '@/stores/metriq'
 import { useConnectionStore } from '@/stores/connection'
 import { useTracesStore }    from '@/stores/traces'
 import { useStationsStore }  from '@/stores/stations'
+import { METRIQ_EVENT_CODES } from '@/constants/metriqEventCodes'
 import { SERVICE_OPTIONS, metricEventFilterClass } from '@/utils/service'
 import { relTime }           from '@/utils/time'
 import SystemDashboardView from '@/views/SystemDashboardView.vue'
@@ -154,6 +155,16 @@ onUnmounted(() => conn.disconnect())
             <span class="filter-tag brand-tag" :class="{ active: metriq.activeBrandFilter === 'all' }" @click="metriq.setBrandFilter('all')">all</span>
             <span v-for="brand in metriq.knownBrands" :key="brand" class="filter-tag brand-tag"
               :class="{ active: metriq.activeBrandFilter === brand }" @click="metriq.setBrandFilter(brand)">{{ brand.toLowerCase() }}</span>
+          </div>
+        </div>
+        <div class="sidebar-divider"></div>
+        <div class="filter-section">
+          <div class="filter-label">Filter by code</div>
+          <div class="select-wrap">
+            <select class="station-select" :value="metriq.activeCodeFilter" @change="metriq.setCodeFilter(($event.target as HTMLSelectElement).value)">
+              <option value="">all</option>
+              <option v-for="code in METRIQ_EVENT_CODES" :key="code" :value="code">{{ code }}</option>
+            </select>
           </div>
         </div>
         <div class="sidebar-divider"></div>
