@@ -1,4 +1,4 @@
-package com.semantyca.metriq.repository.soundfragment;
+package com.semantyca.metriq.repository;
 
 import com.semantyca.core.model.FileMetadata;
 import com.semantyca.core.repository.IFileStorage;
