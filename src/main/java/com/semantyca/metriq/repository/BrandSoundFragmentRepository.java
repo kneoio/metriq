@@ -12,7 +12,6 @@ import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @ApplicationScoped
 public class BrandSoundFragmentRepository extends AsyncRepository {
@@ -28,19 +27,6 @@ public class BrandSoundFragmentRepository extends AsyncRepository {
                                         ObjectMapper mapper,
                                         RLSRepository rlsRepository) {
         super(client, mapper, rlsRepository);
-    }
-
-    public Uni<Void> incrementPlayedCount(UUID brandId, UUID soundFragmentId) {
-        String sql = "INSERT INTO " + TABLE + " " +
-                "(brand_id, sound_fragment_id, played_by_brand_count, last_time_played_by_brand) " +
-                "VALUES ($1, $2, 1, NOW()) " +
-                "ON CONFLICT (brand_id, sound_fragment_id) DO UPDATE SET " +
-                "played_by_brand_count = " + TABLE + ".played_by_brand_count + 1, " +
-                "last_time_played_by_brand = NOW()";
-
-        return client.preparedQuery(sql)
-                .execute(Tuple.of(brandId, soundFragmentId))
-                .replaceWithVoid();
     }
 
     public Uni<Void> incrementPlayedCountsBatch(List<BrandSoundFragmentPlayDelta> deltas) {
