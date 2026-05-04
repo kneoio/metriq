@@ -1,6 +1,5 @@
 FROM eclipse-temurin:21-jre-jammy
 RUN groupadd -r metriq && useradd -r -g metriq metriq
-RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
 RUN mkdir -p /app/segmented /app/merged /app/controller-uploads /app/external /app/file-uploads /var/log/metriq \
     && chown -R metriq:metriq /app /var/log/metriq
 WORKDIR /app

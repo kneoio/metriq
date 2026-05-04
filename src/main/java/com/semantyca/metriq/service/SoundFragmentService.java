@@ -7,14 +7,11 @@ import com.semantyca.mixpla.model.soundfragment.SoundFragment;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
 @ApplicationScoped
 public class SoundFragmentService extends AbstractService<SoundFragment, Object> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SoundFragmentService.class);
 
     private final SoundFragmentRepository repository;
 
